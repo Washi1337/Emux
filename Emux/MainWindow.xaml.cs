@@ -1,0 +1,195 @@
+﻿using System;
+using System.Globalization;
+using System.IO;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Emux.GameBoy;
+using Emux.GameBoy.Cpu;
+using Emux.GameBoy.Graphics;
+using Microsoft.Win32;
+
+namespace Emux
+{
+    /// <summary>
+    /// Interaction logic for MainWindow.xaml
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        public static readonly RoutedUICommand StepCommand = new RoutedUICommand(
+            "Step",
+            "Step",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F10)
+            }));
+
+        public static readonly RoutedUICommand RunCommand = new RoutedUICommand(
+            "Run",
+            "Run",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F5)
+            }));
+
+        public static readonly RoutedUICommand BreakCommand = new RoutedUICommand(
+            "Break",
+            "Break",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F5, ModifierKeys.Control)
+            }));
+
+        public static readonly RoutedUICommand SetBreakpointCommand = new RoutedUICommand(
+            "Set Breakpoint",
+            "Set Breakpoint",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F2)
+            }));
+
+
+        public static readonly RoutedUICommand ClearBreakpointsCommand = new RoutedUICommand(
+            "Clear all breakpoints",
+            "Clear all breakpoints",
+            typeof(MainWindow));
+
+        public static readonly RoutedUICommand ResetCommand = new RoutedUICommand(
+            "Reset",
+            "Reset",
+            typeof(MainWindow));
+
+        public static readonly RoutedUICommand KeyPadCommand = new RoutedUICommand(
+            "Keypad",
+            "Keypad",
+            typeof(MainWindow));
+
+        private GameBoy.GameBoy _gameBoy;
+        private DateTime _start;
+        private ulong _startClocks;
+        private readonly VideoWindow _videoWindow;
+        private readonly KeypadWindow _keypadWindow;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            _videoWindow = new VideoWindow();
+            _keypadWindow = new KeypadWindow();
+        }
+
+        public void RefreshView()
+        {
+            RegistersTextBox.Text = _gameBoy.Cpu.Registers + "\r\nTick: " + _gameBoy.Cpu.TickCount + "\r\n\r\n" +
+                                    "LCDC: " + ((byte)_gameBoy.Gpu.Lcdc).ToString("X2") + "\r\n" +
+                                    "STAT: " + ((byte)_gameBoy.Gpu.Stat).ToString("X2") + "\r\n" +
+                                    "LY: " + _gameBoy.Gpu.LY.ToString("X2") + "\r\n" +
+                                    "ScY: " + _gameBoy.Gpu.ScY.ToString("X2") + "\r\n" +
+                                    "ScX: " + _gameBoy.Gpu.ScX.ToString("X2") + "\r\n"
+                ;
+            DisassemblyView.Items.Clear();
+            var disassembler = new Z80Disassembler(_gameBoy.Memory);
+            disassembler.Position = _gameBoy.Cpu.Registers.PC;
+            for (int i = 0; i < 30 && disassembler.Position < 0xFFFF; i ++)
+            {
+                var instruction = disassembler.ReadNextInstruction();
+                DisassemblyView.Items.Add(instruction.ToString());
+            }
+            
+        }
+
+        private void OpenCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            var dialog = new OpenFileDialog();
+            var result = dialog.ShowDialog();
+            if (result.HasValue && result.Value)
+            {
+                _gameBoy?.Terminate();
+                _gameBoy = new GameBoy.GameBoy(new Cartridge(File.ReadAllBytes(dialog.FileName)));
+                _gameBoy.Cpu.Paused += GameBoyOnPaused;
+                _gameBoy.Gpu.VideoOutput = _videoWindow;
+                _videoWindow.Device = _gameBoy;
+                _videoWindow.Show();
+                _keypadWindow.Device = _gameBoy;
+
+                RefreshView();
+            }
+        }
+
+        private void GameBoyOnPaused(object sender, EventArgs eventArgs)
+        {
+            var end = DateTime.Now;
+            double clockSpeed = (_gameBoy.Cpu.TickCount - _startClocks) / (end - _start).TotalSeconds;
+            Console.WriteLine(
+                $"Average clock speed: {clockSpeed/1000000:0.00}MHz ({(clockSpeed / GameBoyCpu.OfficialClockSpeed * 100):0.00}% of original speed)");
+
+            Dispatcher.Invoke(() =>
+            {
+                RefreshView();
+            });
+        }
+
+        private void StepCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _gameBoy.Cpu.Step();
+            RefreshView();
+        }
+
+        private void RunningOnCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = _gameBoy != null && _gameBoy.Cpu.Running;
+        }
+
+        private void PausingOnCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = _gameBoy != null && !_gameBoy.Cpu.Running;
+        }
+
+        private void GameBoyExistsCanExecute(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = _gameBoy != null;
+        }
+
+        private void RunCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _startClocks = _gameBoy.Cpu.TickCount;
+            _start = DateTime.Now;
+            _gameBoy.Cpu.Run();
+        }
+
+        private void BreakCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _gameBoy.Cpu.Break();
+        }
+
+        private void SetBreakpointCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            var dialog = new InputDialog();
+            var result = dialog.ShowDialog();
+            if (result.HasValue && result.Value)
+            {
+                _gameBoy.Cpu.Breakpoints.Add(ushort.Parse(dialog.Text, NumberStyles.HexNumber));
+            }
+        }
+
+        private void ResetCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _gameBoy.Reset();
+            RefreshView();
+        }
+
+        private void ClearBreakpointsCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _gameBoy.Cpu.Breakpoints.Clear();
+        }
+
+        private void KeyPadCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _keypadWindow.Show();
+        }
+    }
+}

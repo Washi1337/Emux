@@ -1,0 +1,63 @@
+﻿<Window x:Class="Emux.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux"
+        mc:Ignorable="d"
+        Title="Emux" Height="440.245" Width="707.465">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Open" Executed="OpenCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.RunCommand" CanExecute="PausingOnCanExecute" Executed="RunCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.StepCommand" CanExecute="PausingOnCanExecute" Executed="StepCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.BreakCommand" CanExecute="RunningOnCanExecute" Executed="BreakCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.SetBreakpointCommand" CanExecute="GameBoyExistsCanExecute" Executed="SetBreakpointCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.ClearBreakpointsCommand" CanExecute="GameBoyExistsCanExecute" Executed="ClearBreakpointsCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.ResetCommand" CanExecute="GameBoyExistsCanExecute" Executed="ResetCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted"></CommandBinding>
+    </Window.CommandBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0" >
+            <Menu.Items>
+                <MenuItem Header="File">
+                    <MenuItem.Items>
+                        <MenuItem Header="Open" Command="Open"/>
+                    </MenuItem.Items>
+                </MenuItem>
+                <MenuItem Header="Debug">
+                    <MenuItem.Items>
+                        <MenuItem Header="Run" Command="local:MainWindow.RunCommand"/>
+                        <MenuItem Header="Reset" Command="local:MainWindow.ResetCommand"/>
+                        <MenuItem Header="Step" Command="local:MainWindow.StepCommand"/>
+                        <MenuItem Header="Break" Command="local:MainWindow.BreakCommand"/>
+                        <MenuItem Header="Set Breakpoint" Command="local:MainWindow.SetBreakpointCommand"/>
+                        <MenuItem Header="Clear all breakpoints" Command="local:MainWindow.ClearBreakpointsCommand"/>
+                    </MenuItem.Items>
+                </MenuItem>
+                <MenuItem Header="Tools">
+                    <MenuItem.Items>
+                        <MenuItem Header="Virtual keypad" Command="local:MainWindow.KeyPadCommand"/>
+                    </MenuItem.Items>
+                </MenuItem>
+            </Menu.Items>
+        </Menu>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="150"/>
+            </Grid.ColumnDefinitions>
+            
+            <ListView x:Name="DisassemblyView" />
+            <TextBox x:Name="RegistersTextBox" Grid.Column="1" IsReadOnly="True" />
+
+        </Grid>
+
+
+    </Grid>
+</Window>

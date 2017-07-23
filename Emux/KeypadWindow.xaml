@@ -1,0 +1,22 @@
+﻿<Window x:Class="Emux.KeypadWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux"
+        mc:Ignorable="d"
+        WindowStyle="ToolWindow"
+        Title="Keypad" Height="152.511" Width="300" Closing="KeypadWindowOnClosing">
+    <Grid>
+        <CheckBox x:Name="UpCheckBox"    Margin="40,10,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+            <CheckBox x:Name="RightCheckBox" Margin="65,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked" />
+        <CheckBox x:Name="DownCheckBox"  Margin="40,60,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+        <CheckBox x:Name="LeftCheckBox"  Margin="15,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+
+        <CheckBox x:Name="SelectCheckBox" Margin="120,85,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+        <CheckBox x:Name="StartCheckBox"  Margin="145,85,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+        <CheckBox x:Name="BCheckBox"      Margin="215,40,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+        <CheckBox x:Name="ACheckBox"      Margin="240,35,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Checked="ButtonCheckBoxOnChecked" Unchecked="ButtonCheckBoxOnUnchecked"/>
+        
+    </Grid>
+</Window>

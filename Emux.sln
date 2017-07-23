@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.GameBoy", "Emux.GameBoy\Emux.GameBoy.csproj", "{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux", "Emux\Emux.csproj", "{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.GameBoy.Tests", "Emux.GameBoy.Tests\Emux.GameBoy.Tests.csproj", "{365C6CF7-99E3-4861-B63B-E9D352E386AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

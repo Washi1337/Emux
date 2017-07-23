@@ -1,0 +1,22 @@
+﻿<Window x:Class="Emux.InputDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux"
+        mc:Ignorable="d"
+        Title="InputDialog" Height="124.415" Width="336.585">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBox x:Name="ContentsTextBox" Margin="10" Text ="Enter Text" />
+        <StackPanel Margin="5" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Margin = "5" Content="OK" Width="75" Click="OkButtonOnClick" IsDefault="True"/>
+            <Button Margin = "5" Content="Cancel" Width="75" Click ="CancelButtonOnClick" IsCancel="True"/>
+        </StackPanel>
+
+    </Grid>
+</Window>
