@@ -25,15 +25,9 @@ namespace Emux.GameBoy.Memory
 
             Buffer.BlockCopy(device.Cartridge.RomContents, 0, _rom, 0, 0x4000);
             Buffer.BlockCopy(device.Cartridge.RomContents, 0x4000, _switchableRom, 0, 0x4000);
-
-            DmaController = new DmaController(this);
+            
         }
-
-        public DmaController DmaController
-        {
-            get;
-        }
-
+        
         public byte ReadByte(ushort address)
         {
             switch (address >> 12)
@@ -81,6 +75,12 @@ namespace Emux.GameBoy.Memory
                             {
                                 case 0x00:
                                     return _device.KeyPad.JoyP;
+                                case 0x01:
+                                    return 0x80; // TODO: serial
+                                case 0x02:
+                                    return 0xFE; // TODO: serial
+                                case 0x0F:
+                                    return (byte) _device.Cpu.Registers.IF;
                                 case 0x40:
                                 case 0x41:
                                 case 0x42:
@@ -90,8 +90,6 @@ namespace Emux.GameBoy.Memory
                                 case 0x47:
                                 case 0x48:
                                     return _device.Gpu.ReadRegister((byte) (address & 0xFF));
-                                case 0x46:
-                                    return DmaController.DmaTransfer;
                                 case 0x49:
                                 case 0x4A:
                                 case 0x4B:
@@ -172,7 +170,10 @@ namespace Emux.GameBoy.Memory
                             switch (address & 0xFF)
                             {
                                 case 0x00:
-                                    _device.KeyPad.WriteJoyP(value);
+                                    _device.KeyPad.JoyP = value;
+                                    return;
+                                case 0x0F:
+                                    _device.Cpu.Registers.IF = (InterruptFlags) (0xE0 | value);
                                     return;
                                 case 0x40:
                                 case 0x41:
@@ -185,12 +186,7 @@ namespace Emux.GameBoy.Memory
                                      _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
                                     return;
                                 case 0x46:
-                                    //for (int i = 0; i < 160; i++)
-                                    //{
-                                    //    byte x = ReadByte((ushort) (value << 8 + i));
-                                    //    WriteByte((ushort) (0xFE00 + i), x);
-                                    //}
-                                    DmaController.DmaTransfer = value;
+                                    PerformDmaTransfer(value);
                                     return;
                                 default:
                                     if (address >= 0xFF80)

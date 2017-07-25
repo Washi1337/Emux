@@ -21,7 +21,6 @@ namespace Emux.GameBoy.Input
                 if (_pressedButtons < value)
                     _device.Cpu.Registers.IF |= InterruptFlags.Joypad;
                 _pressedButtons = value; 
-                
             }
         }
 
@@ -33,13 +32,9 @@ namespace Emux.GameBoy.Input
                     return (byte)(0xD0 | (~((byte)PressedButtons >> 4) & 0xF));
                 if ((_joyP & 0x20) == 0x20)
                     return (byte)(0xE0 | (~(byte)PressedButtons & 0xF));
-                return 0;
+                return 0xF0;
             }
-        }
-        
-        public void WriteJoyP(byte value)
-        {
-            _joyP = value;
-        }
+            set { _joyP = value; }
+        }        
     }
 }

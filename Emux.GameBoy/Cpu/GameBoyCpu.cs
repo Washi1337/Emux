@@ -88,7 +88,7 @@ namespace Emux.GameBoy.Cpu
                         int cycles;
                         if (_halt)
                         {
-                            cycles = 1;
+                            cycles = 4;
                         }
                         else
                         {
@@ -115,8 +115,7 @@ namespace Emux.GameBoy.Cpu
                                 }
                             }
                         }
-
-                        _device.Memory.DmaController.Update(cycles);
+                        
                         _device.Gpu.Update(cycles);
                         _ticks = (_ticks + (ulong)cycles) & long.MaxValue;
 

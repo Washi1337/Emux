@@ -62,7 +62,6 @@
     <Compile Include="Graphics\SpriteData.cs" />
     <Compile Include="Input\GameBoyPad.cs" />
     <Compile Include="Input\GameBoyPadButton.cs" />
-    <Compile Include="Memory\DmaController.cs" />
     <Compile Include="Memory\GameBoyMemory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

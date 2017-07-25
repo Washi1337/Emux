@@ -146,51 +146,67 @@ namespace Emux.GameBoy.Cpu
             Sub(_registers.A, b, RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C, RegisterFlags.N);
         }
 
-        internal byte Rl(byte value)
+        internal byte Rl(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            _registers.ClearFlags(affectedFlags | resetFlags);
+            _registers.SetFlags(setFlags);
+
             byte newValue = (byte)((value << 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
             if ((value & (1 << 7)) == (1 << 7))
                 flags |= RegisterFlags.C;
-            _registers.OverwriteFlags(flags);
+            _registers.SetFlags(flags);
+
             return newValue;
         }
 
-        internal byte Rlc(byte value)
+        internal byte Rlc(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            _registers.ClearFlags(affectedFlags | resetFlags);
+            _registers.SetFlags(setFlags);
+
             byte newValue = (byte)((value << 1) | (value >> 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
             if ((value & (1 << 7)) == (1 << 7))
                 flags |= RegisterFlags.C;
-            _registers.OverwriteFlags(flags);
+            _registers.SetFlags(flags);
+
             return newValue;
         }
 
-        internal byte Rr(byte value)
+        internal byte Rr(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            _registers.ClearFlags(affectedFlags | resetFlags);
+            _registers.SetFlags(setFlags);
+
             byte newValue = (byte)((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
             if ((value & 1) == 1)
                 flags |= RegisterFlags.C;
-            _registers.OverwriteFlags(flags);
+            _registers.SetFlags(flags);
+
             return newValue;
         }
 
-        internal byte Rrc(byte value)
+        internal byte Rrc(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            _registers.ClearFlags(affectedFlags | resetFlags);
+            _registers.SetFlags(setFlags);
+
             byte newValue = (byte)((value >> 1) | ((value & 1) << 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
             if ((value & 1) == 1)
                 flags |= RegisterFlags.C;
-            _registers.OverwriteFlags(flags);
+            _registers.SetFlags(flags);
+
             return newValue;
         }
 

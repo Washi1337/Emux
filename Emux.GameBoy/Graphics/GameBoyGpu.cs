@@ -62,7 +62,6 @@ namespace Emux.GameBoy.Graphics
         public byte ScX;
         public byte LY;
         public byte LYC;
-        public byte Dma;
         public byte Bgp;
         public byte ObjP0;
         public byte ObjP1;
@@ -128,9 +127,6 @@ namespace Emux.GameBoy.Graphics
                 case 0x45:
                     LYC = value;
                     return;
-                case 0x46:
-                    Dma = value;
-                    return;
                 case 0x47:
                     Bgp = value;
                     return;
@@ -161,8 +157,6 @@ namespace Emux.GameBoy.Graphics
                     return LY;
                 case 0x45:
                     return LYC;
-                case 0x46:
-                    return Dma;
                 case 0x47:
                     return Bgp;
                 case 0x48:
@@ -300,6 +294,12 @@ namespace Emux.GameBoy.Graphics
         private void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer)
         {
             byte dataIndex = _vram[(ushort) (tileMapAddress + tileIndex)];
+            if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) !=
+                LcdControlFlags.BgWindowTileDataSelect)
+            {
+                // Index is signed number in [-128..127] => compensate for it.
+                dataIndex = unchecked((byte) ((sbyte) dataIndex + 0x80));
+            }
             Buffer.BlockCopy(_vram, tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
 
