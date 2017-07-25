@@ -156,10 +156,11 @@ namespace Emux.GameBoy.Cpu
         internal byte Rl(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
             RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            byte newValue = (byte) ((value << 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
+
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
 
-            byte newValue = (byte) ((value << 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -173,10 +174,10 @@ namespace Emux.GameBoy.Cpu
         internal byte Rlc(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
             RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            byte newValue = (byte) ((value << 1) | (value >> 7));
+
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
-
-            byte newValue = (byte) ((value << 1) | (value >> 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -190,10 +191,10 @@ namespace Emux.GameBoy.Cpu
         internal byte Rr(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
             RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            byte newValue = (byte) ((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
+
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
-
-            byte newValue = (byte) ((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -207,10 +208,10 @@ namespace Emux.GameBoy.Cpu
         internal byte Rrc(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
             RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
+            byte newValue = (byte) ((value >> 1) | ((value & 1) << 7));
+
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
-
-            byte newValue = (byte) ((value >> 1) | ((value & 1) << 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -314,7 +315,6 @@ namespace Emux.GameBoy.Cpu
 
         internal void Daa()
         {
-            _registers.ClearFlags(RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C);
             var flags = RegisterFlags.None;
 
             ushort value = _registers.A;
@@ -330,6 +330,8 @@ namespace Emux.GameBoy.Cpu
                 flags |= RegisterFlags.Z;
 
             _registers.A = (byte) (value & 0xFF);
+
+            _registers.ClearFlags(RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C);
             _registers.SetFlags(flags);
         }
     }
