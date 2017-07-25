@@ -12,5 +12,10 @@
             G = g;
             B = b;
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(R)}: {R}, {nameof(G)}: {G}, {nameof(B)}: {B}";
+        }
     }
 }

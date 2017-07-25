@@ -178,7 +178,6 @@ namespace Emux.GameBoy.Graphics
                 LcdStatusFlags stat = Stat;
                 
                 var currentMode = stat & LcdStatusFlags.ModeMask;
-                var lastMode = currentMode;
                 switch (currentMode)
                 {
                     case LcdStatusFlags.ScanLineOamMode:
@@ -329,20 +328,31 @@ namespace Emux.GameBoy.Graphics
                             
                             // Read tile data.
                             int rowIndex = LY - absoluteY;
+
+                            // Flip sprite vertically if specified.
+                            if ((data.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
+                                rowIndex = 8 - rowIndex;
+
                             byte[] currentTileData = new byte[2];
                             Buffer.BlockCopy(_vram, (ushort)(0x0000 + (data.TileDataIndex << 4) + rowIndex * 2),
                                 currentTileData, 0, 2);
 
                             // Render sprite.
-                            for (int j = 0; j < 8; j++)
+                            for (int x = 0; x < 8; x++)
                             {
-                                int absoluteX = data.X - 8 + j;
+                                int absoluteX = data.X - 8;
+
+                                // Flip sprite horizontally if specified.
+                                if ((data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip)
+                                    absoluteX += x;
+                                else
+                                    absoluteX += 7 - x;
+
                                 if (absoluteX >= 0 && absoluteX < FrameWidth)
                                 {
-                                    int colorIndex = DetermineColorIndex(j, currentTileData, palette);
+                                    int colorIndex = DetermineColorIndex(x, currentTileData, palette);
                                     
                                     // TODO: take priority into account.
-                                    // TODO: take flip into account.
 
                                     // Check for transparent color.
                                     if (colorIndex != 0)
