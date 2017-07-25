@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Emux.GameBoy;
+using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Microsoft.Win32;
@@ -109,7 +110,7 @@ namespace Emux
             if (result.HasValue && result.Value)
             {
                 _gameBoy?.Terminate();
-                _gameBoy = new GameBoy.GameBoy(new Cartridge(File.ReadAllBytes(dialog.FileName)));
+                _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(File.ReadAllBytes(dialog.FileName)));
                 _gameBoy.Cpu.Paused += GameBoyOnPaused;
                 _gameBoy.Gpu.VideoOutput = _videoWindow;
                 _videoWindow.Device = _gameBoy;

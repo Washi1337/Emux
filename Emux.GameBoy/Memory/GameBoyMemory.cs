@@ -1,16 +1,12 @@
 ﻿using System;
 using Emux.GameBoy.Cpu;
-using Emux.GameBoy.Graphics;
 
 namespace Emux.GameBoy.Memory
 {
     public class GameBoyMemory
     {
         private readonly GameBoy _device;
-
-        private readonly byte[] _rom = new byte[0x4000];
-        private readonly byte[] _switchableRom = new byte[0x4000];
-        private readonly byte[] _switchableRam = new byte[0x2000];
+        
         private readonly byte[] _internalRam = new byte[0x2000];
         private readonly byte[] _highInternalRam = new byte[0x7F];
         
@@ -22,9 +18,6 @@ namespace Emux.GameBoy.Memory
             if (device == null)
                 throw new ArgumentNullException(nameof(device));
             _device = device;
-
-            Buffer.BlockCopy(device.Cartridge.RomContents, 0, _rom, 0, 0x4000);
-            Buffer.BlockCopy(device.Cartridge.RomContents, 0x4000, _switchableRom, 0, 0x4000);
             
         }
         
@@ -36,13 +29,11 @@ namespace Emux.GameBoy.Memory
                 case 0x1:
                 case 0x2:
                 case 0x3:
-                    return _rom[address];
-
                 case 0x4: // switchable rom (0x4000 -> 0x7FFF)
                 case 0x5:
                 case 0x6:
                 case 0x7:
-                    return _switchableRom[address - 0x4000];
+                    return _device.Cartridge.ReadByte(address);
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
@@ -50,7 +41,7 @@ namespace Emux.GameBoy.Memory
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
-                    return _switchableRam[address - 0xA000];
+                    return _device.Cartridge.ReadByte(address);
                     
                 case 0xC: // internal ram (0xC000 -> 0xDFFF)
                 case 0xD:
@@ -133,8 +124,8 @@ namespace Emux.GameBoy.Memory
                 case 0x5:
                 case 0x6:
                 case 0x7:
+                    _device.Cartridge.WriteByte(address, value);
                     return;
-                    //throw new NotImplementedException("MBC not implemented yet.");
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
@@ -143,7 +134,7 @@ namespace Emux.GameBoy.Memory
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
-                    _switchableRam[address - 0xA000] = value;
+                    _device.Cartridge.WriteByte(address, value);
                     return;
 
                 case 0xC: // internal ram (0xC000 -> 0xDFFF)
@@ -214,21 +205,20 @@ namespace Emux.GameBoy.Memory
 
         internal void PerformDmaTransfer(byte dma)
         {
+            byte[] oamData = new byte[0xA0];
             byte[] section = null;
+
             switch (dma >> 4)
             {
                 case 0x0: // rom (0x0000 -> 0x3FFF)
                 case 0x1:
                 case 0x2:
                 case 0x3:
-                    section = _rom;
-                    break;
                 case 0x4: // switchable rom (0x4000 -> 0x7FFF)
                 case 0x5:
                 case 0x6:
                 case 0x7:
-                    section = _switchableRom;
-                    dma -= 0x40;
+                    _device.Cartridge.ReadBytes((ushort) (dma * 0x100), oamData, 0, oamData.Length);
                     break;
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
@@ -237,8 +227,7 @@ namespace Emux.GameBoy.Memory
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
-                    section = _switchableRam;
-                    dma -= 0xA0;
+                    _device.Cartridge.ReadBytes((ushort)(dma * 0x100), oamData, 0, oamData.Length);
                     break;
 
                 case 0xC: // internal ram (0xC000 -> 0xDFFF)
@@ -258,8 +247,9 @@ namespace Emux.GameBoy.Memory
                     break;
             }
 
-            byte[] oamData = new byte[0xA0];
-            Buffer.BlockCopy(section, dma*0x100, oamData, 0, oamData.Length);
+            if (section != null)
+                Buffer.BlockCopy(section, dma * 0x100, oamData, 0, oamData.Length);
+
             _device.Gpu.ImportOam(oamData);
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
@@ -8,7 +8,7 @@ namespace Emux.GameBoy
 {
     public class GameBoy
     {
-        public GameBoy(Cartridge cartridge)
+        public GameBoy(ICartridge cartridge)
         {
             Cartridge = cartridge;
             Cpu = new GameBoyCpu(this);
@@ -34,7 +34,7 @@ namespace Emux.GameBoy
             get;
         }
 
-        public Cartridge Cartridge
+        public ICartridge Cartridge
         {
             get;
         }

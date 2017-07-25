@@ -42,7 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cartridge.cs" />
+    <Compile Include="Cartridge\MemoryBankController1.cs" />
+    <Compile Include="Cartridge\EmulatedCartridge.cs" />
+    <Compile Include="Cartridge\CartridgeType.cs" />
+    <Compile Include="Cartridge\ICartridge.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
@@ -55,7 +58,6 @@
     <Compile Include="Cpu\GameBoyCpu.cs" />
     <Compile Include="Graphics\Color.cs" />
     <Compile Include="Graphics\GameBoyGpu.cs" />
-    <Compile Include="Graphics\GameBoyGpuMode.cs" />
     <Compile Include="Graphics\IVideoOutput.cs" />
     <Compile Include="Graphics\LcdControlFlags.cs" />
     <Compile Include="Graphics\LcdStatusFlags.cs" />
@@ -63,6 +65,8 @@
     <Compile Include="Input\GameBoyPad.cs" />
     <Compile Include="Input\GameBoyPadButton.cs" />
     <Compile Include="Memory\GameBoyMemory.cs" />
+    <Compile Include="Cartridge\IMemoryBankController.cs" />
+    <Compile Include="Cartridge\RomOnlyBankController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup />
