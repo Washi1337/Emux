@@ -30,12 +30,12 @@ namespace Emux.GameBoy.Cpu
         private byte Perform(byte a, byte b, Func<byte, byte, int> operation, RegisterFlags affectedFlags)
         {
             int intermediate = operation(a, b);
-            byte result = (byte)(intermediate & 0xFF);
+            byte result = (byte) (intermediate & 0xFF);
             _registers.ClearFlags(affectedFlags);
             var setAffected = RegisterFlags.None;
             if ((intermediate & (1 << 8)) == (1 << 8))
                 setAffected |= RegisterFlags.C;
-            if ((operation((byte)(a & 0xF), (byte)(b & 0xF)) & (1 << 4)) == (1 << 4))
+            if ((operation((byte) (a & 0xF), (byte) (b & 0xF)) & (1 << 4)) == (1 << 4))
                 setAffected |= RegisterFlags.H;
             if (result == 0)
                 setAffected |= RegisterFlags.Z;
@@ -46,12 +46,12 @@ namespace Emux.GameBoy.Cpu
         private ushort Perform(ushort a, sbyte b, Func<ushort, sbyte, int> operation, RegisterFlags affectedFlags)
         {
             int intermediate = operation(a, b);
-            ushort result = (ushort)(intermediate & 0xFFFF);
+            ushort result = (ushort) (intermediate & 0xFFFF);
             _registers.ClearFlags(affectedFlags);
             var setAffected = RegisterFlags.None;
             if ((intermediate & (1 << 8)) == (1 << 8))
                 setAffected |= RegisterFlags.C;
-            if ((operation((ushort)(a & 0xF), (sbyte)(b & 0xF)) & (1 << 4)) == (1 << 4))
+            if ((operation((ushort) (a & 0xF), (sbyte) (b & 0xF)) & (1 << 4)) == (1 << 4))
                 setAffected |= RegisterFlags.H;
             if (result == 0)
                 setAffected |= RegisterFlags.Z;
@@ -59,49 +59,56 @@ namespace Emux.GameBoy.Cpu
             return result;
         }
 
-        internal ushort Add(ushort a, ushort b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal ushort Add(ushort a, ushort b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x + y, affectedFlags);
         }
 
-        internal ushort Add(ushort a, sbyte b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal ushort Add(ushort a, sbyte b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x + y, affectedFlags);
         }
 
-        internal byte Add(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Add(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x + y, affectedFlags);
         }
 
-        internal ushort Sub(ushort a, ushort b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal ushort Sub(ushort a, ushort b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x - y, affectedFlags);
         }
 
-        internal byte Sub(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Sub(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x - y, affectedFlags);
         }
 
-        internal byte Adc(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Adc(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
             return Perform(a, b, (x, y) => x + y + (_registers.GetFlags(RegisterFlags.C) ? 1 : 0), affectedFlags);
         }
 
-        internal byte Sbc(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Sbc(byte a, byte b, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(resetFlags);
             _registers.SetFlags(setFlags);
@@ -113,7 +120,7 @@ namespace Emux.GameBoy.Cpu
             unchecked
             {
                 int intermediate = _registers.A & b;
-                byte result = (byte)(intermediate & 0xFF);
+                byte result = (byte) (intermediate & 0xFF);
                 _registers.OverwriteFlags(RegisterFlags.H | (result == 0 ? RegisterFlags.Z : RegisterFlags.None));
                 return result;
             }
@@ -124,7 +131,7 @@ namespace Emux.GameBoy.Cpu
             unchecked
             {
                 int intermediate = _registers.A ^ b;
-                byte result = (byte)(intermediate & 0xFF);
+                byte result = (byte) (intermediate & 0xFF);
                 _registers.OverwriteFlags(result == 0 ? RegisterFlags.Z : RegisterFlags.None);
                 return result;
             }
@@ -135,7 +142,7 @@ namespace Emux.GameBoy.Cpu
             unchecked
             {
                 int intermediate = _registers.A | b;
-                byte result = (byte)(intermediate & 0xFF);
+                byte result = (byte) (intermediate & 0xFF);
                 _registers.OverwriteFlags(result == 0 ? RegisterFlags.Z : RegisterFlags.None);
                 return result;
             }
@@ -146,12 +153,13 @@ namespace Emux.GameBoy.Cpu
             Sub(_registers.A, b, RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C, RegisterFlags.N);
         }
 
-        internal byte Rl(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Rl(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
 
-            byte newValue = (byte)((value << 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
+            byte newValue = (byte) ((value << 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -162,12 +170,13 @@ namespace Emux.GameBoy.Cpu
             return newValue;
         }
 
-        internal byte Rlc(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Rlc(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
 
-            byte newValue = (byte)((value << 1) | (value >> 7));
+            byte newValue = (byte) ((value << 1) | (value >> 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -178,12 +187,13 @@ namespace Emux.GameBoy.Cpu
             return newValue;
         }
 
-        internal byte Rr(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Rr(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
 
-            byte newValue = (byte)((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
+            byte newValue = (byte) ((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -194,12 +204,13 @@ namespace Emux.GameBoy.Cpu
             return newValue;
         }
 
-        internal byte Rrc(byte value, RegisterFlags affectedFlags = RegisterFlags.None, RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
+        internal byte Rrc(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
+            RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);
 
-            byte newValue = (byte)((value >> 1) | ((value & 1) << 7));
+            byte newValue = (byte) ((value >> 1) | ((value & 1) << 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -212,7 +223,7 @@ namespace Emux.GameBoy.Cpu
 
         internal byte Sla(byte value)
         {
-            byte newValue = (byte)(value << 1);
+            byte newValue = (byte) (value << 1);
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -224,9 +235,9 @@ namespace Emux.GameBoy.Cpu
 
         internal byte Sr(byte value, bool resetMsb)
         {
-            byte newValue = (byte)(value >> 1);
+            byte newValue = (byte) (value >> 1);
             if (!resetMsb)
-                newValue |= (byte)(value & (1 << 7));
+                newValue |= (byte) (value & (1 << 7));
             var flags = RegisterFlags.None;
             if (newValue == 0)
                 flags |= RegisterFlags.Z;
@@ -238,19 +249,19 @@ namespace Emux.GameBoy.Cpu
 
         internal byte Swap(byte value)
         {
-            byte newValue = (byte)(((value & 0xF) << 4) | ((value & 0xF0) >> 4));
+            byte newValue = (byte) (((value & 0xF) << 4) | ((value & 0xF0) >> 4));
             _registers.OverwriteFlags(newValue == 0 ? RegisterFlags.Z : RegisterFlags.None);
             return newValue;
         }
 
         internal byte Set(byte value, int position)
         {
-            return (byte)(value | (1 << position));
+            return (byte) (value | (1 << position));
         }
 
         internal byte Res(byte value, int position)
         {
-            return (byte)(value & ~(1 << position));
+            return (byte) (value & ~(1 << position));
         }
 
         internal void Bit(byte value, int position)
@@ -299,6 +310,27 @@ namespace Emux.GameBoy.Cpu
                 _registers.ClearFlags(RegisterFlags.C);
             else
                 _registers.SetFlags(RegisterFlags.C);
+        }
+
+        internal void Daa()
+        {
+            _registers.ClearFlags(RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C);
+            var flags = RegisterFlags.None;
+
+            ushort value = _registers.A;
+            if ((value & 0xF) > 0x9 || _registers.GetFlags(RegisterFlags.H))
+                value += 6;
+
+            if ((value & 0xF0) > 0x90)
+                value += 0x60;
+            
+            if ((value & (1 << 8)) == (1 << 8))
+                flags |= RegisterFlags.C;
+            if (_registers.A == 0)
+                flags |= RegisterFlags.Z;
+
+            _registers.A = (byte) (value & 0xFF);
+            _registers.SetFlags(flags);
         }
     }
 }

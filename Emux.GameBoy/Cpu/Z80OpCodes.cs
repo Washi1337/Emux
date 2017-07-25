@@ -55,7 +55,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("inc h",                0x24, 0x00, 0, 4, (d, i) => d.Cpu.Registers.H = d.Cpu.Alu.Increment(d.Cpu.Registers.H, Z | H, None, N)),
             new Z80OpCode("dec h",                0x25, 0x00, 0, 4, (d, i) => d.Cpu.Registers.H = d.Cpu.Alu.Decrement(d.Cpu.Registers.H, Z | H, N)),
             new Z80OpCode("ld h, {0:x2}",         0x26, 0x00, 1, 8, (d, i) => d.Cpu.Registers.H = i.Operand8),
-            new Z80OpCode("daa",                  0x27, 0x00, 0, 4, Z80OpCode.NotSupported),
+            new Z80OpCode("daa",                  0x27, 0x00, 0, 4, (d, i) => d.Cpu.Alu.Daa()),
             new Z80OpCode("jr z, {0:x2}",         0x28, 0x00, 1, 12, 8, (d, i) => d.Cpu.JumpFlag(i.OpCode, (ushort) (d.Cpu.Registers.PC + unchecked((sbyte) i.Operand8)), d.Cpu.Registers.GetFlags(Z))),
             new Z80OpCode("add hl, hl",           0x29, 0x00, 0, 8, (d, i) => d.Cpu.Registers.HL = d.Cpu.Alu.Add(d.Cpu.Registers.HL, d.Cpu.Registers.HL, H | C, None, N)),
             new Z80OpCode("ld a, (hl+)",          0x2A, 0x00, 0, 8, (d, i) =>
