@@ -2,6 +2,9 @@
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Represents the register bank of the GameBoy CPU.
+    /// </summary>
     public class RegisterBank
     {
         public byte A;
@@ -61,21 +64,38 @@ namespace Emux.GameBoy.Cpu
             }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the given flag(s) are set or not.
+        /// </summary>
+        /// <param name="flag">The flag(s) to check.</param>
+        /// <returns>True if all flags specified are set, false otherwise.</returns>
         public bool GetFlags(RegisterFlags flag)
         {
             return (F & (byte) flag) == (byte) flag;
         }
 
+        /// <summary>
+        /// Overwrites the flags (F) register.
+        /// </summary>
+        /// <param name="newFlags">The new value.</param>
         public void OverwriteFlags(RegisterFlags newFlags)
         {
             F = (byte) newFlags;
         }
 
+        /// <summary>
+        /// Sets the provided flags in the flags (F) register.
+        /// </summary>
+        /// <param name="flags">The flags to set.</param>
         public void SetFlags(RegisterFlags flags)
         {
             F |= (byte) flags;
         }
 
+        /// <summary>
+        /// Clears the provided flags in the flags (F) register.
+        /// </summary>
+        /// <param name="flags">The flags to clear.</param>
         public void ClearFlags(RegisterFlags flags)
         {
             unchecked
@@ -84,6 +104,9 @@ namespace Emux.GameBoy.Cpu
             }
         }
 
+        /// <summary>
+        /// Resets the bank to its begin state.
+        /// </summary>
         public void Reset()
         {
             A = B = C = D = E = F = H = L = 0;

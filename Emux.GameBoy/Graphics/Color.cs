@@ -1,5 +1,8 @@
 ﻿namespace Emux.GameBoy.Graphics
 {
+    /// <summary>
+    /// Represents a 24 bit color.
+    /// </summary>
     public struct Color
     {
         public byte R;

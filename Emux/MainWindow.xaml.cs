@@ -122,7 +122,7 @@ namespace Emux
             var end = DateTime.Now;
             double clockSpeed = (_gameBoy.Cpu.TickCount - _startClocks) / (end - _start).TotalSeconds;
             Console.WriteLine(
-                $"Average clock speed: {clockSpeed/1000000:0.00}MHz ({(clockSpeed / GameBoyCpu.OfficialClockSpeed * 100):0.00}% of original speed)");
+                $"Average clock speed: {clockSpeed/1000000:0.00}MHz ({(clockSpeed / GameBoyCpu.OfficialClockFrequency * 100):0.00}% of original speed)");
 
             Dispatcher.Invoke(() =>
             {

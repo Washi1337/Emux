@@ -1,5 +1,8 @@
 ﻿namespace Emux.GameBoy.Cartridge
 {
+    /// <summary>
+    /// Provides methods for emulation of a memory bank controller (MBC).
+    /// </summary>
     public interface IMemoryBankController
     {
         byte ReadByte(ushort address);

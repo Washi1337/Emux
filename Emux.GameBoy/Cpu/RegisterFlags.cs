@@ -2,6 +2,9 @@
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Provides members for representing all the register flags known by the GameBoy CPU.
+    /// </summary>
     [Flags]
     public enum RegisterFlags : byte
     {

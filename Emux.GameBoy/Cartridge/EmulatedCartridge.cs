@@ -3,6 +3,9 @@ using System.Text;
 
 namespace Emux.GameBoy.Cartridge
 {
+    /// <summary>
+    /// Represents an emulated cartridge initialized from a byte array.
+    /// </summary>
     public class EmulatedCartridge : IFullyAccessibleCartridge
     {
         private readonly byte[] _romContents;

@@ -1,9 +1,11 @@
 ﻿using System;
-using System.Threading;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Graphics
 {
+    /// <summary>
+    /// Represents the graphics processor unit of a GameBoy device.
+    /// </summary>
     public unsafe class GameBoyGpu
     {
         public const int FrameWidth = 160;
@@ -76,37 +78,69 @@ namespace Emux.GameBoy.Graphics
             VideoOutput = new EmptyVideoOutput();
         }
         
+        /// <summary>
+        /// Gets or sets the output device the graphics processor should render frames to.
+        /// </summary>
         public IVideoOutput VideoOutput
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Writes a byte to the Object Attribute Memory (OAM).
+        /// </summary>
+        /// <param name="address">The address in the OAM to write the data to.</param>
+        /// <param name="value">The value to write.</param>
         public void WriteOam(byte address, byte value)
         {
             _oam[address] = value;
         }
 
+        /// <summary>
+        /// Writes the given data to the Object Attribute Memory (OAM).
+        /// </summary>
+        /// <param name="oamData">The data to import.</param>
         public void ImportOam(byte[] oamData)
         {
             Buffer.BlockCopy(oamData, 0, _oam, 0, oamData.Length);
         }
 
+        /// <summary>
+        /// Reads a byte from the Object Attribute Memory (OAM).
+        /// </summary>
+        /// <param name="address">The address in the OAM to read the data from.</param>
+        /// <returns></returns>
         public byte ReadOam(byte address)
         {
             return _oam[address];
         }
 
+        /// <summary>
+        /// Writes a byte to the Video RAM.
+        /// </summary>
+        /// <param name="address">The address in the VRAM to write the data to.</param>
+        /// <param name="value">The value to write.</param>
         public void WriteVRam(ushort address, byte value)
         {
             _vram[address] = value;
         }
 
+        /// <summary>
+        /// Reads a byte from the Video RAM.
+        /// </summary>
+        /// <param name="address">The address in the VRAM to write the data to.</param>
+        /// <returns></returns>
         public byte ReadVRam(int address)
         {
             return _vram[address];
         }
 
+        /// <summary>
+        /// Assigns a new value to a graphics processor register identified by its relative IO memory address.
+        /// </summary>
+        /// <param name="address">The memory address relative to the I/O memory section (0xFF00).</param>
+        /// <param name="value">The new value.</param>
         public void WriteRegister(byte address, byte value)
         {
             switch (address)
@@ -149,6 +183,10 @@ namespace Emux.GameBoy.Graphics
             throw new ArgumentOutOfRangeException(nameof(address));
         }
 
+        /// <summary>
+        /// Reads the value of a graphics processor register identified by its relative IO memory address.
+        /// </summary>
+        /// <param name="address">The memory address relative to the I/O memory section (0xFF00).</param>
         public byte ReadRegister(byte address)
         {
             switch (address)
@@ -180,6 +218,10 @@ namespace Emux.GameBoy.Graphics
             throw new ArgumentOutOfRangeException(nameof(address));
         }
 
+        /// <summary>
+        /// Advances the execution of the graphical processor unit.
+        /// </summary>
+        /// <param name="cycles">The cycles the central processor unit has executed since last step.</param>
         public void GpuStep(int cycles)
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
@@ -216,7 +258,7 @@ namespace Emux.GameBoy.Graphics
                         {
                             _modeClock -= HBlankCycles;
                             LY++;
-                            if (LY == FrameHeight - 1)
+                            if (LY >= FrameHeight - 1)
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 VideoOutput.RenderFrame(_frameBuffer);

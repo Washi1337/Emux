@@ -317,13 +317,26 @@ namespace Emux.GameBoy.Cpu
         {
             var flags = RegisterFlags.None;
 
-            ushort value = _registers.A;
-            if ((value & 0xF) > 0x9 || _registers.GetFlags(RegisterFlags.H))
-                value += 6;
+            int value = _registers.A;
 
-            if ((value & 0xF0) > 0x90)
-                value += 0x60;
-            
+            int correction = _registers.GetFlags(RegisterFlags.C) ? 0x60 : 0x00;
+
+            if (_registers.GetFlags(RegisterFlags.H))
+                correction |= 0x6;
+
+            if (!_registers.GetFlags(RegisterFlags.N))
+            {
+                if ((value & 0xF) > 0x9)
+                    correction |= 6;
+                if (value > 0x99)
+                    correction |= 0x60;
+                value += correction;
+            }
+            else
+            {
+                value -= correction;
+            }
+
             if ((value & (1 << 8)) == (1 << 8))
                 flags |= RegisterFlags.C;
             if (_registers.A == 0)

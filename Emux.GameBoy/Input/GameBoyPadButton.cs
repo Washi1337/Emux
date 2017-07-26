@@ -2,6 +2,9 @@
 
 namespace Emux.GameBoy.Input
 {
+    /// <summary>
+    /// Provides members that represent all the buttons on a GameBoy device.
+    /// </summary>
     [Flags]
     public enum GameBoyPadButton : byte
     {

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-using Emux.GameBoy.Timer;
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Represents a central processing unit of a GameBoy device.
+    /// </summary>
     public class GameBoyCpu
     {
         public const int VerticalBlankIsr = 0x0040;
@@ -13,9 +14,16 @@ namespace Emux.GameBoy.Cpu
         public const int TimerOverflowIsr = 0x0050;
         public const int SerialLinkIsr = 0x0058;
         public const int JoypadPressIsr = 0x0060;
-        public const double OfficialClockSpeed = 4.194304 * 1000000;
+        public const double OfficialClockFrequency = 4194304;
         
+        /// <summary>
+        /// Occurs when the processor is paused by breaking the execution explicitly, or when the control flow hit a breakpoint.
+        /// </summary>
         public event EventHandler Paused;
+
+        /// <summary>
+        /// Occurs when the process has completely shut down.
+        /// </summary>
         public event EventHandler Terminated;
 
         private readonly Z80Disassembler _disassembler;
@@ -36,6 +44,7 @@ namespace Emux.GameBoy.Cpu
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
             Breakpoints = new HashSet<ushort>();
+            FrameLimit = true;
 
             new Thread(CpuLoop)
             {
@@ -44,6 +53,9 @@ namespace Emux.GameBoy.Cpu
             }.Start();
         }
 
+        /// <summary>
+        /// Gets the register bank of the processor.
+        /// </summary>
         public RegisterBank Registers
         {
             get;
@@ -54,22 +66,40 @@ namespace Emux.GameBoy.Cpu
             get;
         }
 
+        /// <summary>
+        /// Gets the amount of cycles the processor has executed.
+        /// </summary>
         public ulong TickCount
         {
             get { return _ticks; }
         }
 
+        /// <summary>
+        /// Gets a value indicating whether the processor is active.
+        /// </summary>
         public bool Running
         {
             get;
             private set;
         }
 
+        /// <summary>
+        /// Gets a collection of memory addresses to break the execution on.
+        /// </summary>
         public ISet<ushort> Breakpoints
         {
             get;
         }
-        
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the processor should limit the execution speed to the original GameBoy clock speed.
+        /// </summary>
+        public bool FrameLimit
+        {
+            get;
+            set;
+        }
+
         private void CpuLoop()
         {
             bool enabled = true;
@@ -83,12 +113,38 @@ namespace Emux.GameBoy.Cpu
                 {
                     Running = true;
                     _continue.Reset();
+                    
+                    var frameStart = DateTime.Now.TimeOfDay;
+                    var start = frameStart;
 
+                    int cycles = 0;
+                    int frames = 0;
                     do
                     {
-                        CpuStep();
+                        cycles += CpuStep();
+                        if (cycles >= 70224)
+                        {
+                            var end = DateTime.Now.TimeOfDay;
+                            var delta = (end - frameStart);
+
+                            if (FrameLimit && delta.TotalMilliseconds < 1000.0 / 59.73)
+                                Thread.Sleep((int)(1000.0 / 59.73));
+
+                            frameStart = end;
+                            cycles -= 70224;
+                            frames++;
+
+                            if ((end - start).TotalSeconds >= 1)
+                            {
+                                start = end;
+                                Console.WriteLine(frames);
+                                frames = 0;
+                            }
+                        }
+
                         if (Breakpoints.Contains(Registers.PC))
                             _break = true;
+
                     } while (!_break);
 
                     Running = false;
@@ -98,7 +154,7 @@ namespace Emux.GameBoy.Cpu
             OnTerminated();
         }
 
-        private void CpuStep()
+        private int CpuStep()
         {
             Registers.IMESet = false;
 
@@ -140,6 +196,7 @@ namespace Emux.GameBoy.Cpu
             _device.Timer.TimerStep(cycles);
 
             _ticks = (_ticks + (ulong) cycles) & long.MaxValue;
+            return cycles;
         }
 
         public void Step()

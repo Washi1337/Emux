@@ -2,6 +2,9 @@
 
 namespace Emux.GameBoy.Input
 {
+    /// <summary>
+    /// Represents the Keypad driver of a GameBoy device.
+    /// </summary>
     public class GameBoyPad
     {
         private readonly GameBoy _device;
@@ -13,6 +16,9 @@ namespace Emux.GameBoy.Input
             _device = device;
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating all the buttons that are currently pressed.
+        /// </summary>
         public GameBoyPadButton PressedButtons
         {
             get { return _pressedButtons; }

@@ -2,9 +2,24 @@
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Represents a reference to a method that evaluates a Z80 instruction.
+    /// </summary>
+    /// <param name="device">The device to run the instruction on.</param>
+    /// <param name="z80Instruction">The instruction to run.</param>
     public delegate void Z80OpCodeOperation(GameBoy device, Z80Instruction z80Instruction);
+
+    /// <summary>
+    /// Represents a reference to a method that evaluates a Z80 instruction that evaluates in a variable amount of clock cycles.
+    /// </summary>
+    /// <param name="device">The device to run the instruction on.</param>
+    /// <param name="z80Instruction">The instruction to run.</param>
+    /// <returns>The amount of clock cycles that it took to evaluate the instruction.</returns>
     public delegate int Z80OpCodeOperationAlt(GameBoy device, Z80Instruction z80Instruction);
 
+    /// <summary>
+    /// Represents a single operation code of the Z80 instruction set.
+    /// </summary>
     public struct Z80OpCode
     {
         public static readonly Z80OpCodeOperation NotSupported = (_, i) => throw new NotSupportedException("Instruction '" + i.ToString() + "' not supported.");

@@ -3,6 +3,9 @@ using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Memory
 {
+    /// <summary>
+    /// Represents the memory controller of a GameBoy device.
+    /// </summary>
     public class GameBoyMemory
     {
         private readonly GameBoy _device;
@@ -218,7 +221,7 @@ namespace Emux.GameBoy.Memory
             WriteBytes(address, BitConverter.GetBytes(value));
         }
 
-        internal void PerformDmaTransfer(byte dma)
+        private void PerformDmaTransfer(byte dma)
         {
             byte[] oamData = new byte[0xA0];
             byte[] section = null;

@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Emux.GameBoy.Graphics
 {
+    /// <summary>
+    /// Represents the structure of a sprite located in the Object Attribute Memory (OAM).
+    /// </summary>
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct SpriteData
     {
@@ -12,6 +15,9 @@ namespace Emux.GameBoy.Graphics
         public SpriteDataFlags Flags;
     }
 
+    /// <summary>
+    /// Provides members for representing all the valid sprite atrributes.
+    /// </summary>
     [Flags]
     public enum SpriteDataFlags : byte
     {

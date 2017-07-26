@@ -1,8 +1,10 @@
-﻿using System.IO;
-using Emux.GameBoy.Memory;
+﻿using Emux.GameBoy.Memory;
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Provides a mechanism for reading Z80 instructions from the memory of a GameBoy device.
+    /// </summary>
     public class Z80Disassembler 
     {
         private readonly GameBoyMemory _memory;
@@ -12,12 +14,19 @@ namespace Emux.GameBoy.Cpu
             _memory = memory;
         }
 
+        /// <summary>
+        /// Gets or sets the position of the disassembler to read the next instruction from.
+        /// </summary>
         public ushort Position
         {
             get;
             set;
         }
 
+        /// <summary>
+        /// Reads the next instruction from memory.
+        /// </summary>
+        /// <returns>The disassembled instruction.</returns>
         public Z80Instruction ReadNextInstruction()
         {
             ushort offset = Position;
