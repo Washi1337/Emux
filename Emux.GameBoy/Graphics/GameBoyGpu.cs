@@ -180,10 +180,12 @@ namespace Emux.GameBoy.Graphics
             throw new ArgumentOutOfRangeException(nameof(address));
         }
 
-        private void GpuStep()
+        public void GpuStep(int cycles)
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
+
+            _modeClock += cycles;
 
             unchecked
             {
@@ -255,7 +257,7 @@ namespace Emux.GameBoy.Graphics
         
         private void RenderScan()
         {
-            if ((_lcdc & LcdControlFlags.EnableBgAndWindow) == LcdControlFlags.EnableBgAndWindow)
+            if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
                 RenderBackgroundScan();
             if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
                 RenderWindowScan();
@@ -387,7 +389,7 @@ namespace Emux.GameBoy.Graphics
 
                             // Flip sprite vertically if specified.
                             if ((data.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
-                                rowIndex = 8 - rowIndex;
+                                rowIndex = 7 - rowIndex;
 
                             byte[] currentTileData = new byte[2];
                             Buffer.BlockCopy(_vram, (ushort)(0x0000 + (data.TileDataIndex << 4) + rowIndex * 2),
@@ -439,13 +441,7 @@ namespace Emux.GameBoy.Graphics
             int colorIndex = (palette >> (paletteIndex * 2)) & 3;
             return colorIndex;
         }
-
-        internal void Update(int cycles)
-        {
-            _modeClock += cycles;
-            GpuStep();
-        }
-
+        
         public void Reset()
         {
             _modeClock = 0;

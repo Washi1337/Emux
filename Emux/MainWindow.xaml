@@ -53,8 +53,8 @@
                 <ColumnDefinition Width="150"/>
             </Grid.ColumnDefinitions>
             
-            <ListView x:Name="DisassemblyView" />
-            <TextBox x:Name="RegistersTextBox" Grid.Column="1" IsReadOnly="True" />
+            <ListView x:Name="DisassemblyView" FontFamily="Consolas" />
+            <TextBox x:Name="RegistersTextBox" FontFamily="Consolas" Grid.Column="1" IsReadOnly="True" />
 
         </Grid>
 

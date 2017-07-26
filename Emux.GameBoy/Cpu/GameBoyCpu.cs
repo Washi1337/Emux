@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Emux.GameBoy.Timer;
 
 namespace Emux.GameBoy.Cpu
 {
@@ -12,10 +13,8 @@ namespace Emux.GameBoy.Cpu
         public const int TimerOverflowIsr = 0x0050;
         public const int SerialLinkIsr = 0x0058;
         public const int JoypadPressIsr = 0x0060;
-                                                  
         public const double OfficialClockSpeed = 4.194304 * 1000000;
-
-
+        
         public event EventHandler Paused;
         public event EventHandler Terminated;
 
@@ -34,6 +33,7 @@ namespace Emux.GameBoy.Cpu
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
             Breakpoints = new HashSet<ushort>();
+
             new Thread(CpuLoop)
             {
                 Name = "Z80CPULOOP",
@@ -83,45 +83,9 @@ namespace Emux.GameBoy.Cpu
 
                     do
                     {
-                        Registers.IMESet = false;
-
-                        int cycles;
-                        if (_halt)
-                        {
-                            cycles = 4;
-                        }
-                        else
-                        {
-                            // Execute the next instruction.
-                            var nextInstruction = ReadNextInstruction();
-                            cycles = nextInstruction.Execute(_device);    
-                        }
-
-                        // Check for interrupts.
-                        bool interrupted = false;
-                        if (Registers.IME && !Registers.IMESet && Registers.IE != InterruptFlags.None && Registers.IF != (InterruptFlags) 0xE0)
-                        {
-                            byte firedAndEnabled = (byte)(Registers.IE & Registers.IF);
-                            for (int i = 0; i < 5 && !interrupted; i++)
-                            {
-                                if ((firedAndEnabled & (1 << i)) == (1 << i))
-                                {
-                                    Registers.IF &= (InterruptFlags)~(1u << i);
-                                    Registers.IME = false;
-                                    interrupted = true;
-                                    Rst((byte)(0x40 + (i << 3)));
-                                    cycles += 12;
-                                    _halt = false;
-                                }
-                            }
-                        }
-                        
-                        _device.Gpu.Update(cycles);
-                        _ticks = (_ticks + (ulong)cycles) & long.MaxValue;
-
+                        CpuStep();
                         if (Breakpoints.Contains(Registers.PC))
                             _break = true;
-
                     } while (!_break);
 
                     Running = false;
@@ -130,7 +94,51 @@ namespace Emux.GameBoy.Cpu
             }
             OnTerminated();
         }
-        
+
+        private void CpuStep()
+        {
+            Registers.IMESet = false;
+
+            int cycles;
+            if (_halt)
+            {
+                cycles = 4;
+            }
+            else
+            {
+                // Execute the next instruction.
+                var nextInstruction = ReadNextInstruction();
+                cycles = nextInstruction.Execute(_device);
+            }
+
+            // Check for interrupts.
+            bool interrupted = false;
+            if (Registers.IME && !Registers.IMESet 
+                && Registers.IE != InterruptFlags.None
+                && Registers.IF != (InterruptFlags) 0xE0)
+            {
+                byte firedAndEnabled = (byte) (Registers.IE & Registers.IF);
+                for (int i = 0; i < 5 && !interrupted; i++)
+                {
+                    if ((firedAndEnabled & (1 << i)) == (1 << i))
+                    {
+                        Registers.IF &= (InterruptFlags) ~(1u << i);
+                        Registers.IME = false;
+                        interrupted = true;
+                        Rst((byte) (0x40 + (i << 3)));
+                        cycles += 12;
+                        _halt = false;
+                    }
+                }
+            }
+
+            // Update cycle dependent components.
+            _device.Gpu.GpuStep(cycles);
+            _device.Timer.TimerStep(cycles);
+
+            _ticks = (_ticks + (ulong) cycles) & long.MaxValue;
+        }
+
         public void Step()
         {
             _break = true;

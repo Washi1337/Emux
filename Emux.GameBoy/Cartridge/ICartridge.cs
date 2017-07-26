@@ -26,7 +26,5 @@
         byte ReadFromAbsoluteAddress(int address);
 
         void ReadFromAbsoluteAddress(int address, byte[] buffer, int bufferOffset, int length);
-
-
     }
 }

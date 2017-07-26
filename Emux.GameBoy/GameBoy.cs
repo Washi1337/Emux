@@ -3,6 +3,7 @@ using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
 using Emux.GameBoy.Memory;
+using Emux.GameBoy.Timer;
 
 namespace Emux.GameBoy
 {
@@ -15,6 +16,7 @@ namespace Emux.GameBoy
             Gpu = new GameBoyGpu(this);
             Memory = new GameBoyMemory(this);
             KeyPad = new GameBoyPad(this);
+            Timer = new GameBoyTimer(this);
             Reset();
             IsPoweredOn = true;
         }
@@ -40,6 +42,11 @@ namespace Emux.GameBoy
         }
 
         public GameBoyPad KeyPad
+        {
+            get;
+        }
+
+        public GameBoyTimer Timer
         {
             get;
         }

@@ -49,6 +49,7 @@
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
+    <Compile Include="Timer\GameBoyTimer.cs" />
     <Compile Include="Cpu\Z80Disassembler.cs" />
     <Compile Include="Cpu\Z80Instruction.cs" />
     <Compile Include="Cpu\Z80OpCode.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Cartridge\IMemoryBankController.cs" />
     <Compile Include="Cartridge\RomOnlyBankController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Timer\TimerControlFlags.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

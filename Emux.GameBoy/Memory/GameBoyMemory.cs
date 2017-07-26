@@ -70,6 +70,11 @@ namespace Emux.GameBoy.Memory
                                     return 0x80; // TODO: serial
                                 case 0x02:
                                     return 0xFE; // TODO: serial
+                                case 0x04:
+                                case 0x05:
+                                case 0x06:
+                                case 0x07:
+                                    return _device.Timer.ReadRegister((ushort) (address & 0xFF));
                                 case 0x0F:
                                     return (byte) _device.Cpu.Registers.IF;
                                 case 0x40:
@@ -125,47 +130,53 @@ namespace Emux.GameBoy.Memory
                 case 0x6:
                 case 0x7:
                     _device.Cartridge.WriteByte(address, value);
-                    return;
+                    break;
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
                     _device.Gpu.WriteVRam((ushort) (address - 0x8000), value);
-                    return;
+                    break;
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
                     _device.Cartridge.WriteByte(address, value);
-                    return;
+                    break;
 
                 case 0xC: // internal ram (0xC000 -> 0xDFFF)
                 case 0xD:
                     _internalRam[address - 0xC000] = value;
-                    return;
+                    break;
 
                 case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
                     _internalRam[address - 0xE000] = value;
-                    return;
+                    break;
 
                 case 0xF:
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
                             _internalRam[address - 0xE000] = value;
-                            return;
+                            break;
 
                         case 0xFE00:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
                                 _device.Gpu.WriteOam((byte)(address & 0xFF), value);
-                            return;
+                            break;
                         case 0xFF00: // IO (0xFF00 -> 0xFFFF)
                             switch (address & 0xFF)
                             {
                                 case 0x00:
                                     _device.KeyPad.JoyP = value;
-                                    return;
+                                    break;
+                                case 0x04:
+                                case 0x05:
+                                case 0x06:
+                                case 0x07:
+                                    _device.Timer.WriteRegister((ushort) (address & 0xFF), value);
+                                    break;
                                 case 0x0F:
                                     _device.Cpu.Registers.IF = (InterruptFlags) (0xE0 | value);
-                                    return;
+                                    break;
                                 case 0x40:
                                 case 0x41:
                                 case 0x42:
@@ -178,21 +189,22 @@ namespace Emux.GameBoy.Memory
                                 case 0x4A:
                                 case 0x4B:
                                     _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
-                                    return;
+                                    break;
                                 case 0x46:
                                     PerformDmaTransfer(value);
-                                    return;
+                                    break;
                                 default:
                                     if (address >= 0xFF80)
                                         _highInternalRam[address - 0xFF80] = value;
-                                    return;
+                                    break;
                                 case 0xFF:
                                     _device.Cpu.Registers.IE = (InterruptFlags) value;
-                                    return;
+                                    break;
                             }
+                            break;
                     }
+                    break;
             }
-            throw new ArgumentOutOfRangeException(nameof(address), $"Memory address {address:X4} is not addressible.");
         }
 
         public void WriteBytes(ushort address, byte[] bytes)

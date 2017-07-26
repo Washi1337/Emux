@@ -5,7 +5,7 @@ namespace Emux.GameBoy.Graphics
     [Flags]
     public enum LcdControlFlags : byte
     {
-        EnableBgAndWindow = 1 << 0,
+        EnableBackground = 1 << 0,
         EnableSprites = 1 << 1,
         Sprite8By16Mode = 1 << 2,
         BgTileMapSelect = 1 << 3,
