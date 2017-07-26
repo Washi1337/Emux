@@ -2,6 +2,9 @@
 
 namespace Emux.GameBoy.Cpu
 {
+    /// <summary>
+    /// Provides valid interrupt flags used by the interrupt registers IF and IE.
+    /// </summary>
     [Flags]
     public enum InterruptFlags : byte
     {

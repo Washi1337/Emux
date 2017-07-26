@@ -1,7 +1,8 @@
-﻿using System.Collections;
-
-namespace Emux.GameBoy.Cartridge
+﻿namespace Emux.GameBoy.Cartridge
 {
+    /// <summary>
+    /// Provides a collection of valid (but not necessarily supported) cartridge types.
+    /// </summary>
     public enum CartridgeType : byte
     {
         RomOnly = 0x00,
