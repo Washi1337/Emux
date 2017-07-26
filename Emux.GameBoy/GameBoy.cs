@@ -12,9 +12,9 @@ namespace Emux.GameBoy
         public GameBoy(ICartridge cartridge)
         {
             Cartridge = cartridge;
+            Memory = new GameBoyMemory(this);
             Cpu = new GameBoyCpu(this);
             Gpu = new GameBoyGpu(this);
-            Memory = new GameBoyMemory(this);
             KeyPad = new GameBoyPad(this);
             Timer = new GameBoyTimer(this);
             Reset();

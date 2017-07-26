@@ -17,6 +17,8 @@ namespace Emux.GameBoy.Cartridge
                 BankController = new RomOnlyBankController(this);
             else if (CartridgeType.IsMbc1())
                 BankController = new MemoryBankController1(this);
+            else if (CartridgeType.IsMbc2())
+                BankController = new MemoryBankController2(this);
             else
                 throw new NotSupportedException("Unsupported cartridge type " + CartridgeType + ".");
         }

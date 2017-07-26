@@ -6,7 +6,7 @@ namespace Emux.GameBoy.Timer
     public class GameBoyTimer
     {
         private readonly GameBoy _device;
-        public const int DivTimerSpeed = 16384;
+        public const int DivFrequency = 16384;
 
         private int _divClock;
         private int _timerClock;
@@ -23,7 +23,7 @@ namespace Emux.GameBoy.Timer
             _device = device;
         }
 
-        public int GetTimaSpeed()
+        public int GetTimaFrequency()
         {
             switch (Tac & TimerControlFlags.ClockMask)
             {
@@ -42,16 +42,16 @@ namespace Emux.GameBoy.Timer
         public void TimerStep(int cycles)
         {
             _divClock += cycles;
-            if (_divClock >= DivTimerSpeed)
+            if (_divClock >= DivFrequency)
             {
-                _divClock -= DivTimerSpeed;
+                _divClock -= DivFrequency;
                 Div = (byte) ((Div + 1) % 0xFF);
             }
 
             if ((Tac & TimerControlFlags.EnableTimer) == TimerControlFlags.EnableTimer)
             {
                 _timerClock += cycles;
-                int timaSpeed = GetTimaSpeed();
+                int timaSpeed = GetTimaFrequency();
                 if (_timerClock > timaSpeed)
                 {
                     _timerClock -= timaSpeed;
