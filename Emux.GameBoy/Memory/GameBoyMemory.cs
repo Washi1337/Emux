@@ -80,10 +80,10 @@ namespace Emux.GameBoy.Memory
                                 case 0x45:
                                 case 0x47:
                                 case 0x48:
-                                    return _device.Gpu.ReadRegister((byte) (address & 0xFF));
                                 case 0x49:
                                 case 0x4A:
                                 case 0x4B:
+                                    return _device.Gpu.ReadRegister((byte) (address & 0xFF));
                                 case 0x4C:
                                     return _io[address - 0xFF49];
                                 default:
@@ -174,7 +174,10 @@ namespace Emux.GameBoy.Memory
                                 case 0x45:
                                 case 0x47:
                                 case 0x48:
-                                     _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
+                                case 0x49:
+                                case 0x4A:
+                                case 0x4B:
+                                    _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
                                     return;
                                 case 0x46:
                                     PerformDmaTransfer(value);

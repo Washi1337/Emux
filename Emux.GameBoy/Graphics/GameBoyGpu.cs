@@ -65,6 +65,8 @@ namespace Emux.GameBoy.Graphics
         public byte Bgp;
         public byte ObjP0;
         public byte ObjP1;
+        public byte WY;
+        public byte WX;
 
         public GameBoyGpu(GameBoy device)
         {
@@ -136,6 +138,12 @@ namespace Emux.GameBoy.Graphics
                 case 0x49:
                     ObjP1 = value;
                     return;
+                case 0x4A:
+                    WY = value;
+                    return;
+                case 0x4B:
+                    WX = value;
+                    return;
             }
 
             throw new ArgumentOutOfRangeException(nameof(address));
@@ -163,6 +171,10 @@ namespace Emux.GameBoy.Graphics
                     return ObjP0;
                 case 0x49:
                     return ObjP1;
+                case 0x4A:
+                    return WY;
+                case 0x4B:
+                    return WX;
             }
 
             throw new ArgumentOutOfRangeException(nameof(address));
@@ -245,6 +257,8 @@ namespace Emux.GameBoy.Graphics
         {
             if ((_lcdc & LcdControlFlags.EnableBgAndWindow) == LcdControlFlags.EnableBgAndWindow)
                 RenderBackgroundScan();
+            if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
+                RenderWindowScan();
             if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
                 RenderSpritesScan();
         }
@@ -270,7 +284,7 @@ namespace Emux.GameBoy.Graphics
 
             int x = ScX;
             
-            // REad first tile data to render.
+            // Read first tile data to render.
             byte[] currentTileData = new byte[2];
             CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
 
@@ -279,7 +293,7 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((x & 7) == 0)
                 {
-                    // Read next tile data to render..
+                    // Read next tile data to render.
                     CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
                 }
 
@@ -302,6 +316,48 @@ namespace Emux.GameBoy.Graphics
             Buffer.BlockCopy(_vram, tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
 
+        private void RenderWindowScan()
+        {
+            if (LY >= WY)
+            {
+                // Move to correct tile map address.
+                int tileMapAddress = (_lcdc & LcdControlFlags.WindowTileMapSelect)
+                                     == LcdControlFlags.WindowTileMapSelect
+                    ? 0x1C00
+                    : 0x1800;
+
+                int tileMapLine = ((LY - WY) & 0xFF) >> 3;
+                tileMapAddress += tileMapLine * 0x20;
+
+                // Move to correct tile data address.
+                int tileDataAddress = (_lcdc & LcdControlFlags.BgWindowTileDataSelect) ==
+                                      LcdControlFlags.BgWindowTileDataSelect
+                    ? 0x0000
+                    : 0x0800;
+
+                int tileDataOffset = ((LY - WY) & 7) * 2;
+                tileDataAddress += tileDataOffset;
+
+                int x = 0;
+                byte[] currentTileData = new byte[2];
+
+                // Render scan line.
+                for (int outputX = WX - 7; outputX < FrameWidth; outputX++, x++)
+                {
+                    if ((x & 7) == 0)
+                    {
+                        // Read next tile data to render.
+                        CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
+                    }
+
+                    var color = DeterminePixelColor(x, currentTileData, Bgp);
+                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
+                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
+                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
+                }
+            }
+        }
+        
         private void RenderSpritesScan()
         {
             fixed (byte* ptr = _oam)
