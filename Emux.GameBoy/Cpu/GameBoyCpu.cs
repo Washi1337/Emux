@@ -18,10 +18,11 @@ namespace Emux.GameBoy.Cpu
         public event EventHandler Paused;
         public event EventHandler Terminated;
 
+        private readonly Z80Disassembler _disassembler;
         private readonly GameBoy _device;
-        private ulong _ticks;
         private readonly ManualResetEvent _continue = new ManualResetEvent(false);
         private readonly ManualResetEvent _terminate = new ManualResetEvent(false);
+        private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
         
@@ -30,6 +31,8 @@ namespace Emux.GameBoy.Cpu
             if (device == null)
                 throw new ArgumentNullException(nameof(device));
             _device = device;
+            _disassembler = new Z80Disassembler(device.Memory);
+
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
             Breakpoints = new HashSet<ushort>();
@@ -165,17 +168,9 @@ namespace Emux.GameBoy.Cpu
 
         private Z80Instruction ReadNextInstruction()
         {
-            ushort offset = Registers.PC;
-            byte code = _device.Memory.ReadByte(Registers.PC++);
-
-            var opcode = code != 0xCB
-                ? Z80OpCodes.SingleByteOpCodes[code]
-                : Z80OpCodes.PrefixedOpCodes[_device.Memory.ReadByte(Registers.PC++)];
-
-            byte[] operand = _device.Memory.ReadBytes(Registers.PC, opcode.OperandLength);
-            Registers.PC += (ushort) operand.Length;
-
-            var instruction = new Z80Instruction(offset, opcode, operand);
+            _disassembler.Position = Registers.PC;
+            var instruction = _disassembler.ReadNextInstruction();
+            Registers.PC = _disassembler.Position;
             return instruction;
         }
 
