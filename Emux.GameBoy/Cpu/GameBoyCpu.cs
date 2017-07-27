@@ -28,13 +28,14 @@ namespace Emux.GameBoy.Cpu
 
         private readonly Z80Disassembler _disassembler;
         private readonly GameBoy _device;
-        private readonly ManualResetEvent _continue = new ManualResetEvent(false);
-        private readonly ManualResetEvent _terminate = new ManualResetEvent(false);
+        private readonly ManualResetEvent _continueSignal = new ManualResetEvent(false);
+        private readonly ManualResetEvent _terminateSignal = new ManualResetEvent(false);
         private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
         private readonly NativeTimer _frameTimer;
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
+        private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
         private TimeSpan _frameStartTime;
         private int _frames;
         
@@ -129,14 +130,14 @@ namespace Emux.GameBoy.Cpu
             bool enabled = true;
             while (enabled)
             {
-                if (WaitHandle.WaitAny(new WaitHandle[] { _continue, _terminate }) == 1)
+                if (WaitHandle.WaitAny(new WaitHandle[] { _continueSignal, _terminateSignal }) == 1)
                 {
                     enabled = false;
                 }
                 else
                 {
                     Running = true;
-                    _continue.Reset();
+                    _continueSignal.Reset();
                     
                     int cycles = 0;
                     do
@@ -146,9 +147,9 @@ namespace Emux.GameBoy.Cpu
                         {
                             _frames++;
                             cycles -= 70224;
-                            if (EnableFrameLimit)
+                            if (EnableFrameLimit && !_break)
                             {
-                                _frameStartSignal.WaitOne();
+                                WaitHandle.WaitAny(new WaitHandle[] { _breakSignal, _frameStartSignal });
                                 _frameStartSignal.Reset();
                             }
                         }
@@ -158,6 +159,7 @@ namespace Emux.GameBoy.Cpu
 
                     } while (!_break);
 
+                    _breakSignal.Reset();
                     Running = false;
                     OnPaused();
                 }
@@ -214,7 +216,7 @@ namespace Emux.GameBoy.Cpu
         {
             _frameTimer.Stop();
             _break = true;
-            _continue.Set();
+            _continueSignal.Set();
         }
 
         public void Run()
@@ -222,21 +224,22 @@ namespace Emux.GameBoy.Cpu
             _frameStartTime = DateTime.Now.TimeOfDay;
             _frameTimer.Start();
             _break = false;
-            _continue.Set();
+            _continueSignal.Set();
         }
 
         public void Break()
         {
+            _breakSignal.Set();
             _frameTimer.Stop();
-            _continue.Reset();
+            _continueSignal.Reset();
             _break = true;
         }
 
         public void Terminate()
         {
             _frameTimer.Stop();
-            _continue.Reset();
-            _terminate.Set();
+            _continueSignal.Reset();
+            _terminateSignal.Set();
         }
 
         private Z80Instruction ReadNextInstruction()

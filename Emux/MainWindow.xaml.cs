@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
@@ -15,7 +17,7 @@ namespace Emux
     public partial class MainWindow : Window
     {
         public static readonly RoutedUICommand StepCommand = new RoutedUICommand(
-            "Step",
+            "Execute next instruction.",
             "Step",
             typeof(MainWindow),
             new InputGestureCollection(new[]
@@ -24,7 +26,7 @@ namespace Emux
             }));
 
         public static readonly RoutedUICommand RunCommand = new RoutedUICommand(
-            "Run",
+            "Continue execution.",
             "Run",
             typeof(MainWindow),
             new InputGestureCollection(new[]
@@ -33,7 +35,7 @@ namespace Emux
             }));
 
         public static readonly RoutedUICommand BreakCommand = new RoutedUICommand(
-            "Break",
+            "Break execution.",
             "Break",
             typeof(MainWindow),
             new InputGestureCollection(new[]
@@ -42,7 +44,7 @@ namespace Emux
             }));
 
         public static readonly RoutedUICommand SetBreakpointCommand = new RoutedUICommand(
-            "Set Breakpoint",
+            "Set an execution breakpoint to a memory address.",
             "Set Breakpoint",
             typeof(MainWindow),
             new InputGestureCollection(new[]
@@ -57,14 +59,41 @@ namespace Emux
             typeof(MainWindow));
 
         public static readonly RoutedUICommand ResetCommand = new RoutedUICommand(
-            "Reset",
+            "Reset the GameBoy device.",
             "Reset",
             typeof(MainWindow));
 
+        public static readonly RoutedUICommand VideoOutputCommand = new RoutedUICommand(
+            "Open the video output window",
+            "Video Output",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F11)
+            }));
+
         public static readonly RoutedUICommand KeyPadCommand = new RoutedUICommand(
+            "Open the virtual keypad window",
             "Keypad",
-            "Keypad",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F12)
+            }));
+
+        public static readonly RoutedUICommand SourceCodeCommand = new RoutedUICommand(
+            "View the source code of the program.",
+            "Source Code",
             typeof(MainWindow));
+
+        public static readonly RoutedUICommand AboutCommand = new RoutedUICommand(
+            "View about details.",
+            "About",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F1)
+            }));
 
         private GameBoy.GameBoy _gameBoy;
         private readonly VideoWindow _videoWindow;
@@ -198,6 +227,30 @@ namespace Emux
         private void KeyPadCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             _keypadWindow.Show();
+        }
+
+        private void SourceCodeCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            Process.Start(Properties.Settings.Default.Repository);
+        }
+
+        private void AboutCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            new AboutDialog().ShowDialog();
+        }
+
+        private void VideoOutputCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _videoWindow.Show();
+        }
+
+        private void MainWindow_OnClosing(object sender, CancelEventArgs e)
+        {
+            _gameBoy?.Terminate();
+            _videoWindow.Device = null;
+            _keypadWindow.Device = null;
+            _videoWindow.Close();
+            _keypadWindow.Close();
         }
     }
 }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Emux"
         mc:Ignorable="d"
-        Title="Emux" Height="440.245" Width="707.465">
+        Title="Emux" Height="440.245" Width="707.465" Closing="MainWindow_OnClosing">
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Open" Executed="OpenCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.RunCommand" CanExecute="PausingOnCanExecute" Executed="RunCommandOnExecuted" />
@@ -14,7 +14,11 @@
         <CommandBinding Command="local:MainWindow.SetBreakpointCommand" CanExecute="GameBoyExistsCanExecute" Executed="SetBreakpointCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.ClearBreakpointsCommand" CanExecute="GameBoyExistsCanExecute" Executed="ClearBreakpointsCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.ResetCommand" CanExecute="GameBoyExistsCanExecute" Executed="ResetCommandOnExecuted" />
-        <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted"></CommandBinding>
+        <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.VideoOutputCommand" CanExecute="GameBoyExistsCanExecute" Executed="VideoOutputCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.SourceCodeCommand" Executed="SourceCodeCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.AboutCommand" Executed="AboutCommandOnExecuted" />
     </Window.CommandBindings>
     <Grid>
         <Grid.RowDefinitions>
@@ -41,8 +45,13 @@
                 </MenuItem>
                 <MenuItem Header="Tools">
                     <MenuItem.Items>
+                        <MenuItem Header="Video output" Command="local:MainWindow.VideoOutputCommand"/>
                         <MenuItem Header="Virtual keypad" Command="local:MainWindow.KeyPadCommand"/>
                     </MenuItem.Items>
+                </MenuItem>
+                <MenuItem Header="Help">
+                    <MenuItem Header="Source code" Command="local:MainWindow.SourceCodeCommand"/>
+                    <MenuItem Header="About" Command="local:MainWindow.AboutCommand"/>
                 </MenuItem>
             </Menu.Items>
         </Menu>
@@ -55,7 +64,6 @@
             
             <ListView x:Name="DisassemblyView" FontFamily="Consolas" />
             <TextBox x:Name="RegistersTextBox" FontFamily="Consolas" Grid.Column="1" IsReadOnly="True" />
-
         </Grid>
 
 

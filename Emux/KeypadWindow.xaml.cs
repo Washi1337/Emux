@@ -47,7 +47,7 @@ namespace Emux
 
         private void KeypadWindowOnClosing(object sender, CancelEventArgs e)
         {
-            e.Cancel = Device == null;
+            e.Cancel = Device != null;
             Hide();
         }
     }

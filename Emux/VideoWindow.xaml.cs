@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
@@ -42,8 +43,11 @@ namespace Emux
         {
             if (Device != null)
             {
-                Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} FPS)",
-                    _device.Cpu.FramesPerSecond));
+                lock (this)
+                {
+                    Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} FPS)",
+                        _device.Cpu.FramesPerSecond));
+                }
             }
         }
 
@@ -86,6 +90,16 @@ namespace Emux
             GameBoyPadButton button;
             if (_keyMapping.TryGetValue(e.Key, out button))
                 Device.KeyPad.PressedButtons &= ~button;
+        }
+
+        private void VideoWindowOnClosing(object sender, CancelEventArgs e)
+        {
+            lock (this)
+            {
+                _frameRateTimer.Stop();
+                e.Cancel = Device != null;
+                Hide();
+            }
         }
     }
 }

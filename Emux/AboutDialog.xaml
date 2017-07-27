@@ -1,0 +1,48 @@
+﻿<Window x:Class="Emux.AboutDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux"
+        mc:Ignorable="d"
+        Title="About" Height="207.741" Width="300" WindowStyle="ToolWindow" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        
+        <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+
+            <Label Grid.Row="0" Grid.Column="0" Content="Main Developer:" />
+            <Label Grid.Row="0" Grid.Column="1" Content="Washi" />
+
+            <Label Grid.Row="1" Grid.Column="0" Content="Version:" />
+            <Label Grid.Row="1" Grid.Column="1" x:Name="VersionLabel"/>
+
+            <Label Grid.Row="2" Grid.Column="0" Content="Source Code:" />
+            <Label Grid.Row="2" Grid.Column="1" Target="{Binding ElementName=TextArea}">
+                <Hyperlink x:Name="SourceCodeHyperlink" Click="SourceCodeHyperlinkOnRequestNavigate">Github</Hyperlink>
+            </Label>
+
+            <Label Grid.Row="3" Grid.Column="0" Content="License:" />
+            <Label Grid.Row="3" Grid.Column="1" Target="{Binding ElementName=TextArea}">
+                <Hyperlink x:Name="LicenseHyperlink" Click="LicenseHyperlinkOnRequestNavigate">GPLv3</Hyperlink>
+            </Label>
+        </Grid>
+        
+        <Button Grid.Row="1" Margin="10" Content="Close" Width="75" HorizontalAlignment="Right" IsCancel="True" IsDefault="True"/>
+
+    </Grid>
+</Window>
+
