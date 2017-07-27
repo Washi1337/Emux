@@ -39,22 +39,33 @@ namespace Emux.GameBoy.Timer
             return 0;
         }
 
+        private int GetTimaClockCycles()
+        {
+            return (int)(GameBoyCpu.OfficialClockFrequency / GetTimaFrequency());
+        }
+
+        private int GetDivClockCycles()
+        {
+            return (int)(GameBoyCpu.OfficialClockFrequency / DivFrequency);
+        }
+
         public void TimerStep(int cycles)
         {
             _divClock += cycles;
-            if (_divClock >= DivFrequency)
+            int divClockCycles = GetDivClockCycles();
+            if (_divClock >= divClockCycles)
             {
-                _divClock -= DivFrequency;
+                _divClock -= divClockCycles;
                 Div = (byte) ((Div + 1) % 0xFF);
             }
 
             if ((Tac & TimerControlFlags.EnableTimer) == TimerControlFlags.EnableTimer)
             {
                 _timerClock += cycles;
-                int timaSpeed = GetTimaFrequency();
-                if (_timerClock > timaSpeed)
+                int timaCycles = GetTimaClockCycles();
+                if (_timerClock > timaCycles)
                 {
-                    _timerClock -= timaSpeed;
+                    _timerClock -= timaCycles;
                     Tima = Tma;
                     _device.Cpu.Registers.IF |= InterruptFlags.Timer;   
                 }
