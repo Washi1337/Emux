@@ -67,8 +67,6 @@ namespace Emux
             typeof(MainWindow));
 
         private GameBoy.GameBoy _gameBoy;
-        private DateTime _start;
-        private ulong _startClocks;
         private readonly VideoWindow _videoWindow;
         private readonly KeypadWindow _keypadWindow;
 
@@ -109,6 +107,7 @@ namespace Emux
                 _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(File.ReadAllBytes(dialog.FileName)));
                 _gameBoy.Cpu.Paused += GameBoyOnPaused;
                 _gameBoy.Gpu.VideoOutput = _videoWindow;
+
                 _videoWindow.Device = _gameBoy;
                 _videoWindow.Show();
                 _keypadWindow.Device = _gameBoy;
@@ -119,15 +118,7 @@ namespace Emux
 
         private void GameBoyOnPaused(object sender, EventArgs eventArgs)
         {
-            var end = DateTime.Now;
-            double clockSpeed = (_gameBoy.Cpu.TickCount - _startClocks) / (end - _start).TotalSeconds;
-            Console.WriteLine(
-                $"Average clock speed: {clockSpeed/1000000:0.00}MHz ({(clockSpeed / GameBoyCpu.OfficialClockFrequency * 100):0.00}% of original speed)");
-
-            Dispatcher.Invoke(() =>
-            {
-                RefreshView();
-            });
+            Dispatcher.Invoke(RefreshView);
         }
 
         private void StepCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -153,8 +144,6 @@ namespace Emux
 
         private void RunCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _startClocks = _gameBoy.Cpu.TickCount;
-            _start = DateTime.Now;
             _gameBoy.Cpu.Run();
         }
 
@@ -165,11 +154,33 @@ namespace Emux
 
         private void SetBreakpointCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            var dialog = new InputDialog();
-            var result = dialog.ShowDialog();
-            if (result.HasValue && result.Value)
+            string text = "0000";
+            bool repeat = true;
+            while (repeat)
             {
-                _gameBoy.Cpu.Breakpoints.Add(ushort.Parse(dialog.Text, NumberStyles.HexNumber));
+                var dialog = new InputDialog
+                {
+                    Title = "Enter breakpoint address",
+                    Text = text
+                };
+                var result = dialog.ShowDialog();
+                repeat = result.HasValue && result.Value;
+                if (repeat)
+                {
+                    ushort address;
+                    text = dialog.Text;
+                    repeat = !ushort.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out address);
+
+                    if (repeat)
+                    {
+                        MessageBox.Show("Please enter a valid hexadecimal number between 0000 and FFFF", "Emux",
+                            MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        _gameBoy.Cpu.Breakpoints.Add(address);
+                    }
+                }
             }
         }
 

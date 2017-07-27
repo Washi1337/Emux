@@ -33,6 +33,10 @@ namespace Emux.GameBoy.Cpu
         private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
+        private readonly NativeTimer _frameTimer;
+        private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
+        private TimeSpan _frameStartTime;
+        private int _frames;
         
         public GameBoyCpu(GameBoy device)
         {
@@ -44,13 +48,26 @@ namespace Emux.GameBoy.Cpu
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
             Breakpoints = new HashSet<ushort>();
-            FrameLimit = true;
+            EnableFrameLimit = true;
 
             new Thread(CpuLoop)
             {
                 Name = "Z80CPULOOP",
                 IsBackground = true
             }.Start();
+
+            _frameTimer = new NativeTimer((timerid, msg, user, dw1, dw2) =>
+            {
+                _frameStartSignal.Set();
+                var time = DateTime.Now.TimeOfDay;
+                var delta = time - _frameStartTime;
+                if (delta.TotalSeconds >= 1)
+                {
+                    FramesPerSecond = _frames / delta.TotalSeconds;
+                    _frames = 0;
+                    _frameStartTime = time;
+                }
+            }, 60);
         }
 
         /// <summary>
@@ -92,12 +109,19 @@ namespace Emux.GameBoy.Cpu
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether the processor should limit the execution speed to the original GameBoy clock speed.
+        /// Gets or sets a value indicating whether the processor should limit the execution speed to the original GameBoy clock speed. 
+        /// Disable this if experiencing heavy performance losses.
         /// </summary>
-        public bool FrameLimit
+        public bool EnableFrameLimit
         {
             get;
             set;
+        }
+
+        public double FramesPerSecond
+        {
+            get;
+            private set;
         }
 
         private void CpuLoop()
@@ -114,31 +138,18 @@ namespace Emux.GameBoy.Cpu
                     Running = true;
                     _continue.Reset();
                     
-                    var frameStart = DateTime.Now.TimeOfDay;
-                    var start = frameStart;
-
                     int cycles = 0;
-                    int frames = 0;
                     do
                     {
                         cycles += CpuStep();
                         if (cycles >= 70224)
                         {
-                            var end = DateTime.Now.TimeOfDay;
-                            var delta = (end - frameStart);
-
-                            if (FrameLimit && delta.TotalMilliseconds < 1000.0 / 59.73)
-                                Thread.Sleep((int)(1000.0 / 59.73));
-
-                            frameStart = end;
+                            _frames++;
                             cycles -= 70224;
-                            frames++;
-
-                            if ((end - start).TotalSeconds >= 1)
+                            if (EnableFrameLimit)
                             {
-                                start = end;
-                                Console.WriteLine(frames);
-                                frames = 0;
+                                _frameStartSignal.WaitOne();
+                                _frameStartSignal.Reset();
                             }
                         }
 
@@ -201,24 +212,29 @@ namespace Emux.GameBoy.Cpu
 
         public void Step()
         {
+            _frameTimer.Stop();
             _break = true;
             _continue.Set();
         }
 
         public void Run()
         {
+            _frameStartTime = DateTime.Now.TimeOfDay;
+            _frameTimer.Start();
             _break = false;
             _continue.Set();
         }
 
         public void Break()
         {
+            _frameTimer.Stop();
             _continue.Reset();
             _break = true;
         }
 
         public void Terminate()
         {
+            _frameTimer.Stop();
             _continue.Reset();
             _terminate.Set();
         }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Emux"
         mc:Ignorable="d"
-        Title="InputDialog" Height="124.415" Width="336.585">
+        Title="InputDialog" Height="124.415" Width="336.585" WindowStartupLocation="CenterScreen" IsVisibleChanged="InputDialogOnIsVisibleChanged">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>

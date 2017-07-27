@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -23,13 +25,26 @@ namespace Emux
             [Key.X] = GameBoyPadButton.A,
             [Key.Z] = GameBoyPadButton.B,
             [Key.Enter] = GameBoyPadButton.Start,
-            [Key.LeftShift] = GameBoyPadButton.Select,
+            [Key.LeftShift] = GameBoyPadButton.Select
         };
-        private GameBoy.GameBoy _device;
+        private readonly Timer _frameRateTimer = new Timer(1000);
 
+        private GameBoy.GameBoy _device;
+        
         public VideoWindow()
         {
             InitializeComponent();
+            _frameRateTimer.Start();
+            _frameRateTimer.Elapsed += FrameRateTimerOnElapsed;
+        }
+
+        private void FrameRateTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        {
+            if (Device != null)
+            {
+                Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} FPS)",
+                    _device.Cpu.FramesPerSecond));
+            }
         }
 
         public GameBoy.GameBoy Device
@@ -56,6 +71,8 @@ namespace Emux
 
         private void VideoWindowOnKeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Space)
+                Device.Cpu.EnableFrameLimit = false;
             GameBoyPadButton button;
             if (_keyMapping.TryGetValue(e.Key, out button))
                 Device.KeyPad.PressedButtons |= button;
@@ -64,6 +81,8 @@ namespace Emux
 
         private void VideoWindowOnKeyUp(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Space)
+                Device.Cpu.EnableFrameLimit = true;
             GameBoyPadButton button;
             if (_keyMapping.TryGetValue(e.Key, out button))
                 Device.KeyPad.PressedButtons &= ~button;

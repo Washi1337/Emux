@@ -11,13 +11,12 @@ namespace Emux
         public InputDialog()
         {
             InitializeComponent();
-            ContentsTextBox.SelectAll();
-            ContentsTextBox.Focus();
         }
 
         public string Text
         {
             get { return ContentsTextBox.Text; }
+            set { ContentsTextBox.Text = value; }
         }
         
         private void CancelButtonOnClick(object sender, RoutedEventArgs e)
@@ -30,6 +29,12 @@ namespace Emux
         {
             DialogResult = true;
             Close();
+        }
+
+        private void InputDialogOnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            ContentsTextBox.SelectAll();
+            ContentsTextBox.Focus();
         }
     }
 }
