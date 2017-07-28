@@ -14,7 +14,21 @@ namespace Emux.GameBoy.Timer
         public byte Div;
         public byte Tima;
         public byte Tma;
-        public TimerControlFlags Tac;
+        private TimerControlFlags _tac;
+
+        public TimerControlFlags Tac
+        {
+            get { return _tac; }
+            set
+            {
+                if ((value & TimerControlFlags.EnableTimer) != TimerControlFlags.EnableTimer)
+                {
+                    _timerClock = 0;
+                }
+
+                _tac = value;
+            }
+        }
 
         public GameBoyTimer(GameBoy device)
         {
@@ -48,7 +62,7 @@ namespace Emux.GameBoy.Timer
         {
             return (int)(GameBoyCpu.OfficialClockFrequency / DivFrequency);
         }
-
+        
         public void TimerStep(int cycles)
         {
             _divClock += cycles;
@@ -66,8 +80,13 @@ namespace Emux.GameBoy.Timer
                 if (_timerClock > timaCycles)
                 {
                     _timerClock -= timaCycles;
-                    Tima = Tma;
-                    _device.Cpu.Registers.IF |= InterruptFlags.Timer;   
+
+                    int result = Tima + 1;
+                    if (result > 0xFF)
+                    {
+                        Tima = Tma;
+                        _device.Cpu.Registers.IF |= InterruptFlags.Timer;
+                    }
                 }
             }
         }
