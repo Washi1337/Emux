@@ -147,7 +147,7 @@ namespace Emux.GameBoy.Cpu
                         {
                             _frames++;
                             cycles -= 70224;
-                            if (EnableFrameLimit && !_break)
+                            if (EnableFrameLimit)
                             {
                                 WaitHandle.WaitAny(new WaitHandle[] { _breakSignal, _frameStartSignal });
                                 _frameStartSignal.Reset();

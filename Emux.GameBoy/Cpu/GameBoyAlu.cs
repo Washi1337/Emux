@@ -166,7 +166,7 @@ namespace Emux.GameBoy.Cpu
                 flags |= RegisterFlags.Z;
             if ((value & (1 << 7)) == (1 << 7))
                 flags |= RegisterFlags.C;
-            _registers.SetFlags(flags);
+            _registers.SetFlags(flags & affectedFlags);
 
             return newValue;
         }
@@ -183,7 +183,7 @@ namespace Emux.GameBoy.Cpu
                 flags |= RegisterFlags.Z;
             if ((value & (1 << 7)) == (1 << 7))
                 flags |= RegisterFlags.C;
-            _registers.SetFlags(flags);
+            _registers.SetFlags(flags & affectedFlags);
 
             return newValue;
         }
@@ -200,7 +200,7 @@ namespace Emux.GameBoy.Cpu
                 flags |= RegisterFlags.Z;
             if ((value & 1) == 1)
                 flags |= RegisterFlags.C;
-            _registers.SetFlags(flags);
+            _registers.SetFlags(flags & affectedFlags);
 
             return newValue;
         }
@@ -217,7 +217,7 @@ namespace Emux.GameBoy.Cpu
                 flags |= RegisterFlags.Z;
             if ((value & 1) == 1)
                 flags |= RegisterFlags.C;
-            _registers.SetFlags(flags);
+            _registers.SetFlags(flags & affectedFlags);
 
             return newValue;
         }
