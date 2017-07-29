@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Graphics
@@ -34,6 +35,7 @@ namespace Emux.GameBoy.Graphics
 
         private int _modeClock;
         private LcdControlFlags _lcdc;
+        public byte _ly;
 
         public LcdControlFlags Lcdc
         {
@@ -51,6 +53,7 @@ namespace Emux.GameBoy.Graphics
                 else if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 {
                     _modeClock = 0;
+                    Stat = (LcdStatusFlags) 0x85;
                     if (LY == LYC)
                         Stat |= LcdStatusFlags.Coincidence;
                 }
@@ -62,7 +65,20 @@ namespace Emux.GameBoy.Graphics
         public LcdStatusFlags Stat;
         public byte ScY;
         public byte ScX;
-        public byte LY;
+
+        public byte LY
+        {
+            get { return _ly; }
+            set
+            {
+                if (_ly != value)
+                {
+                    _ly = value;
+                    CheckCoincidenceInterrupt();
+                }
+            }
+        }
+
         public byte LYC;
         public byte Bgp;
         public byte ObjP0;
@@ -149,7 +165,7 @@ namespace Emux.GameBoy.Graphics
                     Lcdc = (LcdControlFlags) value;
                     return;
                 case 0x41:
-                    Stat = (LcdStatusFlags) (value & 0b01111000);
+                    Stat = (LcdStatusFlags) ((byte)Stat & 0b111 | value & 0b01111000);
                     return;
                 case 0x42:
                     ScY = value;
@@ -295,6 +311,12 @@ namespace Emux.GameBoy.Graphics
                     stat |= LcdStatusFlags.Coincidence;
                 Stat = stat;
             }
+        }
+
+        private void CheckCoincidenceInterrupt()
+        {
+            if (LY == LYC && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
+                _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
         }
         
         private void RenderScan()
