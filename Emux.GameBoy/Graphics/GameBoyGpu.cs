@@ -351,7 +351,7 @@ namespace Emux.GameBoy.Graphics
             
             // Read first tile data to render.
             byte[] currentTileData = new byte[2];
-            CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
+            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
 
             // Render scan line.
             for (int outputX = 0; outputX < FrameWidth; outputX++, x++)
@@ -359,7 +359,7 @@ namespace Emux.GameBoy.Graphics
                 if ((x & 7) == 0)
                 {
                     // Read next tile data to render.
-                    CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
+                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                 }
 
                 var color = DeterminePixelColor(x, currentTileData, Bgp);
@@ -412,7 +412,7 @@ namespace Emux.GameBoy.Graphics
                     if ((x & 7) == 0)
                     {
                         // Read next tile data to render.
-                        CopyTileData(tileMapAddress, x >> 3, tileDataAddress, currentTileData);
+                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                     }
 
                     var color = DeterminePixelColor(x, currentTileData, Bgp);
@@ -425,6 +425,7 @@ namespace Emux.GameBoy.Graphics
         
         private void RenderSpritesScan()
         {
+            int spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
             fixed (byte* ptr = _oam)
             {
                 // GameBoy only supports 10 sprites in one scan line.
@@ -435,7 +436,7 @@ namespace Emux.GameBoy.Graphics
                     int absoluteY = data.Y - 16;
 
                     // Check if sprite is on current scan line.
-                    if (absoluteY <= LY && LY < absoluteY + 8)
+                    if (absoluteY <= LY && LY < absoluteY + spriteHeight)
                     {
                         // TODO: take order into account.
                         spritesCount++;
@@ -452,7 +453,7 @@ namespace Emux.GameBoy.Graphics
 
                             // Flip sprite vertically if specified.
                             if ((data.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
-                                rowIndex = 7 - rowIndex;
+                                rowIndex = (spriteHeight - 1) - rowIndex;
 
                             byte[] currentTileData = new byte[2];
                             Buffer.BlockCopy(_vram, (ushort)(0x0000 + (data.TileDataIndex << 4) + rowIndex * 2),
