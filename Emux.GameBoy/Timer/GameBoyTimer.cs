@@ -82,6 +82,7 @@ namespace Emux.GameBoy.Timer
                     _timerClock -= timaCycles;
 
                     int result = Tima + 1;
+                    Tima = (byte) (result & 0xFF);
                     if (result > 0xFF)
                     {
                         Tima = Tma;

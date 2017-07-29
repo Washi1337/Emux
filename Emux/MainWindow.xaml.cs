@@ -109,11 +109,15 @@ namespace Emux
         public void RefreshView()
         {
             RegistersTextBox.Text = _gameBoy.Cpu.Registers + "\r\nTick: " + _gameBoy.Cpu.TickCount + "\r\n\r\n" +
-                                    "LCDC: " + ((byte)_gameBoy.Gpu.Lcdc).ToString("X2") + "\r\n" +
-                                    "STAT: " + ((byte)_gameBoy.Gpu.Stat).ToString("X2") + "\r\n" +
+                                    "LCDC: " + ((byte) _gameBoy.Gpu.Lcdc).ToString("X2") + "\r\n" +
+                                    "STAT: " + ((byte) _gameBoy.Gpu.Stat).ToString("X2") + "\r\n" +
                                     "LY: " + _gameBoy.Gpu.LY.ToString("X2") + "\r\n" +
                                     "ScY: " + _gameBoy.Gpu.ScY.ToString("X2") + "\r\n" +
-                                    "ScX: " + _gameBoy.Gpu.ScX.ToString("X2") + "\r\n"
+                                    "ScX: " + _gameBoy.Gpu.ScX.ToString("X2") + "\r\n" +
+                                    "\r\n" +
+                                    "TIMA: " + _gameBoy.Timer.Tima.ToString("X2") + "\r\n" +
+                                    "TMA: " + _gameBoy.Timer.Tma.ToString("X2") + "\r\n" +
+                                    "TAC: " + ((byte) _gameBoy.Timer.Tac).ToString("X2") + "\r\n";
                 ;
             DisassemblyView.Items.Clear();
             var disassembler = new Z80Disassembler(_gameBoy.Memory);

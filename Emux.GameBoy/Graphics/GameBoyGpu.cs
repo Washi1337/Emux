@@ -47,13 +47,12 @@ namespace Emux.GameBoy.Graphics
                     Array.Clear(_frameBuffer, 0, _frameBuffer.Length);
                     VideoOutput.RenderFrame(_frameBuffer);
                     LY = 0;
-                    Stat = (LcdStatusFlags) 0x80;
+                    SwitchMode(LcdStatusFlags.HBlankMode);
                     _modeClock = 0;
                 }
                 else if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 {
                     _modeClock = 0;
-                    Stat = (LcdStatusFlags) 0x85;
                     if (LY == LYC)
                         Stat |= LcdStatusFlags.Coincidence;
                 }
@@ -233,7 +232,7 @@ namespace Emux.GameBoy.Graphics
 
             throw new ArgumentOutOfRangeException(nameof(address));
         }
-
+        
         /// <summary>
         /// Advances the execution of the graphical processor unit.
         /// </summary>
@@ -242,7 +241,7 @@ namespace Emux.GameBoy.Graphics
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
-
+            
             _modeClock += cycles;
 
             unchecked
@@ -515,5 +514,9 @@ namespace Emux.GameBoy.Graphics
             Stat = (LcdStatusFlags) 0x85;
         }
 
+        private void SwitchMode(LcdStatusFlags mode)
+        {
+            Stat = (Stat & ~LcdStatusFlags.ModeMask) | mode;
+        }
     }
 }
