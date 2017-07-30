@@ -1,4 +1,5 @@
-﻿using Emux.GameBoy.Cartridge;
+﻿using Emux.GameBoy.Audio;
+using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
@@ -18,6 +19,7 @@ namespace Emux.GameBoy
             Memory = new GameBoyMemory(this);
             Cpu = new GameBoyCpu(this);
             Gpu = new GameBoyGpu(this);
+            Spu = new GameBoySpu(this);
             KeyPad = new GameBoyPad(this);
             Timer = new GameBoyTimer(this);
             Reset();
@@ -36,6 +38,14 @@ namespace Emux.GameBoy
         /// Gets the graphics processing unit of the emulated GameBoy device.
         /// </summary>
         public GameBoyGpu Gpu
+        {
+            get;
+        }
+
+        /// <summary>
+        /// Gets the sound processing unit of the emulated GameBoy device.
+        /// </summary>
+        public GameBoySpu Spu
         {
             get;
         }

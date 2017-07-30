@@ -42,6 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Audio\GameBoySpu.cs" />
+    <Compile Include="Audio\IAudioOutput.cs" />
+    <Compile Include="Audio\ISoundChannel.cs" />
+    <Compile Include="Audio\WaveSoundChannel.cs" />
     <Compile Include="Cartridge\MemoryBankController1.cs" />
     <Compile Include="Cartridge\EmulatedCartridge.cs" />
     <Compile Include="Cartridge\CartridgeType.cs" />
