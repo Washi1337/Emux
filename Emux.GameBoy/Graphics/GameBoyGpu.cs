@@ -472,12 +472,13 @@ namespace Emux.GameBoy.Graphics
 
                                 if (absoluteX >= 0 && absoluteX < FrameWidth)
                                 {
-                                    int colorIndex = DetermineColorIndex(x, currentTileData, palette);
+                                    int paletteIndex = DeterminePaletteIndex(x, currentTileData);
+                                    int colorIndex = DetermineColorIndex(palette, paletteIndex);
                                     
                                     // TODO: take priority into account.
 
                                     // Check for transparent color.
-                                    if (colorIndex != 0)
+                                    if (paletteIndex != 0)
                                     {
                                         var color = _colors[colorIndex];
                                         _frameBuffer[LY * FrameWidth * 3 + absoluteX * 3] = color.R;
@@ -499,13 +500,23 @@ namespace Emux.GameBoy.Graphics
 
         private static int DetermineColorIndex(int x, byte[] tileRowData, byte palette)
         {
+            var paletteIndex = DeterminePaletteIndex(x, tileRowData);
+            return DetermineColorIndex(palette, paletteIndex);
+        }
+
+        private static int DetermineColorIndex(byte palette, int paletteIndex)
+        {
+            return (palette >> (paletteIndex * 2)) & 3;
+        }
+
+        private static int DeterminePaletteIndex(int x, byte[] tileRowData)
+        {
             int bitIndex = 7 - (x & 7);
             int paletteIndex = (((tileRowData[0] >> bitIndex) & 1) << 1) |
                                ((tileRowData[1] >> bitIndex) & 1);
-            int colorIndex = (palette >> (paletteIndex * 2)) & 3;
-            return colorIndex;
+            return paletteIndex;
         }
-        
+
         public void Reset()
         {
             _modeClock = 0;
