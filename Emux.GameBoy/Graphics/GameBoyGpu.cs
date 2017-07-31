@@ -362,7 +362,7 @@ namespace Emux.GameBoy.Graphics
                     CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                 }
 
-                var color = DeterminePixelColor(x, currentTileData, Bgp);
+                var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
                 _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
                 _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
                 _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
@@ -415,7 +415,7 @@ namespace Emux.GameBoy.Graphics
                         CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                     }
 
-                    var color = DeterminePixelColor(x, currentTileData, Bgp);
+                    var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
                     _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
                     _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
                     _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
@@ -512,8 +512,8 @@ namespace Emux.GameBoy.Graphics
         private static int DeterminePaletteIndex(int x, byte[] tileRowData)
         {
             int bitIndex = 7 - (x & 7);
-            int paletteIndex = (((tileRowData[0] >> bitIndex) & 1) << 1) |
-                               ((tileRowData[1] >> bitIndex) & 1);
+            int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
+                               (((tileRowData[1] >> bitIndex) & 1) << 1);
             return paletteIndex;
         }
 
