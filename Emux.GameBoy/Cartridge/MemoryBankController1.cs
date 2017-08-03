@@ -6,7 +6,7 @@ namespace Emux.GameBoy.Cartridge
     {
         private readonly IFullyAccessibleCartridge _cartridge;
         private readonly byte[] _romBank = new byte[0x4000];
-        private int _romBankIndex = 1;
+        private int _romBankIndex;
         private int _ramBankIndex;
         private bool _romRamMode;
         private readonly byte[] _externalRam;

@@ -53,6 +53,7 @@
     <Compile Include="Cartridge\CartridgeType.cs" />
     <Compile Include="Cartridge\ICartridge.cs" />
     <Compile Include="Cartridge\MemoryBankController2.cs" />
+    <Compile Include="Cartridge\MemoryBankController3.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
