@@ -147,7 +147,7 @@ namespace Emux.GameBoy.Audio
                         _volume++;
                     else
                         _volume--;
-
+                    
                     if (_volume < 0)
                         _volume = 0;
                     if (_volume > 15)
@@ -176,7 +176,7 @@ namespace Emux.GameBoy.Audio
             {
                 for (int i = 0; i < buffer.Length; i++)
                 {
-                    buffer[i] = (float) (maxAmplitude * (_volume / 15.0)  // Volume adjustments.
+                    buffer[i] = (float) (maxAmplitude * (_volume / 15.0)                                // Volume adjustments.
                         * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
                     _coordinate = (_coordinate + 1) % sampleRate;
                 }

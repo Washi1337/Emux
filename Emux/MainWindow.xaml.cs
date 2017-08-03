@@ -4,10 +4,13 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using Emux.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Microsoft.Win32;
+using NAudio.Wave;
 
 namespace Emux
 {
@@ -81,6 +84,11 @@ namespace Emux
                 new KeyGesture(Key.F12)
             }));
 
+        public static readonly RoutedUICommand EnableSoundCommand = new RoutedUICommand(
+            "Enable or disable sound",
+            "Enable sound",
+            typeof(MainWindow));
+
         public static readonly RoutedUICommand SourceCodeCommand = new RoutedUICommand(
             "View the source code of the program.",
             "Source Code",
@@ -95,17 +103,21 @@ namespace Emux
                 new KeyGesture(Key.F1)
             }));
 
-        private GameBoy.GameBoy _gameBoy;
+        private readonly GameBoyAudioMixer _mixer = new GameBoyAudioMixer();
         private readonly VideoWindow _videoWindow;
         private readonly KeypadWindow _keypadWindow;
+        private GameBoy.GameBoy _gameBoy;
 
         public MainWindow()
         {
             InitializeComponent();
             _videoWindow = new VideoWindow();
             _keypadWindow = new KeypadWindow();
+            var player = new DirectSoundOut();
+            player.Init(_mixer);
+            player.Play();
         }
-
+        
         public void RefreshView()
         {
             RegistersTextBox.Text = _gameBoy.Cpu.Registers + "\r\nTick: " + _gameBoy.Cpu.TickCount + "\r\n\r\n" +
@@ -140,6 +152,8 @@ namespace Emux
                 _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(File.ReadAllBytes(dialog.FileName)));
                 _gameBoy.Cpu.Paused += GameBoyOnPaused;
                 _gameBoy.Gpu.VideoOutput = _videoWindow;
+                _gameBoy.Spu.DeactivateAllChannels();
+                _mixer.Connect(_gameBoy.Spu);
 
                 _videoWindow.Device = _gameBoy;
                 _videoWindow.Show();
@@ -255,6 +269,14 @@ namespace Emux
             _keypadWindow.Device = null;
             _videoWindow.Close();
             _keypadWindow.Close();
+        }
+
+        private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            if (EnableSoundsMenuItem.IsChecked)
+                _gameBoy.Spu.ActivateAllChannels();
+            else
+                _gameBoy.Spu.DeactivateAllChannels();
         }
     }
 }

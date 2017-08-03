@@ -45,8 +45,8 @@ namespace Emux
             {
                 lock (this)
                 {
-                    Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} FPS)",
-                        _device.Cpu.FramesPerSecond));
+                    Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} %)",
+                        _device.Cpu.SpeedFactor * 100));
                 }
             }
         }

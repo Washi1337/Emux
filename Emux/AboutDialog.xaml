@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Emux"
         mc:Ignorable="d"
-        Title="About" Height="207.741" Width="300" WindowStyle="ToolWindow" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+        Title="About" Height="237.294" Width="342.591" WindowStyle="ToolWindow" WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -14,6 +14,7 @@
         
         <Grid Margin="10">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -38,6 +39,11 @@
             <Label Grid.Row="3" Grid.Column="0" Content="License:" />
             <Label Grid.Row="3" Grid.Column="1" Target="{Binding ElementName=TextArea}">
                 <Hyperlink x:Name="LicenseHyperlink" Click="LicenseHyperlinkOnRequestNavigate">GPLv3</Hyperlink>
+            </Label>
+
+            <Label Grid.Row="4" Grid.Column="0" Content="Audio back-end:" />
+            <Label Grid.Row="4" Grid.Column="1" Target="{Binding ElementName=TextArea}">
+                <Hyperlink x:Name="NAudioHyperlink" Click="NAudioHyperlinkOnRequestNavigate">NAudio</Hyperlink>
             </Label>
         </Grid>
         

@@ -47,3 +47,7 @@ This project is based on the specifications of the following papers (Therefore a
 - http://marc.rawer.de/Gameboy/Docs/GBCPUman.pdf
 - http://bgb.bircd.org/pandocs.htm
 - http://pastraiser.com/cpu/gameboy/gameboy_opcodes.html
+
+External libraries
+=======================
+- [NAudio](https://github.com/naudio/NAudio) for the sound rendering.

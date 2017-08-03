@@ -23,5 +23,10 @@ namespace Emux
         {
             Process.Start(Properties.Settings.Default.Repository + "/blob/master/LICENSE");
         }
+
+        private void NAudioHyperlinkOnRequestNavigate(object sender, RoutedEventArgs e)
+        {
+            Process.Start("https://github.com/naudio/NAudio");
+        }
     }
 }
