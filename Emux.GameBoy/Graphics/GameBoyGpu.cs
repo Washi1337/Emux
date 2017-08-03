@@ -415,10 +415,13 @@ namespace Emux.GameBoy.Graphics
                         CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                     }
 
-                    var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
-                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
-                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
-                    _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
+                    if (outputX >= 0)
+                    {
+                        var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
+                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
+                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
+                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
+                    }
                 }
             }
         }

@@ -160,6 +160,10 @@ namespace Emux
                 _keypadWindow.Device = _gameBoy;
 
                 RefreshView();
+                if (EnableSoundsMenuItem.IsChecked)
+                    _gameBoy.Spu.ActivateAllChannels();
+                else
+                    _gameBoy.Spu.DeactivateAllChannels();
             }
         }
 

@@ -104,6 +104,7 @@ namespace Emux.GameBoy
             Cpu.Registers.DE = 0x00D8;
             Cpu.Registers.HL = 0x014D;
             Cpu.Registers.PC = 0x100;
+            Cpu.Registers.SP = 0xFFFE;
             Cpu.Registers.IE = 0;
             Cpu.Registers.IF = (InterruptFlags) 0xE1;
             Cpu.Registers.IME = false;
