@@ -43,8 +43,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Audio\GameBoySpu.cs" />
-    <Compile Include="Audio\IAudioOutput.cs" />
+    <Compile Include="Audio\IAudioChannelOutput.cs" />
     <Compile Include="Audio\ISoundChannel.cs" />
+    <Compile Include="Audio\SquareChannel.cs" />
+    <Compile Include="Audio\SquareSweepChannel.cs" />
     <Compile Include="Audio\WaveSoundChannel.cs" />
     <Compile Include="Cartridge\MemoryBankController1.cs" />
     <Compile Include="Cartridge\EmulatedCartridge.cs" />

@@ -1,7 +1,7 @@
 namespace Emux.GameBoy.Audio
 {
     public interface ISoundChannel
-    {
+    { 
         byte NR0
         {
             get;
@@ -31,5 +31,19 @@ namespace Emux.GameBoy.Audio
             get;
             set;
         }
+
+        bool Active
+        {
+            get;
+            set;
+        }
+
+        IAudioChannelOutput ChannelOutput
+        {
+            get;
+            set;
+        }
+
+        void ChannelStep(int cycles);
     }
 }

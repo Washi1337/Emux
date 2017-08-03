@@ -5,20 +5,25 @@ namespace Emux.GameBoy.Audio
 {
     public class GameBoySpu
     {
-        private readonly GameBoy _device;
         private readonly byte[] _unused = new byte[9];
 
         public GameBoySpu(GameBoy device)
         {
             if (device == null)
                 throw new ArgumentNullException(nameof(device));
-            _device = device;
+            Device = device;
             var channels = new List<ISoundChannel>();
-            channels.Add(null);
-            channels.Add(null);
+            channels.Add(new SquareSweepChannel(this));
+            channels.Add(new SquareChannel(this));
             channels.Add(Wave = new WaveSoundChannel());
             channels.Add(null);
             Channels = channels.AsReadOnly();
+            ActivateAllChannels();
+        }
+
+        public GameBoy Device
+        {
+            get;
         }
 
         public byte NR51
@@ -34,12 +39,6 @@ namespace Emux.GameBoy.Audio
         }
 
         public byte NR53
-        {
-            get;
-            set;
-        }
-
-        public IAudioOutput AudioOutput
         {
             get;
             set;
@@ -148,6 +147,33 @@ namespace Emux.GameBoy.Audio
                             return channel.NR4;
                     }
                     throw new ArgumentOutOfRangeException(nameof(address));
+            }
+        }
+
+        public void SpuStep(int cycles)
+        {
+            if ((NR52 & (1 << 7)) != 0)
+            {
+                foreach (var channel in Channels)
+                    channel?.ChannelStep(cycles);
+            }
+        }
+
+        public void ActivateAllChannels()
+        {
+            foreach (var channel in Channels)
+            {
+                if (channel != null)
+                    channel.Active = true;
+            }
+        }
+
+        public void DeactivateAllChannels()
+        {
+            foreach (var channel in Channels)
+            {
+                if (channel != null)
+                    channel.Active = false;
             }
         }
     }
