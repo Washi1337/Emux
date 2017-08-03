@@ -166,7 +166,7 @@ namespace Emux.GameBoy.Audio
 
             const float maxAmplitude = 0.05f;
 
-            double realFrequency = 131072.0 / (2048.0 - Frequency);
+            double realFrequency = 131072.0 / (2048.0 - Frequency) / 2;
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor * 2;
             int sampleCount = (int) (timeDelta * sampleRate);
