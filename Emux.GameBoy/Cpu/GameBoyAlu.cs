@@ -191,7 +191,7 @@ namespace Emux.GameBoy.Cpu
         internal byte Rr(byte value, RegisterFlags affectedFlags = RegisterFlags.None,
             RegisterFlags setFlags = RegisterFlags.None, RegisterFlags resetFlags = RegisterFlags.None)
         {
-            byte newValue = (byte) ((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 : 0));
+            byte newValue = (byte) ((value >> 1) | (_registers.GetFlags(RegisterFlags.C) ? 1 << 7 : 0));
 
             _registers.ClearFlags(affectedFlags | resetFlags);
             _registers.SetFlags(setFlags);

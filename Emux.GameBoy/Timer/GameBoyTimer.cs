@@ -7,15 +7,35 @@ namespace Emux.GameBoy.Timer
     {
         private readonly GameBoy _device;
         public const int DivFrequency = 16384;
+        public const int DivCycleInterval = (int) (GameBoyCpu.OfficialClockFrequency / DivFrequency);
 
         private int _divClock;
         private int _timerClock;
-
-        public byte Div;
-        public byte Tima;
-        public byte Tma;
         private TimerControlFlags _tac;
+        private byte _tima;
 
+        public byte Div
+        {
+            get;
+            set;
+        }
+
+        public byte Tima
+        {
+            get { return _tima; }
+            set
+            {
+                _tima = value;
+                _timerClock = 0;
+            }
+        }
+
+        public byte Tma
+        {
+            get;
+            set;
+        }
+        
         public TimerControlFlags Tac
         {
             get { return _tac; }
@@ -57,19 +77,13 @@ namespace Emux.GameBoy.Timer
         {
             return (int)(GameBoyCpu.OfficialClockFrequency / GetTimaFrequency());
         }
-
-        private int GetDivClockCycles()
-        {
-            return (int)(GameBoyCpu.OfficialClockFrequency / DivFrequency);
-        }
         
         public void TimerStep(int cycles)
         {
             _divClock += cycles;
-            int divClockCycles = GetDivClockCycles();
-            if (_divClock >= divClockCycles)
+            if (_divClock >= DivCycleInterval)
             {
-                _divClock -= divClockCycles;
+                _divClock -= DivCycleInterval;
                 Div = (byte) ((Div + 1) % 0xFF);
             }
 
@@ -77,15 +91,15 @@ namespace Emux.GameBoy.Timer
             {
                 _timerClock += cycles;
                 int timaCycles = GetTimaClockCycles();
-                if (_timerClock > timaCycles)
+                if (_timerClock >= timaCycles)
                 {
                     _timerClock -= timaCycles;
 
-                    int result = Tima + 1;
-                    Tima = (byte) (result & 0xFF);
+                    int result = _tima + 1;
+                    _tima = (byte) (result & 0xFF);
                     if (result > 0xFF)
                     {
-                        Tima = Tma;
+                        _tima = Tma;
                         _device.Cpu.Registers.IF |= InterruptFlags.Timer;
                     }
                 }
