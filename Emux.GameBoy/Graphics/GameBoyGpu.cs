@@ -273,7 +273,7 @@ namespace Emux.GameBoy.Graphics
                         {
                             _modeClock -= HBlankCycles;
                             LY++;
-                            if (LY == FrameHeight - 1)
+                            if (LY == FrameHeight )
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 VideoOutput.RenderFrame(_frameBuffer);
