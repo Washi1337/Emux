@@ -18,6 +18,7 @@ namespace Emux.GameBoy.Cartridge
                 throw new ArgumentNullException(nameof(cartridge));
             _cartridge = cartridge;
             _externalRam = new byte[cartridge.ExternalRamSize];
+            SwitchRomBank(1);
         }
 
         public byte ReadByte(ushort address)
