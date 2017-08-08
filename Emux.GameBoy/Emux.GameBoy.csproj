@@ -49,6 +49,7 @@
     <Compile Include="Audio\SquareChannel.cs" />
     <Compile Include="Audio\SquareSweepChannel.cs" />
     <Compile Include="Audio\WaveSoundChannel.cs" />
+    <Compile Include="Cartridge\IExternalMemory.cs" />
     <Compile Include="Cartridge\MemoryBankController1.cs" />
     <Compile Include="Cartridge\EmulatedCartridge.cs" />
     <Compile Include="Cartridge\CartridgeType.cs" />
@@ -80,6 +81,7 @@
     <Compile Include="Cartridge\RomOnlyBankController.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Timer\TimerControlFlags.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

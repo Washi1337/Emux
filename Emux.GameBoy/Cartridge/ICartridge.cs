@@ -89,6 +89,11 @@
     /// </summary>
     public interface IFullyAccessibleCartridge : ICartridge
     {
+        IExternalMemory ExternalMemory
+        {
+            get;
+        }
+
         /// <summary>
         /// Reads a single byte from the raw data of the cartridge.
         /// </summary>

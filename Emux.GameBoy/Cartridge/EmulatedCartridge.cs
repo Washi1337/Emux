@@ -10,11 +10,14 @@ namespace Emux.GameBoy.Cartridge
     {
         private readonly byte[] _romContents;
 
-        public EmulatedCartridge(byte[] romContents)
+        public EmulatedCartridge(byte[] romContents, IExternalMemory externalMemory)
         {
             if (romContents == null)
                 throw new ArgumentNullException(nameof(romContents));
+            if (externalMemory == null)
+                throw new ArgumentNullException(nameof(externalMemory));
             _romContents = romContents;
+            ExternalMemory = externalMemory;
 
             if (CartridgeType.IsRom()) 
                 BankController = new RomOnlyBankController(this);
@@ -108,7 +111,12 @@ namespace Emux.GameBoy.Cartridge
         {
             get;
         }
-        
+
+        public IExternalMemory ExternalMemory
+        {
+            get;
+        }
+
         public byte ReadByte(ushort address)
         {
             return BankController.ReadByte(address);

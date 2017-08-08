@@ -107,6 +107,7 @@ namespace Emux
         private readonly VideoWindow _videoWindow;
         private readonly KeypadWindow _keypadWindow;
         private GameBoy.GameBoy _gameBoy;
+        private StreamedExternalMemory _externalMemory;
 
         public MainWindow()
         {
@@ -149,7 +150,12 @@ namespace Emux
             if (result.HasValue && result.Value)
             {
                 _gameBoy?.Terminate();
-                _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(File.ReadAllBytes(dialog.FileName)));
+                _externalMemory?.Dispose();
+
+                _externalMemory = new StreamedExternalMemory(File.Open(Path.ChangeExtension(dialog.FileName, ".sav"), FileMode.OpenOrCreate));
+                _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(
+                    File.ReadAllBytes(dialog.FileName),
+                    _externalMemory));
                 _gameBoy.Cpu.Paused += GameBoyOnPaused;
                 _gameBoy.Gpu.VideoOutput = _videoWindow;
                 _gameBoy.Spu.DeactivateAllChannels();

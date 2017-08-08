@@ -9,15 +9,12 @@ namespace Emux.GameBoy.Cartridge
         private int _romBankIndex;
         private int _ramBankIndex;
         private bool _romRamMode;
-        private readonly byte[] _externalRam;
-        private bool _ramEnabled = false;
 
         public MemoryBankController1(IFullyAccessibleCartridge cartridge)
         {
             if (cartridge == null)
                 throw new ArgumentNullException(nameof(cartridge));
             _cartridge = cartridge;
-            _externalRam = new byte[cartridge.ExternalRamSize];
             SwitchRomBank(1);
         }
 
@@ -27,8 +24,8 @@ namespace Emux.GameBoy.Cartridge
                 return _cartridge.ReadFromAbsoluteAddress(address);
             if (address < 0x8000)
                 return _romBank[address - 0x4000];
-            if (_ramEnabled && address >= 0xA000 && address <= 0xBFFF)
-                return _externalRam[address - 0xA000 + GetRamOffset()];
+            if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address <= 0xBFFF)
+                return _cartridge.ExternalMemory.ReadByte(address - 0xA000 + GetRamOffset());
             return 0;
         }
 
@@ -38,22 +35,27 @@ namespace Emux.GameBoy.Cartridge
                 _cartridge.ReadFromAbsoluteAddress(address, buffer, bufferOffset, length);
             else if (address < 0x8000)
                 Buffer.BlockCopy(_romBank, address - 0x4000, buffer, bufferOffset, length);
-            if (_ramEnabled && address >= 0xA000 && address <= 0xBFFF)
-                Buffer.BlockCopy(_externalRam, address - 0xA000 + GetRamOffset(), buffer, bufferOffset, length);
+            if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address <= 0xBFFF)
+                _cartridge.ExternalMemory.ReadBytes(address - 0xA000 + GetRamOffset(), buffer, bufferOffset, length);
         }
 
         public void WriteByte(ushort address, byte value)
         {
             if (address < 0x2000)
-                _ramEnabled = (value & 0xA) == 0xA;
+            {
+                if ((value & 0xA) == 0xA)
+                    _cartridge.ExternalMemory.Activate();
+                else
+                    _cartridge.ExternalMemory.Deactivate();
+            }
             else if (address < 0x4000)
                 SwitchRomBank(value & 0x1F);
-            else if (address <  0x6000)
+            else if (address < 0x6000)
                 SwitchRamBank(value & 0x3);
             else if (address < 0x8000)
                 SwitchRomRamMode(value);
-            else if (_ramEnabled && address >= 0xA000 && address - 0xA000 < _externalRam.Length)
-                _externalRam[address - 0xA000 + GetRamOffset()] = value;
+            else if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address - 0xA000 < _cartridge.ExternalRamSize)
+                _cartridge.ExternalMemory.WriteByte(address - 0xA000 + GetRamOffset(), value);
         }
 
         private void SwitchRomRamMode(byte value)
