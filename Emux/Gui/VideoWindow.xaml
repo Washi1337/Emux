@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Emux"
         mc:Ignorable="d"
-        Title="GameBoy Video Output" Height="300" Width="300" KeyDown="VideoWindowOnKeyDown" KeyUp="VideoWindowOnKeyUp" Background="Black" Closing="VideoWindowOnClosing">
+        Title="GameBoy Video Output" Height="400" Width="450" KeyDown="VideoWindowOnKeyDown" KeyUp="VideoWindowOnKeyUp" Background="Black" Closing="VideoWindowOnClosing">
     <Grid>
         <Image x:Name="VideoImage"/>
     </Grid>

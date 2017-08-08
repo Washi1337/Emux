@@ -103,38 +103,53 @@ namespace Emux
                 new KeyGesture(Key.F1)
             }));
 
-        private readonly GameBoyAudioMixer _mixer = new GameBoyAudioMixer();
         private readonly VideoWindow _videoWindow;
         private readonly KeypadWindow _keypadWindow;
-        private GameBoy.GameBoy _gameBoy;
-        private StreamedExternalMemory _externalMemory;
+        private GameBoy.GameBoy _currentDevice;
 
         public MainWindow()
         {
             InitializeComponent();
             _videoWindow = new VideoWindow();
             _keypadWindow = new KeypadWindow();
-            var player = new DirectSoundOut();
-            player.Init(_mixer);
-            player.Play();
+
+            App.Current.DeviceManager.DeviceChanged += DeviceManagerOnDeviceChanged;
         }
-        
+
+        private void DeviceManagerOnDeviceChanged(object sender, EventArgs e)
+        {
+            _currentDevice = App.Current.DeviceManager.CurrentDevice;
+            _currentDevice.Cpu.Paused += GameBoyOnPaused;
+            _currentDevice.Gpu.VideoOutput = _videoWindow;
+
+            _videoWindow.Device = _currentDevice;
+            _videoWindow.Show();
+            _keypadWindow.Device = _currentDevice;
+
+            RefreshView();
+
+            if (EnableSoundsMenuItem.IsChecked)
+                _currentDevice.Spu.ActivateAllChannels();
+            else
+                _currentDevice.Spu.DeactivateAllChannels();
+        }
+
         public void RefreshView()
         {
-            RegistersTextBox.Text = _gameBoy.Cpu.Registers + "\r\nTick: " + _gameBoy.Cpu.TickCount + "\r\n\r\n" +
-                                    "LCDC: " + ((byte) _gameBoy.Gpu.Lcdc).ToString("X2") + "\r\n" +
-                                    "STAT: " + ((byte) _gameBoy.Gpu.Stat).ToString("X2") + "\r\n" +
-                                    "LY: " + _gameBoy.Gpu.LY.ToString("X2") + "\r\n" +
-                                    "ScY: " + _gameBoy.Gpu.ScY.ToString("X2") + "\r\n" +
-                                    "ScX: " + _gameBoy.Gpu.ScX.ToString("X2") + "\r\n" +
+            RegistersTextBox.Text = _currentDevice.Cpu.Registers + "\r\nTick: " + _currentDevice.Cpu.TickCount + "\r\n\r\n" +
+                                    "LCDC: " + ((byte) _currentDevice.Gpu.Lcdc).ToString("X2") + "\r\n" +
+                                    "STAT: " + ((byte) _currentDevice.Gpu.Stat).ToString("X2") + "\r\n" +
+                                    "LY: " + _currentDevice.Gpu.LY.ToString("X2") + "\r\n" +
+                                    "ScY: " + _currentDevice.Gpu.ScY.ToString("X2") + "\r\n" +
+                                    "ScX: " + _currentDevice.Gpu.ScX.ToString("X2") + "\r\n" +
                                     "\r\n" +
-                                    "TIMA: " + _gameBoy.Timer.Tima.ToString("X2") + "\r\n" +
-                                    "TMA: " + _gameBoy.Timer.Tma.ToString("X2") + "\r\n" +
-                                    "TAC: " + ((byte) _gameBoy.Timer.Tac).ToString("X2") + "\r\n";
+                                    "TIMA: " + _currentDevice.Timer.Tima.ToString("X2") + "\r\n" +
+                                    "TMA: " + _currentDevice.Timer.Tma.ToString("X2") + "\r\n" +
+                                    "TAC: " + ((byte) _currentDevice.Timer.Tac).ToString("X2") + "\r\n";
                 ;
             DisassemblyView.Items.Clear();
-            var disassembler = new Z80Disassembler(_gameBoy.Memory);
-            disassembler.Position = _gameBoy.Cpu.Registers.PC;
+            var disassembler = new Z80Disassembler(_currentDevice.Memory);
+            disassembler.Position = _currentDevice.Cpu.Registers.PC;
             for (int i = 0; i < 30 && disassembler.Position < 0xFFFF; i ++)
             {
                 var instruction = disassembler.ReadNextInstruction();
@@ -146,31 +161,10 @@ namespace Emux
         private void OpenCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             var dialog = new OpenFileDialog();
+            dialog.Filter = "GameBoy ROM file (*.gb)|*.gb";
             var result = dialog.ShowDialog();
             if (result.HasValue && result.Value)
-            {
-                _gameBoy?.Terminate();
-                _externalMemory?.Dispose();
-
-                _externalMemory = new StreamedExternalMemory(File.Open(Path.ChangeExtension(dialog.FileName, ".sav"), FileMode.OpenOrCreate));
-                _gameBoy = new GameBoy.GameBoy(new EmulatedCartridge(
-                    File.ReadAllBytes(dialog.FileName),
-                    _externalMemory));
-                _gameBoy.Cpu.Paused += GameBoyOnPaused;
-                _gameBoy.Gpu.VideoOutput = _videoWindow;
-                _gameBoy.Spu.DeactivateAllChannels();
-                _mixer.Connect(_gameBoy.Spu);
-
-                _videoWindow.Device = _gameBoy;
-                _videoWindow.Show();
-                _keypadWindow.Device = _gameBoy;
-
-                RefreshView();
-                if (EnableSoundsMenuItem.IsChecked)
-                    _gameBoy.Spu.ActivateAllChannels();
-                else
-                    _gameBoy.Spu.DeactivateAllChannels();
-            }
+                App.Current.DeviceManager.LoadDevice(dialog.FileName, Path.ChangeExtension(dialog.FileName, ".sav"));
         }
 
         private void GameBoyOnPaused(object sender, EventArgs eventArgs)
@@ -180,33 +174,33 @@ namespace Emux
 
         private void StepCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _gameBoy.Cpu.Step();
+            _currentDevice.Cpu.Step();
             RefreshView();
         }
 
         private void RunningOnCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = _gameBoy != null && _gameBoy.Cpu.Running;
+            e.CanExecute = _currentDevice != null && _currentDevice.Cpu.Running;
         }
 
         private void PausingOnCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = _gameBoy != null && !_gameBoy.Cpu.Running;
+            e.CanExecute = _currentDevice != null && !_currentDevice.Cpu.Running;
         }
 
         private void GameBoyExistsCanExecute(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = _gameBoy != null;
+            e.CanExecute = _currentDevice != null;
         }
 
         private void RunCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _gameBoy.Cpu.Run();
+            _currentDevice.Cpu.Run();
         }
 
         private void BreakCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _gameBoy.Cpu.Break();
+            _currentDevice.Cpu.Break();
         }
 
         private void SetBreakpointCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -235,7 +229,7 @@ namespace Emux
                     }
                     else
                     {
-                        _gameBoy.Cpu.Breakpoints.Add(address);
+                        _currentDevice.Cpu.Breakpoints.Add(address);
                     }
                 }
             }
@@ -243,13 +237,13 @@ namespace Emux
 
         private void ResetCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _gameBoy.Reset();
+            _currentDevice.Reset();
             RefreshView();
         }
 
         private void ClearBreakpointsCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _gameBoy.Cpu.Breakpoints.Clear();
+            _currentDevice.Cpu.Breakpoints.Clear();
         }
 
         private void KeyPadCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -274,7 +268,7 @@ namespace Emux
 
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
         {
-            _gameBoy?.Terminate();
+            App.Current.DeviceManager.UnloadDevice();
             _videoWindow.Device = null;
             _keypadWindow.Device = null;
             _videoWindow.Close();
@@ -284,9 +278,9 @@ namespace Emux
         private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             if (EnableSoundsMenuItem.IsChecked)
-                _gameBoy.Spu.ActivateAllChannels();
+                _currentDevice.Spu.ActivateAllChannels();
             else
-                _gameBoy.Spu.DeactivateAllChannels();
+                _currentDevice.Spu.DeactivateAllChannels();
         }
     }
 }
