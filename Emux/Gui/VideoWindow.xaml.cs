@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Timers;
 using System.Windows;
@@ -9,7 +8,7 @@ using System.Windows.Media.Imaging;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
 
-namespace Emux
+namespace Emux.Gui
 {
     /// <summary>
     /// Interaction logic for VideoWindow.xaml

@@ -6,13 +6,10 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Emux.Audio;
-using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Microsoft.Win32;
-using NAudio.Wave;
 
-namespace Emux
+namespace Emux.Gui
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -153,7 +150,7 @@ namespace Emux
             for (int i = 0; i < 30 && disassembler.Position < 0xFFFF; i ++)
             {
                 var instruction = disassembler.ReadNextInstruction();
-                DisassemblyView.Items.Add(instruction.ToString());
+                DisassemblyView.Items.Add(new InstructionItem(_currentDevice, instruction));
             }
             
         }

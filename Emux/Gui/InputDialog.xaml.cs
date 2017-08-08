@@ -1,7 +1,6 @@
 ﻿using System.Windows;
-using System.Windows.Input;
 
-namespace Emux
+namespace Emux.Gui
 {
     /// <summary>
     /// Interaction logic for InputDialog.xaml

@@ -1,9 +1,9 @@
-﻿<Window x:Class="Emux.MainWindow"
+﻿<Window x:Class="Emux.Gui.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Emux"
+        xmlns:local="clr-namespace:Emux.Gui"
         mc:Ignorable="d"
         Title="Emux" Height="440.245" Width="707.465" Closing="MainWindow_OnClosing">
     <Window.CommandBindings>
@@ -62,8 +62,31 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="150"/>
             </Grid.ColumnDefinitions>
-            
-            <ListView x:Name="DisassemblyView" FontFamily="Consolas" />
+
+            <ListView x:Name="DisassemblyView" FontFamily="Consolas">
+                <ListView.Resources>
+                    <Style TargetType="ListViewItem">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsCurrentInstruction}" Value="True">
+                                <Setter Property="Background" Value="Gray"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Path=IsBreakpoint}" Value="True">
+                                <Setter Property="Background" Value="Red"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.Resources>
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Offset" Width="100" DisplayMemberBinding="{Binding Path=Offset, StringFormat={}{0:X4}}"/>
+                        <GridViewColumn Header="Disassembly" Width="200" DisplayMemberBinding="{Binding Path=Disassembly}"/>
+                        <GridViewColumn Header="Cycles" Width="80" DisplayMemberBinding="{Binding Path=Cycles}"/>
+                        <GridViewColumn Header="Comment" Width ="200" DisplayMemberBinding="{Binding Path=Comment}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
             <TextBox x:Name="RegistersTextBox" FontFamily="Consolas" Grid.Column="1" IsReadOnly="True" />
         </Grid>
 

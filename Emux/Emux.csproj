@@ -66,6 +66,7 @@
       <DependentUpon>AboutDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Audio\NAudioChannelOutput.cs" />
+    <Compile Include="Gui\InstructionItem.cs" />
     <Compile Include="Gui\KeypadWindow.xaml.cs">
       <DependentUpon>KeypadWindow.xaml</DependentUpon>
     </Compile>

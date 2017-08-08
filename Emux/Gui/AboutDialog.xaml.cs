@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Windows;
 
-namespace Emux
+namespace Emux.Gui
 {
     /// <summary>
     /// Interaction logic for AboutWindow.xaml
