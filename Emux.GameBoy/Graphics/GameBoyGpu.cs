@@ -18,7 +18,8 @@ namespace Emux.GameBoy.Graphics
         public const int OneLineCycles = 456;
         public const int VBlankCycles = 456 * 10;
         public const int FullFrameCycles = 70224;
-        
+
+        private readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
         private readonly byte[] _frameBuffer = new byte[3 * FrameWidth * FrameHeight];
         private readonly GameBoy _device;
 
@@ -362,10 +363,9 @@ namespace Emux.GameBoy.Graphics
                     CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                 }
 
-                var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
-                _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
-                _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
-                _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
+                int paletteIndex = DeterminePaletteIndex(x & 7, currentTileData);
+                int colorIndex = DetermineColorIndex(Bgp, paletteIndex);
+                RenderPixel(outputX, LY, colorIndex);
             }
         }
 
@@ -417,10 +417,9 @@ namespace Emux.GameBoy.Graphics
 
                     if (outputX >= 0)
                     {
-                        var color = DeterminePixelColor(x & 7, currentTileData, Bgp);
-                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3] = color.R;
-                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 1] = color.G;
-                        _frameBuffer[LY * FrameWidth * 3 + outputX * 3 + 2] = color.B;
+                        int paletteIndex = DeterminePaletteIndex(x & 7, currentTileData);
+                        int colorIndex = DetermineColorIndex(Bgp, paletteIndex);
+                        RenderPixel(outputX, LY, colorIndex);
                     }
                 }
             }
@@ -468,37 +467,24 @@ namespace Emux.GameBoy.Graphics
                                 int absoluteX = data.X - 8;
 
                                 // Flip sprite horizontally if specified.
-                                if ((data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip)
-                                    absoluteX += x;
-                                else
-                                    absoluteX += 7 - x;
+                                absoluteX += (data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? x : 7 - x;
 
-                                if (absoluteX >= 0 && absoluteX < FrameWidth)
+                                // Check if in frame and sprite is above or below background.
+                                if (absoluteX >= 0 && absoluteX < FrameWidth 
+                                    && ((data.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(absoluteX, LY) == 0))
                                 {
                                     int paletteIndex = DeterminePaletteIndex(x, currentTileData);
                                     int colorIndex = DetermineColorIndex(palette, paletteIndex);
                                     
-                                    // TODO: take priority into account.
-
-                                    // Check for transparent color.
+                                    // Check if not transparent.
                                     if (paletteIndex != 0)
-                                    {
-                                        var color = _colors[colorIndex];
-                                        _frameBuffer[LY * FrameWidth * 3 + absoluteX * 3] = color.R;
-                                        _frameBuffer[LY * FrameWidth * 3 + absoluteX * 3 + 1] = color.G;
-                                        _frameBuffer[LY * FrameWidth * 3 + absoluteX * 3 + 2] = color.B;
-                                    }
+                                        RenderPixel(absoluteX, LY, colorIndex);
                                 }
                             }
                         }
                     }
                 }
             }
-        }
-        
-        private Color DeterminePixelColor(int x, byte[] tileRowData, byte palette)
-        {
-            return _colors[DetermineColorIndex(x, tileRowData, palette)];
         }
 
         private static int DetermineColorIndex(int x, byte[] tileRowData, byte palette)
@@ -518,6 +504,20 @@ namespace Emux.GameBoy.Graphics
             int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
                                (((tileRowData[1] >> bitIndex) & 1) << 1);
             return paletteIndex;
+        }
+
+        private void RenderPixel(int x, int y, int colorIndex)
+        {
+            _frameIndices[y * FrameWidth + x] = (byte)colorIndex;
+            var color = _colors[colorIndex];
+            _frameBuffer[y * FrameWidth * 3 + x * 3] = color.R;
+            _frameBuffer[y * FrameWidth * 3 + x * 3 + 1] = color.G;
+            _frameBuffer[y * FrameWidth * 3 + x * 3 + 2] = color.B;
+        }
+
+        private int GetRenderedColorIndex(int x, int y)
+        {
+            return _frameIndices[y * FrameWidth + x];
         }
 
         public void Reset()
