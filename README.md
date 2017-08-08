@@ -6,8 +6,10 @@ Features
 ========
 - Play GameBoy Games and relive your nostalgic memories!
     - Open ROM dumps and execute them like the original GameBoy does.
-        - Support for cartridges that contain memory bank controllers v1 and v2.
+        - Support for cartridges that contain memory bank controllers v1, v2 and v3.
+        - Support for cartridges that contain external memory (for e.g. save files).
     - Disable the frame limit for the boring parts of the game that take forever and you'd rather skip (such as training your Pokémon, I won't judge).
+    - Listen to the good ol' tunes and sound effects that the original GameBoy produced.
 - Debugging capabilities
     - Break and continue execution whenever you want
     - View disassembly of the GameBoy memory.
