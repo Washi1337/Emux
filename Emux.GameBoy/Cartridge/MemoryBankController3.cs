@@ -26,7 +26,7 @@ namespace Emux.GameBoy.Cartridge
                 return _cartridge.ReadFromAbsoluteAddress(address);
             if (address < 0x8000)
                 return _romBank[address - 0x4000];
-            if (_ramRtcEnabled && address >= 0xA000 && address <= 0xBFFF)
+            if (_ramRtcEnabled && address >= 0xA000 && address < 0xC000)
                 return ReadRamOrRtc(address);
             return 0;
         }
@@ -57,7 +57,7 @@ namespace Emux.GameBoy.Cartridge
             if (address < 0x2000)
                 _ramRtcEnabled = (value & 0xA) == 0xA;
             else if (address < 0x4000)
-                SwitchRomBank(value & 0x1F);
+                SwitchRomBank(value & 0x7F);
             else if (address < 0x6000)
                 _ramBankOrRtcIndex = value & 3;
             else if (address < 0x8000)
