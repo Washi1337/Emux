@@ -45,7 +45,8 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((value & LcdControlFlags.EnableLcd) == 0)
                 {
-                    Array.Clear(_frameBuffer, 0, _frameBuffer.Length);
+                    Utilities.Memset(_frameBuffer, 255, _frameBuffer.Length);
+                    Array.Clear(_frameIndices, 0, _frameIndices.Length);
                     VideoOutput.RenderFrame(_frameBuffer);
                     LY = 0;
                     SwitchMode(LcdStatusFlags.HBlankMode);
