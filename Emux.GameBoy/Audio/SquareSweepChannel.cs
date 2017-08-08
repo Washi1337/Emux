@@ -31,7 +31,7 @@ namespace Emux.GameBoy.Audio
 
         protected void UpdateFrequency(int cycles)
         {
-            if (SweepShiftCount > 0)
+            if (SweepShiftCount > 0 && _spu.Device.Cpu.SpeedFactor > 0.5)
             {
                 double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor * 2;
                 _frequencySweepClock += timeDelta;

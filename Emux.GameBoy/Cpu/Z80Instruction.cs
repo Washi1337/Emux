@@ -59,17 +59,28 @@ namespace Emux.GameBoy.Cpu
             get { return BitConverter.ToUInt16(RawOperand, 0); }
         }
 
+        /// <summary>
+        /// Gets the assembler code representing the instruction.
+        /// </summary>
+        public string Disassembly
+        {
+            get
+            {
+                switch (RawOperand.Length)
+                {
+                    default:
+                        return OpCode.Disassembly;
+                    case 1:
+                        return string.Format(OpCode.Disassembly, Operand8);
+                    case 2:
+                        return string.Format(OpCode.Disassembly, Operand16);
+                }
+            }
+        }
+
         public override string ToString()
         {
-            switch (RawOperand.Length)
-            {
-                default:
-                    return Offset.ToString("X4") + ": " + OpCode.Disassembly;
-                case 1:
-                    return Offset.ToString("X4") + ": " + string.Format(OpCode.Disassembly, Operand8);
-                case 2:
-                    return Offset.ToString("X4") + ": " + string.Format(OpCode.Disassembly, Operand16);
-            }
+            return Offset.ToString("X4") + ": " + Disassembly;
         }
 
         /// <summary>

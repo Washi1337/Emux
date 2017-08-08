@@ -63,14 +63,14 @@ namespace Emux.GameBoy.Cpu
                 _frameStartSignal.Set();
                 var time = DateTime.Now.TimeOfDay;
                 var delta = time - _frameStartTime;
-                if (delta.TotalSeconds >= 1)
-                {
+               // if (delta.TotalSeconds >= 1)
+               // {
                     CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
-                    FramesPerSecond = _frames / delta.TotalSeconds;
+                    FramesPerSecond = 1 / delta.TotalSeconds;
                     _frames = 0;
                     _frameStartTime = time;
                     _frameStartTickCount = _ticks;
-                }
+               // }
             }, 60);
         }
 
