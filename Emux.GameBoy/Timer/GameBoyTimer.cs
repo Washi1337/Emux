@@ -23,11 +23,7 @@ namespace Emux.GameBoy.Timer
         public byte Tima
         {
             get { return _tima; }
-            set
-            {
-                _tima = value;
-                _timerClock = 0;
-            }
+            set { _tima = value; }
         }
 
         public byte Tma
@@ -41,9 +37,9 @@ namespace Emux.GameBoy.Timer
             get { return _tac; }
             set
             {
-                if ((value & TimerControlFlags.EnableTimer) != TimerControlFlags.EnableTimer)
+                if ((value & TimerControlFlags.EnableTimer) == 0)
                 {
-                    _timerClock = 0;
+                    //_timerClock = 0;
                 }
 
                 _tac = value;
@@ -81,7 +77,7 @@ namespace Emux.GameBoy.Timer
         public void TimerStep(int cycles)
         {
             _divClock += cycles;
-            if (_divClock >= DivCycleInterval)
+            while (_divClock > DivCycleInterval)
             {
                 _divClock -= DivCycleInterval;
                 Div = (byte) ((Div + 1) % 0xFF);
@@ -91,7 +87,7 @@ namespace Emux.GameBoy.Timer
             {
                 _timerClock += cycles;
                 int timaCycles = GetTimaClockCycles();
-                if (_timerClock >= timaCycles)
+                while (_timerClock > timaCycles)
                 {
                     _timerClock -= timaCycles;
 

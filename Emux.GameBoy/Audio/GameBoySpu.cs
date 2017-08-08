@@ -16,7 +16,7 @@ namespace Emux.GameBoy.Audio
             channels.Add(new SquareSweepChannel(this));
             channels.Add(new SquareChannel(this));
             channels.Add(Wave = new WaveSoundChannel());
-            channels.Add(null);
+            channels.Add(new NoiseChannel(this));
             Channels = channels.AsReadOnly();
             ActivateAllChannels();
         }
