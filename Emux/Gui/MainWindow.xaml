@@ -63,7 +63,7 @@
                 <ColumnDefinition Width="150"/>
             </Grid.ColumnDefinitions>
 
-            <ListView x:Name="DisassemblyView" FontFamily="Consolas">
+            <ListView x:Name="DisassemblyView" FontFamily="Consolas" d:DataContext="{d:DesignData local:InstructionItem }">
                 <ListView.Resources>
                     <Style TargetType="ListViewItem">
                         <Style.Triggers>
@@ -81,7 +81,32 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Offset" Width="100" DisplayMemberBinding="{Binding Path=Offset, StringFormat={}{0:X4}}"/>
-                        <GridViewColumn Header="Disassembly" Width="200" DisplayMemberBinding="{Binding Path=Disassembly}"/>
+                        <GridViewColumn Header="Disassembly" Width="200">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock d:DataContext="{d:DesignInstance local:InstructionItem}" Text="{Binding Disassembly}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsJump}" Value="True">
+                                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                                        <Setter Property="Background" Value="Yellow"></Setter>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Path=IsCall}" Value="True">
+                                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                                        <Setter Property="Background" Value="Cyan"></Setter>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding Path=IsReturn}" Value="True">
+                                                        <Setter Property="Foreground" Value="Black"></Setter>
+                                                        <Setter Property="Background" Value="Cyan"></Setter>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Header="Cycles" Width="80" DisplayMemberBinding="{Binding Path=Cycles}"/>
                         <GridViewColumn Header="Comment" Width ="200" DisplayMemberBinding="{Binding Path=Comment}"/>
                     </GridView>
@@ -93,3 +118,4 @@
 
     </Grid>
 </Window>
+

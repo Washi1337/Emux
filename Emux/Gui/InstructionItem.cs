@@ -40,6 +40,21 @@ namespace Emux.Gui
             get { return _gameBoy.Cpu.Registers.PC == Offset; }
         }
 
+        public bool IsReturn
+        {
+            get { return _instruction.OpCode.Disassembly.StartsWith("ret"); }
+        }
+
+        public bool IsCall
+        {
+            get { return _instruction.OpCode.Disassembly.StartsWith("call"); }
+        }
+
+        public bool IsJump
+        {
+            get { return _instruction.OpCode.Disassembly.StartsWith("j"); }
+        }
+
         public int Offset
         {
             get { return _instruction.Offset; }
