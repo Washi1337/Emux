@@ -511,9 +511,10 @@ namespace Emux.GameBoy.Graphics
         {
             _frameIndices[y * FrameWidth + x] = (byte)colorIndex;
             var color = _colors[colorIndex];
-            _frameBuffer[y * FrameWidth * 3 + x * 3] = color.R;
-            _frameBuffer[y * FrameWidth * 3 + x * 3 + 1] = color.G;
-            _frameBuffer[y * FrameWidth * 3 + x * 3 + 2] = color.B;
+            fixed (byte* frameBuffer = _frameBuffer)
+            {
+                ((Color*)frameBuffer)[y * FrameWidth + x] = color;
+            }
         }
 
         private int GetRenderedColorIndex(int x, int y)
