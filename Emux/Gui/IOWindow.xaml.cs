@@ -3,7 +3,9 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Emux.GameBoy.Graphics;
 
 namespace Emux.Gui
@@ -13,11 +15,21 @@ namespace Emux.Gui
     /// </summary>
     public partial class IOWindow : Window
     {
-        private GameBoy.GameBoy _device;
+        public static readonly DependencyProperty AutoRefreshProperty = DependencyProperty.Register("AutoRefresh",
+            typeof(bool), typeof(IOWindow), new PropertyMetadata((o, e) => ((IOWindow)o)._refreshTimer.IsEnabled = (bool) e.NewValue));
 
+        private GameBoy.GameBoy _device;
+        private readonly DispatcherTimer _refreshTimer;
         public IOWindow()
         {
             InitializeComponent();
+            _refreshTimer = new DispatcherTimer(new TimeSpan(0, 0, 0, 0, 50), DispatcherPriority.Background,
+                (o, e) =>
+                {
+                    if (Device != null)
+                        RefreshView();
+                }, Dispatcher);
+            
         }
 
         public GameBoy.GameBoy Device
@@ -35,7 +47,6 @@ namespace Emux.Gui
                             value.Cpu.Resumed -= CpuOnResumed;
                         }
                         _device = value;
-                        DisabledOverlay.DisableOverlay();
                         if (_device != null)
                         {
                             _device.Cpu.Paused += CpuOnPaused;
@@ -45,6 +56,11 @@ namespace Emux.Gui
                 }
             }
         }
+        public bool AutoRefresh
+        {
+            get { return (bool) GetValue(AutoRefreshProperty); }
+            set { SetValue(AutoRefreshProperty, value); }
+        }
 
         private void CpuOnPaused(object sender, EventArgs eventArgs)
         {
@@ -52,16 +68,11 @@ namespace Emux.Gui
             {
                 if (IsVisible)
                     RefreshView();
-                DisabledOverlay.DisableOverlay();
             });
         }
 
         private void CpuOnResumed(object sender, EventArgs e)
         {
-            Dispatcher.Invoke(() =>
-            {
-                DisabledOverlay.EnableOverlay(500);
-            });
         }
 
         public void RefreshView()
@@ -70,6 +81,16 @@ namespace Emux.Gui
             StatFlagsListBox.RawValue = (byte) Device.Gpu.Stat;
 
             foreach (var item in GpuRegistersView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in Sound1RegistersView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in Sound2RegistersView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in Sound3RegistersView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in Sound4RegistersView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in MasterSoundRegistersView.Items.Cast<RegisterItem>())
                 item.Value = Device.Memory.ReadByte(item.Offset);
         }
 
@@ -114,12 +135,13 @@ namespace Emux.Gui
                 StatFlagsListBox.RawValue;
         }
 
-        private void GpuRegistersViewOnItemActivate(object sender, EventArgs e)
+        private void RegistersViewOnItemActivate(object sender, EventArgs e)
         {
-            if (GpuRegistersView.SelectedItem == null)
+            var listView = (ListView) sender;
+            if (listView.SelectedItem == null)
                 return;
 
-            var item = (RegisterItem) GpuRegistersView.SelectedItem;
+            var item = (RegisterItem) listView.SelectedItem;
             string text = item.Value.ToString("X2");
             bool repeat = true;
             while (repeat)
@@ -145,6 +167,7 @@ namespace Emux.Gui
                     else
                     {
                         item.Value = newValue;
+                        Device.Memory.WriteByte(item.Offset, newValue);
                     }
                 }
             }

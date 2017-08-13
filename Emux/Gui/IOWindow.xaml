@@ -6,7 +6,9 @@
         xmlns:local="clr-namespace:Emux.Gui"
         xmlns:converters="clr-namespace:Emux.Gui.Converters"
         mc:Ignorable="d"
-        Title="IO memory view" Height="523.157" Width="584.81" Closing="IOWindowOnClosing" WindowStyle="ToolWindow" IsVisibleChanged="IOWindowOnIsVisibleChanged">
+        Title="IO memory view" Height="523.157" Width="581.271" Closing="IOWindowOnClosing" WindowStyle="ToolWindow"
+        IsVisibleChanged="IOWindowOnIsVisibleChanged"
+        x:Name="Root">
     <Window.CommandBindings>
         <CommandBinding Command="Close" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="CloseCommandOnExecuted"/>
         <CommandBinding Command="Refresh" CanExecute="CommandBindingOnCanAlwaysExecute"
@@ -20,8 +22,12 @@
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
 
-        <TabControl>
+        <TabControl Grid.ColumnSpan="2">
             <TabItem Header="GPU">
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -29,7 +35,7 @@
                         <ColumnDefinition Width="5"/>
                         <ColumnDefinition Width="263*" />
                     </Grid.ColumnDefinitions>
-                    <ListView x:Name="GpuRegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="GpuRegistersViewOnItemActivate">
+                    <ListView x:Name="GpuRegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
                         <ListView.View>
                             <GridView>
                                 <GridViewColumn Header="Offset" Width="75" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
@@ -87,13 +93,127 @@
                     </Grid>
                 </Grid>
             </TabItem>
-        </TabControl>
-        
-        <local:TitledOverlay Grid.Row="0" x:Name="DisabledOverlay" Visibility="Hidden"
-                               Title="The emulator is running..." 
-                               Subtitle="Changes to IO registers cannot be made right now. "/>
+            <TabItem Header="SPU">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition Height="5"/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="1" Margin="5" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+                    <GroupBox Grid.Row="0" Grid.Column="0" Header="Master">
+                        <ListView x:Name="MasterSoundRegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF24" DisplayName="NR51"/>
+                                <local:RegisterItem Offset="0xFF25" DisplayName="NR52"/>
+                                <local:RegisterItem Offset="0xFF26" DisplayName="NR53"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+
+                    <GroupBox Grid.Row="0" Grid.Column="2" Header="#1 (Square + sweep)">
+                        <ListView x:Name="Sound1RegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF10" DisplayName="NR10"/>
+                                <local:RegisterItem Offset="0xFF11" DisplayName="NR11"/>
+                                <local:RegisterItem Offset="0xFF12" DisplayName="NR12"/>
+                                <local:RegisterItem Offset="0xFF13" DisplayName="NR13"/>
+                                <local:RegisterItem Offset="0xFF14" DisplayName="NR14"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+                    
+                    <GridSplitter Grid.Row="0" Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+                    <GroupBox Grid.Row="0" Grid.Column="4" Header="#2 (Square)">
+                        <ListView x:Name="Sound2RegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF15" DisplayName="NR20"/>
+                                <local:RegisterItem Offset="0xFF16" DisplayName="NR21"/>
+                                <local:RegisterItem Offset="0xFF17" DisplayName="NR22"/>
+                                <local:RegisterItem Offset="0xFF18" DisplayName="NR23"/>
+                                <local:RegisterItem Offset="0xFF19" DisplayName="NR24"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+                    
+                    <GridSplitter Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+                    <GroupBox Grid.Row="2" Grid.Column="2" Header="#3 (Wave)">
+                        <ListView x:Name="Sound3RegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF1A" DisplayName="NR30"/>
+                                <local:RegisterItem Offset="0xFF1B" DisplayName="NR31"/>
+                                <local:RegisterItem Offset="0xFF1C" DisplayName="NR32"/>
+                                <local:RegisterItem Offset="0xFF1D" DisplayName="NR33"/>
+                                <local:RegisterItem Offset="0xFF1E" DisplayName="NR34"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+
+                    <GridSplitter Grid.Row="2" Grid.Column="3" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
+
+                    <GroupBox Grid.Row="2" Grid.Column="4" Header="#4 (Noise)">
+                        <ListView x:Name="Sound4RegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF1F" DisplayName="NR40"/>
+                                <local:RegisterItem Offset="0xFF20" DisplayName="NR41"/>
+                                <local:RegisterItem Offset="0xFF21" DisplayName="NR42"/>
+                                <local:RegisterItem Offset="0xFF22" DisplayName="NR43"/>
+                                <local:RegisterItem Offset="0xFF23" DisplayName="NR44"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <StackPanel Grid.Row="1" Grid.Column="0" Margin="5" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Stretch">
+            <CheckBox Content="Auto-refresh" VerticalAlignment="Center" IsChecked="{Binding ElementName=Root, Path=AutoRefresh}"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="5" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
             <Button Content="Refresh" Padding="20,5" MinWidth="100" Margin="5" Command="Refresh"/>
             <Button Content="Close" Padding="20,5" MinWidth="100" Margin="5" IsCancel="True" Command="Close"/>
         </StackPanel>

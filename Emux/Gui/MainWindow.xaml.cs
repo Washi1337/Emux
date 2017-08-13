@@ -303,6 +303,7 @@ namespace Emux.Gui
             _ioWindow.Device = null;
             _videoWindow.Close();
             _keypadWindow.Close();
+            _ioWindow.Close();
         }
 
         private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
