@@ -72,6 +72,11 @@ namespace Emux.Gui
                 new KeyGesture(Key.F11)
             }));
 
+        public static readonly RoutedUICommand IOMemoryCommand = new RoutedUICommand(
+            "Open the IO memory view",
+            "IO Memory",
+            typeof(MainWindow));
+
         public static readonly RoutedUICommand KeyPadCommand = new RoutedUICommand(
             "Open the virtual keypad window",
             "Keypad",
@@ -102,6 +107,7 @@ namespace Emux.Gui
 
         private readonly VideoWindow _videoWindow;
         private readonly KeypadWindow _keypadWindow;
+        private readonly IOWindow _ioWindow;
         private GameBoy.GameBoy _currentDevice;
 
         public MainWindow()
@@ -109,19 +115,30 @@ namespace Emux.Gui
             InitializeComponent();
             _videoWindow = new VideoWindow();
             _keypadWindow = new KeypadWindow();
+            _ioWindow = new IOWindow();
 
             App.Current.DeviceManager.DeviceChanged += DeviceManagerOnDeviceChanged;
         }
 
         private void DeviceManagerOnDeviceChanged(object sender, EventArgs e)
         {
+            if (_currentDevice != null)
+            {
+                _currentDevice.Cpu.Paused -= GameBoyOnPaused;
+                _currentDevice.Cpu.Resumed -= GameBoyOnResumed;
+                RunningOverlay.DisableOverlay();
+            }
+
             _currentDevice = App.Current.DeviceManager.CurrentDevice;
             _currentDevice.Cpu.Paused += GameBoyOnPaused;
+            _currentDevice.Cpu.Resumed += GameBoyOnResumed;
             _currentDevice.Gpu.VideoOutput = _videoWindow;
 
             _videoWindow.Device = _currentDevice;
-            _videoWindow.Show();
             _keypadWindow.Device = _currentDevice;
+            _ioWindow.Device = _currentDevice;
+            
+            _videoWindow.Show();
 
             RefreshView();
 
@@ -166,7 +183,19 @@ namespace Emux.Gui
 
         private void GameBoyOnPaused(object sender, EventArgs eventArgs)
         {
-            Dispatcher.Invoke(RefreshView);
+            Dispatcher.Invoke(() =>
+            {
+                RefreshView();
+                RunningOverlay.DisableOverlay();
+            });
+        }
+
+        private void GameBoyOnResumed(object sender, EventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                RunningOverlay.EnableOverlay(500);
+            });
         }
 
         private void StepCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -261,6 +290,9 @@ namespace Emux.Gui
         private void VideoOutputCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             _videoWindow.Show();
+            if (_videoWindow.WindowState == WindowState.Minimized)
+                _videoWindow.WindowState = WindowState.Normal;
+            _videoWindow.Focus();
         }
 
         private void MainWindow_OnClosing(object sender, CancelEventArgs e)
@@ -268,6 +300,7 @@ namespace Emux.Gui
             App.Current.DeviceManager.UnloadDevice();
             _videoWindow.Device = null;
             _keypadWindow.Device = null;
+            _ioWindow.Device = null;
             _videoWindow.Close();
             _keypadWindow.Close();
         }
@@ -278,6 +311,11 @@ namespace Emux.Gui
                 _currentDevice.Spu.ActivateAllChannels();
             else
                 _currentDevice.Spu.DeactivateAllChannels();
+        }
+
+        private void IOMemoryCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _ioWindow.Show();
         }
     }
 }

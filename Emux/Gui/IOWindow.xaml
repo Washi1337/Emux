@@ -1,0 +1,101 @@
+﻿<Window x:Class="Emux.Gui.IOWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux.Gui"
+        xmlns:converters="clr-namespace:Emux.Gui.Converters"
+        mc:Ignorable="d"
+        Title="IO memory view" Height="523.157" Width="584.81" Closing="IOWindowOnClosing" WindowStyle="ToolWindow" IsVisibleChanged="IOWindowOnIsVisibleChanged">
+    <Window.CommandBindings>
+        <CommandBinding Command="Close" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="CloseCommandOnExecuted"/>
+        <CommandBinding Command="Refresh" CanExecute="CommandBindingOnCanAlwaysExecute"
+                        Executed="RefreshCommandOnExecuted"/>
+    </Window.CommandBindings>
+    <Window.Resources>
+        <converters:HexadecimalConverter x:Key="HexConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TabControl>
+            <TabItem Header="GPU">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="283*" />
+                        <ColumnDefinition Width="5"/>
+                        <ColumnDefinition Width="263*" />
+                    </Grid.ColumnDefinitions>
+                    <ListView x:Name="GpuRegistersView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="GpuRegistersViewOnItemActivate">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Offset" Width="75" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                <GridViewColumn Header="Name" Width="75" DisplayMemberBinding="{Binding DisplayName}"/>
+                                <GridViewColumn Header="Value" Width="75" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                            </GridView>
+                        </ListView.View>
+                        <ListView.Items>
+                            <local:RegisterItem Offset="0xFF40" DisplayName="LCDC"/>
+                            <local:RegisterItem Offset="0xFF41" DisplayName="STAT"/>
+                            <local:RegisterItem Offset="0xFF42" DisplayName="SCY"/>
+                            <local:RegisterItem Offset="0xFF43" DisplayName="SCX"/>
+                            <local:RegisterItem Offset="0xFF44" DisplayName="LY"/>
+                            <local:RegisterItem Offset="0xFF45" DisplayName="LYC"/>
+                            <local:RegisterItem Offset="0xFF47" DisplayName="BGP"/>
+                            <local:RegisterItem Offset="0xFF48" DisplayName="OBJP0"/>
+                            <local:RegisterItem Offset="0xFF49" DisplayName="OBJP1"/>
+                            <local:RegisterItem Offset="0xFF4A" DisplayName="WY"/>
+                            <local:RegisterItem Offset="0xFF4B" DisplayName="WX"/>
+                        </ListView.Items>
+                    </ListView>
+                    <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="5"/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <GroupBox Header="LCDC">
+                            <local:FlagsListBox x:Name="LcdcFlagsListBox" RawValueChanged="LcdcFlagsListBoxOnRawValueChanged">
+                                <local:FlagsListBox.FlagItems>
+                                    <local:FlagItem FlagName="Enable Background" BitIndex="0"/>
+                                    <local:FlagItem FlagName="Enable Sprites" BitIndex="1"/>
+                                    <local:FlagItem FlagName="8x16 Sprites" BitIndex="2"/>
+                                    <local:FlagItem FlagName="Use background tile map 0x9C00" BitIndex="3"/>
+                                    <local:FlagItem FlagName="Use background/window tile data 0x8000" BitIndex="4"/>
+                                    <local:FlagItem FlagName="Enable window" BitIndex="5"/>
+                                    <local:FlagItem FlagName="Use window tile map 0x9C000" BitIndex="6"/>
+                                    <local:FlagItem FlagName="Enable LCD" BitIndex="7"/>
+                                </local:FlagsListBox.FlagItems>
+                            </local:FlagsListBox>
+                        </GroupBox>
+                        <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch"/>
+                        <GroupBox Grid.Row="2" Header="STAT">
+                            <local:FlagsListBox x:Name="StatFlagsListBox" RawValueChanged="StatFlagsListBoxOnRawValueChanged">
+                                <local:FlagsListBox.FlagItems>
+                                    <local:FlagItem FlagName="Coincidence (LY=LYC)" BitIndex="2" IsReadOnly="True"/>
+                                    <local:FlagItem FlagName="Enable HBlank interrupts" BitIndex="3"/>
+                                    <local:FlagItem FlagName="Enable VBlank interrupts" BitIndex="4"/>
+                                    <local:FlagItem FlagName="Enable OamBlank interrupts" BitIndex="5"/>
+                                    <local:FlagItem FlagName="Enable Coincidence interrupts" BitIndex="6"/>
+                                </local:FlagsListBox.FlagItems>
+                            </local:FlagsListBox>
+                        </GroupBox>
+                    </Grid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+        
+        <local:TitledOverlay Grid.Row="0" x:Name="DisabledOverlay" Visibility="Hidden"
+                               Title="The emulator is running..." 
+                               Subtitle="Changes to IO registers cannot be made right now. "/>
+
+        <StackPanel Grid.Row="1" Margin="5" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Stretch">
+            <Button Content="Refresh" Padding="20,5" MinWidth="100" Margin="5" Command="Refresh"/>
+            <Button Content="Close" Padding="20,5" MinWidth="100" Margin="5" IsCancel="True" Command="Close"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -66,7 +66,20 @@
       <DependentUpon>AboutDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Audio\NAudioChannelOutput.cs" />
+    <Compile Include="Gui\Converters\HexadecimalConverter.cs" />
+    <Compile Include="Gui\Converters\InverseConverter.cs" />
+    <Compile Include="Gui\RegisterItem.cs" />
+    <Compile Include="Gui\TitledOverlay.xaml.cs">
+      <DependentUpon>TitledOverlay.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Gui\FlagItem.cs" />
+    <Compile Include="Gui\FlagsListBox.xaml.cs">
+      <DependentUpon>FlagsListBox.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Gui\InstructionItem.cs" />
+    <Compile Include="Gui\IOWindow.xaml.cs">
+      <DependentUpon>IOWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Gui\KeypadWindow.xaml.cs">
       <DependentUpon>KeypadWindow.xaml</DependentUpon>
     </Compile>
@@ -78,7 +91,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Gui\TitledOverlay.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Gui\FlagsListBox.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Gui\InputDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Gui\IOWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
