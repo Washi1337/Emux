@@ -86,7 +86,7 @@ namespace Emux.GameBoy.Graphics
         public byte ObjP1;
         public byte WY;
         public byte WX;
-
+        
         public GameBoyGpu(GameBoy device)
         {
             if (device == null)
