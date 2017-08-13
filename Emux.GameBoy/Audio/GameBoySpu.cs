@@ -152,7 +152,7 @@ namespace Emux.GameBoy.Audio
 
         public void SpuStep(int cycles)
         {
-            if ((NR52 & (1 << 7)) != 0)
+            if ((NR53 & (1 << 7)) != 0)
             {
                 foreach (var channel in Channels)
                     channel?.ChannelStep(cycles);
