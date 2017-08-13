@@ -15,7 +15,12 @@ namespace Emux.GameBoy.Cpu
         public const int SerialLinkIsr = 0x0058;
         public const int JoypadPressIsr = 0x0060;
         public const double OfficialClockFrequency = 4194304;
-        
+
+        /// <summary>
+        /// Occurs when the processor has resumed execution.
+        /// </summary>
+        public event EventHandler Resumed;
+
         /// <summary>
         /// Occurs when the processor is paused by breaking the execution explicitly, or when the control flow hit a breakpoint.
         /// </summary>
@@ -71,7 +76,7 @@ namespace Emux.GameBoy.Cpu
                     _frameStartTime = time;
                     _frameStartTickCount = _ticks;
                // }
-            }, 60);
+            }, 59);
         }
 
         /// <summary>
@@ -152,7 +157,8 @@ namespace Emux.GameBoy.Cpu
                 {
                     Running = true;
                     _continueSignal.Reset();
-                    
+                    OnResumed();
+
                     int cycles = 0;
                     do
                     {
@@ -334,7 +340,12 @@ namespace Emux.GameBoy.Cpu
         {
             _halt = true;
         }
-        
+
+        protected virtual void OnResumed()
+        {
+            Resumed?.Invoke(this, EventArgs.Empty);
+        }
+
         protected virtual void OnPaused()
         {
             Paused?.Invoke(this, EventArgs.Empty);
@@ -344,5 +355,6 @@ namespace Emux.GameBoy.Cpu
         {
             Terminated?.Invoke(this, EventArgs.Empty);
         }
+
     }
 }
