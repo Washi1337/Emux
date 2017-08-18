@@ -21,6 +21,8 @@ namespace Emux.Audio
 
             foreach (var channel in Channels)
                 _mixer.AddInputStream(channel);
+
+            
         }
         
         public WaveFormat WaveFormat

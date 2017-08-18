@@ -14,6 +14,13 @@ namespace Emux.Audio
             if (mixer == null)
                 throw new ArgumentNullException(nameof(mixer));
             _mixer = mixer;
+            Enabled = true;
+        }
+
+        public bool Enabled
+        {
+            get;
+            set;
         }
 
         public int SampleRate
@@ -24,7 +31,8 @@ namespace Emux.Audio
         public void BufferSoundSamples(float[] sampleData, int offset, int length)
         {
             byte[] newSampleData = new byte[length * sizeof(float)];
-            Buffer.BlockCopy(sampleData, offset * sizeof(float), newSampleData, 0, length * sizeof(float));    
+            if (Enabled)
+                Buffer.BlockCopy(sampleData, offset * sizeof(float), newSampleData, 0, length * sizeof(float));
             AddSamples(newSampleData, 0, newSampleData.Length);
         }
     }
