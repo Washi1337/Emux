@@ -21,6 +21,11 @@
         byte[] NewPublisherCode { get; }
 
         /// <summary>
+        /// Gets a value indicating whether the cartridge is designed specifically for GameBoy Color devices.
+        /// </summary>
+        GameBoyColorFlag GameBoyColorFlag { get; }
+
+        /// <summary>
         /// Gets a value indicating whether Super GameBoy features are enabled or not by this cartridge. 
         /// </summary>
         bool SuperGameBoyMode { get; }

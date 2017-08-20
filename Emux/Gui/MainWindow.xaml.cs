@@ -204,7 +204,7 @@ namespace Emux.Gui
         private void OpenCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             var dialog = new OpenFileDialog();
-            dialog.Filter = "GameBoy ROM file (*.gb)|*.gb";
+            dialog.Filter = "GameBoy ROM file (*.gb;*.gbc)|*.gb;*.gbc";
             var result = dialog.ShowDialog();
             if (result.HasValue && result.Value)
                 App.Current.DeviceManager.LoadDevice(dialog.FileName, Path.ChangeExtension(dialog.FileName, ".sav"));

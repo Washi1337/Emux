@@ -61,7 +61,8 @@ namespace Emux
         {
             UnloadDevice();
             _currentExternalMemory = new StreamedExternalMemory(File.Open(ramFilePath, FileMode.OpenOrCreate));
-            CurrentDevice = new GameBoy.GameBoy(new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory));
+            var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
+            CurrentDevice = new GameBoy.GameBoy(cartridge, cartridge.GameBoyColorFlag != GameBoyColorFlag.OriginalGameBoy);
             OnDeviceLoaded(new DeviceEventArgs(CurrentDevice));
         }
 

@@ -9,8 +9,10 @@ namespace Emux.GameBoy.Memory
     public class GameBoyMemory
     {
         private readonly GameBoy _device;
-        
-        private readonly byte[] _internalRam = new byte[0x2000];
+
+        private readonly byte[] _internalRam = new byte[0x1000];
+        private readonly byte[] _internalSwitchableRam;
+        private int _internalRamBankIndex = 1;
         private readonly byte[] _highInternalRam = new byte[0x7F];
         
         // TODO: to be removed:
@@ -21,7 +23,7 @@ namespace Emux.GameBoy.Memory
             if (device == null)
                 throw new ArgumentNullException(nameof(device));
             _device = device;
-            
+            _internalSwitchableRam = new byte[device.GbcMode ? 0x7000 : 0x1000];
         }
         
         public byte ReadByte(ushort address)
@@ -46,9 +48,11 @@ namespace Emux.GameBoy.Memory
                 case 0xB:
                     return _device.Cartridge.ReadByte(address);
                     
-                case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                case 0xD:
+                case 0xC: // internal ram (0xC000 -> 0xCFFF)
                     return _internalRam[address - 0xC000];
+
+                case 0xD: // internal switchable ram (0xD000 -> 0xDFFF)
+                    return _internalSwitchableRam[address - 0xD000 + GetSwitchableRamOffset()];
 
                 case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
                     return _internalRam[address - 0xE000];
@@ -57,7 +61,7 @@ namespace Emux.GameBoy.Memory
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            return _internalRam[address - 0xE000];
+                            return _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()];
 
                         case 0xFE00:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
@@ -96,6 +100,8 @@ namespace Emux.GameBoy.Memory
                                     return _device.Gpu.ReadRegister((byte) (address & 0xFF));
                                 case 0x4C:
                                     return _io[address - 0xFF49];
+                                case 0x70:
+                                    return (byte) _internalRamBankIndex;
                                 default:
                                     if (address < 0xFF80)
                                         return 0;
@@ -147,9 +153,12 @@ namespace Emux.GameBoy.Memory
                     _device.Cartridge.WriteByte(address, value);
                     break;
 
-                case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                case 0xD:
+                case 0xC: // internal ram (0xC000 -> 0xCFFF)
                     _internalRam[address - 0xC000] = value;
+                    break;
+
+                case 0xD: // internal switchable ram (0xD000 -> 0xDFFF)
+                    _internalSwitchableRam[address - 0xD000 + GetSwitchableRamOffset()] = value;
                     break;
 
                 case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
@@ -162,7 +171,7 @@ namespace Emux.GameBoy.Memory
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            _internalRam[address - 0xE000] = value;
+                            _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()] = value;
                             break;
 
                         case 0xFE00:
@@ -199,6 +208,9 @@ namespace Emux.GameBoy.Memory
                                     break;
                                 case 0x46:
                                     PerformDmaTransfer(value);
+                                    break;
+                                case 0x70:
+                                    SwitchRamBank(value);
                                     break;
                                 default:
                                     if (address >= 0xFF80)
@@ -253,9 +265,13 @@ namespace Emux.GameBoy.Memory
                     break;
 
                 case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                case 0xD:
                     section = _internalRam;
                     dma -= 0xC0;
+                    break;
+                case 0xD:
+                    section = _internalSwitchableRam;
+                    dma -= 0xD0;
+                    dma += (byte) (GetSwitchableRamOffset() >> 8);
                     break;
 
                 case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
@@ -273,6 +289,18 @@ namespace Emux.GameBoy.Memory
                 Buffer.BlockCopy(section, dma * 0x100, oamData, 0, oamData.Length);
 
             _device.Gpu.ImportOam(oamData);
+        }
+
+        private int GetSwitchableRamOffset()
+        {
+            return _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
+        }
+
+        private void SwitchRamBank(byte value)
+        {
+            if (value == 0)
+                value = 1;
+            _internalRamBankIndex = value & 7;
         }
     }
 }

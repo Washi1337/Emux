@@ -13,9 +13,10 @@ namespace Emux.GameBoy
     /// </summary>
     public class GameBoy
     {
-        public GameBoy(ICartridge cartridge)
+        public GameBoy(ICartridge cartridge, bool gbcMode)
         {
             Cartridge = cartridge;
+            GbcMode = gbcMode;
             Memory = new GameBoyMemory(this);
             Cpu = new GameBoyCpu(this);
             Gpu = new GameBoyGpu(this);
@@ -24,6 +25,14 @@ namespace Emux.GameBoy
             Timer = new GameBoyTimer(this);
             Reset();
             IsPoweredOn = true;
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the GameBoy device is in GameBoy Color (GBC) mode, enabling specific features only GameBoy Color devices have.
+        /// </summary>
+        public bool GbcMode
+        {
+            get;
         }
 
         /// <summary>
@@ -97,8 +106,8 @@ namespace Emux.GameBoy
         public void Reset()
         {
             Gpu.Reset();
-            
-            Cpu.Registers.A = 0x01;
+
+            Cpu.Registers.A = GbcMode ? (byte) 0x11 : (byte) 0x01;
             Cpu.Registers.F = 0xB0;
             Cpu.Registers.BC = 0x0013;
             Cpu.Registers.DE = 0x00D8;
