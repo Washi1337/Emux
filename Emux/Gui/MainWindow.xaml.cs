@@ -75,7 +75,11 @@ namespace Emux.Gui
         public static readonly RoutedUICommand IOMemoryCommand = new RoutedUICommand(
             "Open the IO memory view",
             "IO Memory",
-            typeof(MainWindow));
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F3)
+            }));
 
         public static readonly RoutedUICommand KeyPadCommand = new RoutedUICommand(
             "Open the virtual keypad window",
@@ -84,6 +88,15 @@ namespace Emux.Gui
             new InputGestureCollection(new[]
             {
                 new KeyGesture(Key.F12)
+            }));
+
+        public static readonly RoutedUICommand MixerCommand = new RoutedUICommand(
+            "Open the audio mixer",
+            "Audio Mixer",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F4)
             }));
 
         public static readonly RoutedUICommand EnableSoundCommand = new RoutedUICommand(
@@ -105,22 +118,42 @@ namespace Emux.Gui
                 new KeyGesture(Key.F1)
             }));
 
+        public static readonly DependencyProperty DeviceManagerProperty = DependencyProperty.Register(
+            "DeviceManager", typeof(DeviceManager), typeof(MainWindow),
+            new PropertyMetadata((o, e) => ((MainWindow) o).OnDeviceManagerChanged(e)));
+
         private readonly VideoWindow _videoWindow;
+        private readonly AudioMixerWindow _mixerWindow;
         private readonly KeypadWindow _keypadWindow;
         private readonly IOWindow _ioWindow;
         private GameBoy.GameBoy _currentDevice;
-
+        
         public MainWindow()
         {
             InitializeComponent();
             _videoWindow = new VideoWindow();
+            _mixerWindow = new AudioMixerWindow();
             _keypadWindow = new KeypadWindow();
             _ioWindow = new IOWindow();
 
-            App.Current.DeviceManager.DeviceChanged += DeviceManagerOnDeviceChanged;
+            DeviceManager = App.Current.DeviceManager;
         }
 
-        private void DeviceManagerOnDeviceChanged(object sender, EventArgs e)
+        public DeviceManager DeviceManager
+        {
+            get { return (DeviceManager) GetValue(DeviceManagerProperty); }
+            set { SetValue(DeviceManagerProperty, value); }
+        }
+
+        private void OnDeviceManagerChanged(DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue != null)
+                ((DeviceManager) e.OldValue).DeviceChanged -= OnDeviceChanged;
+            if (e.NewValue != null)
+                ((DeviceManager) e.NewValue).DeviceChanged += OnDeviceChanged;
+        }
+
+        private void OnDeviceChanged(object sender, EventArgs e)
         {
             if (_currentDevice != null)
             {
@@ -129,7 +162,7 @@ namespace Emux.Gui
                 RunningOverlay.DisableOverlay();
             }
 
-            _currentDevice = App.Current.DeviceManager.CurrentDevice;
+            _currentDevice = DeviceManager.CurrentDevice;
             _currentDevice.Cpu.Paused += GameBoyOnPaused;
             _currentDevice.Cpu.Resumed += GameBoyOnResumed;
             _currentDevice.Gpu.VideoOutput = _videoWindow;
@@ -137,15 +170,11 @@ namespace Emux.Gui
             _videoWindow.Device = _currentDevice;
             _keypadWindow.Device = _currentDevice;
             _ioWindow.Device = _currentDevice;
-            
+            _mixerWindow.Mixer = DeviceManager.AudioMixer;
+
             _videoWindow.Show();
 
             RefreshView();
-
-            if (EnableSoundsMenuItem.IsChecked)
-                _currentDevice.Spu.ActivateAllChannels();
-            else
-                _currentDevice.Spu.DeactivateAllChannels();
         }
 
         public void RefreshView()
@@ -301,22 +330,28 @@ namespace Emux.Gui
             _videoWindow.Device = null;
             _keypadWindow.Device = null;
             _ioWindow.Device = null;
+            _mixerWindow.Mixer = null;
             _videoWindow.Close();
             _keypadWindow.Close();
             _ioWindow.Close();
+            _mixerWindow.Close();
         }
 
         private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            if (EnableSoundsMenuItem.IsChecked)
-                _currentDevice.Spu.ActivateAllChannels();
-            else
-                _currentDevice.Spu.DeactivateAllChannels();
+            App.Current.DeviceManager.AudioMixer.Enabled = EnableSoundsMenuItem.IsChecked;
         }
 
         private void IOMemoryCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
             _ioWindow.Show();
+            _ioWindow.Focus();
+        }
+
+        private void MixerCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _mixerWindow.Show();
+            _mixerWindow.Focus();
         }
     }
 }

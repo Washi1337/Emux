@@ -1,28 +1,47 @@
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Emux.GameBoy.Audio;
 using NAudio.Wave;
 
 namespace Emux.Audio
 {
-    public class NAudioChannelOutput : BufferedWaveProvider, IAudioChannelOutput
+    public class NAudioChannelOutput : BufferedWaveProvider, IAudioChannelOutput, INotifyPropertyChanged
     {
-        private readonly GameBoyAudioMixer _mixer;
+        public event PropertyChangedEventHandler PropertyChanged;
 
-        public NAudioChannelOutput(GameBoyAudioMixer mixer)
+        private readonly GameBoyAudioMixer _mixer;
+        private bool _enabled;
+
+        public NAudioChannelOutput(GameBoyAudioMixer mixer, string name)
             : base(mixer.WaveFormat)
         {
             if (mixer == null)
                 throw new ArgumentNullException(nameof(mixer));
             _mixer = mixer;
+            Name = name;
             Enabled = true;
+            
         }
 
         public bool Enabled
         {
-            get;
-            set;
+            get { return _enabled; }
+            set
+            {
+                if (_enabled != value)
+                {
+                    _enabled = value;
+                    OnPropertyChanged(nameof(Enabled));
+                }
+            }
         }
 
+        public string Name
+        {
+            get;
+        }
+        
         public int SampleRate
         {
             get { return WaveFormat.SampleRate; }
@@ -34,6 +53,11 @@ namespace Emux.Audio
             if (Enabled)
                 Buffer.BlockCopy(sampleData, offset * sizeof(float), newSampleData, 0, length * sizeof(float));
             AddSamples(newSampleData, 0, newSampleData.Length);
+        }
+        
+        protected virtual void OnPropertyChanged(string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

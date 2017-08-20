@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Emux.Gui"
         mc:Ignorable="d"
-        Title="Emux" Height="440.245" Width="707.465" Closing="MainWindow_OnClosing">
+        Title="Emux" Height="440.245" Width="707.465" Closing="MainWindow_OnClosing"
+        x:Name="Root">
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Open" Executed="OpenCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.RunCommand" CanExecute="PausingOnCanExecute" Executed="RunCommandOnExecuted" />
@@ -17,7 +18,8 @@
         <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.VideoOutputCommand" CanExecute="GameBoyExistsCanExecute" Executed="VideoOutputCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.IOMemoryCommand" CanExecute="GameBoyExistsCanExecute" Executed="IOMemoryCommandOnExecuted" />
-        <CommandBinding Command="local:MainWindow.EnableSoundCommand" CanExecute="GameBoyExistsCanExecute" Executed="EnableSoundCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.MixerCommand" CanExecute="GameBoyExistsCanExecute" Executed="MixerCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.EnableSoundCommand" CanExecute="GameBoyExistsCanExecute" />
         <CommandBinding Command="local:MainWindow.SourceCodeCommand" Executed="SourceCodeCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.AboutCommand" Executed="AboutCommandOnExecuted" />
     </Window.CommandBindings>
@@ -49,7 +51,8 @@
                         <MenuItem Header="Video output" Command="local:MainWindow.VideoOutputCommand"/>
                         <MenuItem Header="Virtual keypad" Command="local:MainWindow.KeyPadCommand"/>
                         <MenuItem Header="IO memory view" Command="local:MainWindow.IOMemoryCommand"/>
-                        <MenuItem x:Name="EnableSoundsMenuItem" Header="Enable sound" IsCheckable="True" IsChecked="False" Command="local:MainWindow.EnableSoundCommand" />
+                        <MenuItem Header="Audio Mixer" Command="local:MainWindow.MixerCommand"/>
+                        <MenuItem x:Name="EnableSoundsMenuItem" Header="Enable sound" IsCheckable="True" IsChecked="{Binding ElementName=Root, Path=DeviceManager.AudioMixer.Enabled}" Command="local:MainWindow.EnableSoundCommand" />
                     </MenuItem.Items>
                 </MenuItem>
                 <MenuItem Header="Help">

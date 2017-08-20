@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using System.Windows.Navigation;
+using Emux.Gui;
 
 namespace Emux
 {
@@ -11,7 +13,7 @@ namespace Emux
         {
             DeviceManager = new DeviceManager();
         }
-
+        
         public new static App Current
         {
             get { return (App) Application.Current; }
@@ -21,5 +23,7 @@ namespace Emux
         {
             get;
         }
+
+        
     }
 }
