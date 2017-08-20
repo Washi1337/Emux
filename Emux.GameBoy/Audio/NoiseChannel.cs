@@ -34,7 +34,11 @@ namespace Emux.GameBoy.Audio
         public byte NR1
         {
             get { return _nr1; }
-            set { _nr1 = value; }
+            set
+            {
+                _nr1 = value;
+                _length = SoundLength;
+            }
         }
 
         public byte NR2
@@ -166,9 +170,9 @@ namespace Emux.GameBoy.Audio
                 {
                     buffer[i] = (float) (maxAmplitude * (_volume / 15.0) * _currentValue);
                     _coordinate += timeDelta;
-                    if (_coordinate >= (1 / frequency))
+                    if (_coordinate >= (1 / frequency)*2)
                     {
-                        _coordinate -= (1 / frequency);
+                        _coordinate -= (1 / frequency)*2;
                         _currentValue = _random.NextDouble();
                     }
                 }
