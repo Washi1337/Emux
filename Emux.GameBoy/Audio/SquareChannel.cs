@@ -159,7 +159,8 @@ namespace Emux.GameBoy.Audio
 
         public virtual void ChannelStep(int cycles)
         {
-            if (!Active || _spu.Device.Cpu.SpeedFactor < 0.5)
+            double cpuSpeedFactor = _spu.Device.Cpu.SpeedFactor;
+            if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
                 return;
 
             UpdateVolume(cycles);
@@ -168,7 +169,7 @@ namespace Emux.GameBoy.Audio
 
             double realFrequency = 131072.0 / (2048.0 - Frequency) / 2;
             int sampleRate = ChannelOutput.SampleRate;
-            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor * 2;
+            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor * 2;
             int sampleCount = (int) (timeDelta * sampleRate);
             float[] buffer = new float[sampleCount];
 

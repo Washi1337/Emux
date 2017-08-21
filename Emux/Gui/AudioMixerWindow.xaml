@@ -1,0 +1,60 @@
+﻿<Window x:Class="Emux.Gui.AudioMixerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux.Gui"
+        xmlns:converters="clr-namespace:Emux.Gui.Converters"
+        mc:Ignorable="d"
+        Title="Audio Mixer" Height="333.892" Width="374.686" WindowStyle="ToolWindow" x:Name="Root" Closing="AudioMixerWindowOnClosing">
+    <Window.CommandBindings>
+        <CommandBinding Command="Close" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="CloseCommandOnExecuted"/>
+        <CommandBinding Command="SaveAs" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="SaveAsCommandOnExecuted"/>
+        <CommandBinding Command="local:AudioMixerWindow.StartRecordingCommand" CanExecute="StartRecordingCommandOnCanExecute" Executed="StartRecordingCommandOnExecuted"/>
+        <CommandBinding Command="local:AudioMixerWindow.StartRecordingCommand" CanExecute="StopRecordingCommandOnCanExecute" Executed="StopRecordingCommandOnExecuted"/>
+    </Window.CommandBindings>
+    <Window.Resources>
+        <converters:InverseConverter x:Key="InverseConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <DockPanel>
+            <GroupBox Header="Record" DockPanel.Dock="Top">
+                <StackPanel>
+                    <DockPanel>
+                        <Label DockPanel.Dock="Left" Content="Output path:" Margin="5"/>
+                        <Button DockPanel.Dock="Right" Content="..." MinWidth="50" Margin="5" Command="SaveAs"/>
+                        <TextBox x:Name="FileTextBox" HorizontalAlignment="Stretch" Margin="5" IsReadOnly="True"/>
+                    </DockPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Stop Recording" Margin="5" Padding="10,5" IsEnabled="{Binding ElementName=Root, Path=Mixer.IsRecording}" Click="StopRecordingCommandOnExecuted"/>
+                        <Button Content="Start Recording" Margin="5" Padding="10,5" IsEnabled="{Binding ElementName=Root, Path=Mixer.IsRecording, Converter={StaticResource InverseConverter}}"
+                                Click="StartRecordingCommandOnExecuted"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Header="Channels">
+                <DockPanel>
+                    <CheckBox x:Name="EnableAllCheckBox" DockPanel.Dock="Top" Content="Enable all" Margin="5" IsChecked="{Binding ElementName=Root, Path=Mixer.Enabled}"/>
+                    <ListBox Margin="5" ItemsSource="{Binding ElementName=Root, Path=Mixer.Channels}" IsEnabled="{Binding ElementName=EnableAllCheckBox, Path=IsChecked}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox Content="{Binding Path=Name}" IsChecked="{Binding Path=Enabled}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </GroupBox>
+
+        </DockPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Margin="5" Padding="20,5" Content="Close" IsCancel="True" MinWidth="100" Command="Close"/>
+        </StackPanel>
+    </Grid>
+</Window>
