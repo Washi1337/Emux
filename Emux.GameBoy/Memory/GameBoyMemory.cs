@@ -24,8 +24,14 @@ namespace Emux.GameBoy.Memory
                 throw new ArgumentNullException(nameof(device));
             _device = device;
             _internalSwitchableRam = new byte[device.GbcMode ? 0x7000 : 0x1000];
+            DmaController = new DmaController(device);
         }
-        
+
+        public DmaController DmaController
+        {
+            get;
+        }
+
         public byte ReadByte(ushort address)
         {
             switch (address >> 12)
@@ -217,7 +223,7 @@ namespace Emux.GameBoy.Memory
                                     _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
                                     break;
                                 case 0x46:
-                                    PerformDmaTransfer(value);
+                                    DmaController.WriteRegister(address, value);
                                     break;
                                 case 0x70:
                                     SwitchRamBank(value);
@@ -246,61 +252,7 @@ namespace Emux.GameBoy.Memory
         {
             WriteBytes(address, BitConverter.GetBytes(value));
         }
-
-        private void PerformDmaTransfer(byte dma)
-        {
-            byte[] oamData = new byte[0xA0];
-            byte[] section = null;
-
-            switch (dma >> 4)
-            {
-                case 0x0: // rom (0x0000 -> 0x3FFF)
-                case 0x1:
-                case 0x2:
-                case 0x3:
-                case 0x4: // switchable rom (0x4000 -> 0x7FFF)
-                case 0x5:
-                case 0x6:
-                case 0x7:
-                    _device.Cartridge.ReadBytes((ushort) (dma * 0x100), oamData, 0, oamData.Length);
-                    break;
-
-                case 0x8: // vram (0x8000 -> 0x9FFF)
-                case 0x9:
-                    throw new NotImplementedException();
-
-                case 0xA: // switchable ram (0xA000 -> 0xBFFF)
-                case 0xB:
-                    _device.Cartridge.ReadBytes((ushort)(dma * 0x100), oamData, 0, oamData.Length);
-                    break;
-
-                case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                    section = _internalRam;
-                    dma -= 0xC0;
-                    break;
-                case 0xD:
-                    section = _internalSwitchableRam;
-                    dma -= 0xD0;
-                    dma += (byte) (GetSwitchableRamOffset() >> 8);
-                    break;
-
-                case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
-                    section = _internalRam;
-                    dma -= 0xE0;
-                    break;
-
-                case 0xF:
-                    section = _internalRam;
-                    dma -= 0xE0;
-                    break;
-            }
-
-            if (section != null)
-                Buffer.BlockCopy(section, dma * 0x100, oamData, 0, oamData.Length);
-
-            _device.Gpu.ImportOam(oamData);
-        }
-
+        
         private int GetSwitchableRamOffset()
         {
             return _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
@@ -311,6 +263,57 @@ namespace Emux.GameBoy.Memory
             if (value == 0)
                 value = 1;
             _internalRamBankIndex = value & 7;
+        }
+
+        internal void ReadBlock(ushort address, byte[] buffer, int offset, int length)
+        {
+            byte[] section = null;
+
+            switch (address >> 12)
+            {
+                case 0x0: // rom (0x0000 -> 0x3FFF)
+                case 0x1:
+                case 0x2:
+                case 0x3:
+                case 0x4: // switchable rom (0x4000 -> 0x7FFF)
+                case 0x5:
+                case 0x6:
+                case 0x7:
+                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
+                    break;
+
+                case 0x8: // vram (0x8000 -> 0x9FFF)
+                case 0x9:
+                    throw new NotImplementedException();
+
+                case 0xA: // switchable ram (0xA000 -> 0xBFFF)
+                case 0xB:
+                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
+                    break;
+
+                case 0xC: // internal ram (0xC000 -> 0xDFFF)
+                    section = _internalRam;
+                    address -= 0xC000;
+                    break;
+                case 0xD:
+                    section = _internalSwitchableRam;
+                    address -= 0xD000;
+                    address += (byte) GetSwitchableRamOffset();
+                    break;
+
+                case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
+                    section = _internalRam;
+                    address -= 0xE000;
+                    break;
+
+                case 0xF:
+                    section = _internalRam;
+                    address -= 0xE000;
+                    break;
+            }
+
+            if (section != null)
+                Buffer.BlockCopy(section, address, buffer, 0, buffer.Length);
         }
     }
 }

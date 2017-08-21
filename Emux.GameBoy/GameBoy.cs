@@ -13,10 +13,10 @@ namespace Emux.GameBoy
     /// </summary>
     public class GameBoy
     {
-        public GameBoy(ICartridge cartridge, bool gbcMode)
+        public GameBoy(ICartridge cartridge, bool preferGbcMode)
         {
             Cartridge = cartridge;
-            GbcMode = gbcMode;
+            GbcMode = preferGbcMode && (cartridge.GameBoyColorFlag & GameBoyColorFlag.SupportsColor) != 0;
             Memory = new GameBoyMemory(this);
             Cpu = new GameBoyCpu(this);
             Gpu = new GameBoyGpu(this);

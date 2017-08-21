@@ -58,7 +58,7 @@ namespace Emux.GameBoy.Cartridge
 
         public GameBoyColorFlag GameBoyColorFlag
         {
-            get { return (GameBoyColorFlag) _romContents[0x143]; }
+            get { return (GameBoyColorFlag) (_romContents[0x143] & 0xC0); }
         }
 
         public bool SuperGameBoyMode

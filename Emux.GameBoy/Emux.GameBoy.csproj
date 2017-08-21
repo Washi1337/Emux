@@ -61,6 +61,7 @@
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
+    <Compile Include="Memory\DmaController.cs" />
     <Compile Include="NativeTimer.cs" />
     <Compile Include="Timer\GameBoyTimer.cs" />
     <Compile Include="Cpu\Z80Disassembler.cs" />
