@@ -15,7 +15,7 @@ namespace Emux.Gui
     /// </summary>
     public partial class VideoWindow : IVideoOutput
     {
-        private readonly WriteableBitmap _bitmap = new WriteableBitmap(GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight, 96, 96, PixelFormats.Bgr24, null);
+        private readonly WriteableBitmap _bitmap = new WriteableBitmap(GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight, 96, 96, PixelFormats.Rgb24, null);
         private readonly IDictionary<Key, GameBoyPadButton> _keyMapping = new Dictionary<Key, GameBoyPadButton>()
         {
             [Key.Up] = GameBoyPadButton.Up,

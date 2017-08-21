@@ -97,6 +97,9 @@ namespace Emux.GameBoy.Memory
                                 case 0x49:
                                 case 0x4A:
                                 case 0x4B:
+                                case 0x4F:
+                                case 0x68:
+                                case 0x69:
                                     return _device.Gpu.ReadRegister((byte) (address & 0xFF));
                                 case 0x4C:
                                     return _io[address - 0xFF49];
@@ -204,6 +207,9 @@ namespace Emux.GameBoy.Memory
                                 case 0x49:
                                 case 0x4A:
                                 case 0x4B:
+                                case 0x4F:
+                                case 0x68:
+                                case 0x69:
                                     _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
                                     break;
                                 case 0x46:
