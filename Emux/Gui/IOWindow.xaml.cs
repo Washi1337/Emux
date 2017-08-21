@@ -29,7 +29,7 @@ namespace Emux.Gui
                     if (Device != null)
                         RefreshView();
                 }, Dispatcher);
-            
+            _refreshTimer.Stop();
         }
 
         public GameBoy.GameBoy Device
