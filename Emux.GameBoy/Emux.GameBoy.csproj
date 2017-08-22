@@ -62,6 +62,8 @@
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
+    <Compile Include="Cpu\StepEventArgs.cs" />
+    <Compile Include="IGameBoyComponent.cs" />
     <Compile Include="Memory\DmaController.cs" />
     <Compile Include="NativeTimer.cs" />
     <Compile Include="Timer\GameBoyTimer.cs" />

@@ -2,7 +2,7 @@
 
 namespace Emux.GameBoy.Memory
 {
-    public class DmaController
+    public class DmaController : IGameBoyComponent
     {
         private readonly GameBoy _device;
         private byte _sourceHigh;
@@ -30,7 +30,21 @@ namespace Emux.GameBoy.Memory
 
         public int Length
         {
-            get { return _dmaLengthMode & 0x7F; }
+            get { return (_dmaLengthMode & 0x7F + 1) * 0x10; }
+        }
+
+        public void Initialize()
+        {
+            _device.Gpu.HBlankStarted += GpuOnHBlankStarted;
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void Shutdown()
+        {
+            _device.Gpu.HBlankStarted -= GpuOnHBlankStarted;
         }
 
         public byte ReadRegister(ushort address)
@@ -95,6 +109,11 @@ namespace Emux.GameBoy.Memory
             byte[] oamData = new byte[0xA0];
             _device.Memory.ReadBlock((ushort) (dma * 0x100), oamData, 0, oamData.Length);
             _device.Gpu.ImportOam(oamData);
+        }
+
+        private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)
+        {
+
         }
     }
 }

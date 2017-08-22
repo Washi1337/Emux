@@ -5,7 +5,7 @@ namespace Emux.GameBoy.Input
     /// <summary>
     /// Represents the Keypad driver of a GameBoy device.
     /// </summary>
-    public class GameBoyPad
+    public class GameBoyPad : IGameBoyComponent
     {
         private readonly GameBoy _device;
         private GameBoyPadButton _pressedButtons;
@@ -41,6 +41,17 @@ namespace Emux.GameBoy.Input
                 return 0xFE;
             }
             set { _joyP = value; }
-        }        
+        }
+        public void Initialize()
+        {
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void Shutdown()
+        {
+        }
     }
 }

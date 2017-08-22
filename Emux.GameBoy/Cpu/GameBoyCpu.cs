@@ -7,7 +7,7 @@ namespace Emux.GameBoy.Cpu
     /// <summary>
     /// Represents a central processing unit of a GameBoy device.
     /// </summary>
-    public class GameBoyCpu
+    public class GameBoyCpu : IGameBoyComponent
     {
         public const int VerticalBlankIsr = 0x0040;
         public const int LcdStatusIsr = 0x0048;
@@ -31,6 +31,8 @@ namespace Emux.GameBoy.Cpu
         /// </summary>
         public event EventHandler Terminated;
 
+        public event StepEventHandler PerformedStep;
+        
         private readonly Z80Disassembler _disassembler;
         private readonly GameBoy _device;
         private readonly ManualResetEvent _continueSignal = new ManualResetEvent(false);
@@ -144,6 +146,19 @@ namespace Emux.GameBoy.Cpu
             get { return CyclesPerSecond / OfficialClockFrequency; }
         }
 
+        public void Initialize()
+        {
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void Shutdown()
+        {
+            Terminate();
+        }
+
         private void CpuLoop()
         {
             bool enabled = true;
@@ -227,8 +242,7 @@ namespace Emux.GameBoy.Cpu
             }
 
             // Update cycle dependent components.
-            _device.Gpu.GpuStep(cycles);
-            _device.Timer.TimerStep(cycles);
+            OnPerformedStep(new StepEventArgs(cycles));
 
             _ticks = (_ticks + (ulong) cycles) & long.MaxValue;
             return cycles;
@@ -262,6 +276,26 @@ namespace Emux.GameBoy.Cpu
             _frameTimer.Stop();
             _continueSignal.Reset();
             _terminateSignal.Set();
+        }
+
+        protected virtual void OnResumed()
+        {
+            Resumed?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnPaused()
+        {
+            Paused?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnTerminated()
+        {
+            Terminated?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnPerformedStep(StepEventArgs args)
+        {
+            PerformedStep?.Invoke(this, args);
         }
 
         private Z80Instruction ReadNextInstruction()
@@ -339,21 +373,6 @@ namespace Emux.GameBoy.Cpu
         internal void Halt()
         {
             _halt = true;
-        }
-
-        protected virtual void OnResumed()
-        {
-            Resumed?.Invoke(this, EventArgs.Empty);
-        }
-
-        protected virtual void OnPaused()
-        {
-            Paused?.Invoke(this, EventArgs.Empty);
-        }
-
-        protected virtual void OnTerminated()
-        {
-            Terminated?.Invoke(this, EventArgs.Empty);
         }
 
     }

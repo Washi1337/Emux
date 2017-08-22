@@ -1,4 +1,5 @@
-﻿using Emux.GameBoy.Audio;
+﻿using System.Collections.Generic;
+using Emux.GameBoy.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
@@ -16,15 +17,29 @@ namespace Emux.GameBoy
         public GameBoy(ICartridge cartridge, bool preferGbcMode)
         {
             Cartridge = cartridge;
+
             GbcMode = preferGbcMode && (cartridge.GameBoyColorFlag & GameBoyColorFlag.SupportsColor) != 0;
-            Memory = new GameBoyMemory(this);
-            Cpu = new GameBoyCpu(this);
-            Gpu = new GameBoyGpu(this);
-            Spu = new GameBoySpu(this);
-            KeyPad = new GameBoyPad(this);
-            Timer = new GameBoyTimer(this);
+
+            Components = new List<IGameBoyComponent>
+            {
+                (Memory = new GameBoyMemory(this)),
+                (Cpu = new GameBoyCpu(this)),
+                (Gpu = new GameBoyGpu(this)),
+                (Spu = new GameBoySpu(this)),
+                (KeyPad = new GameBoyPad(this)),
+                (Timer = new GameBoyTimer(this))
+            }.AsReadOnly();
+            
+            foreach (var component in Components)
+                component.Initialize();
+
             Reset();
             IsPoweredOn = true;
+        }
+
+        public ICollection<IGameBoyComponent> Components
+        {
+            get;
         }
 
         /// <summary>
@@ -105,7 +120,8 @@ namespace Emux.GameBoy
         /// </summary>
         public void Reset()
         {
-            Gpu.Reset();
+            foreach (var component in Components)
+                component.Reset();
 
             Cpu.Registers.A = GbcMode ? (byte) 0x11 : (byte) 0x01;
             Cpu.Registers.F = 0xB0;
@@ -156,7 +172,8 @@ namespace Emux.GameBoy
         /// </summary>
         public void Terminate()
         {
-            Cpu.Terminate();
+            foreach (var component in Components)
+                component.Shutdown();
             IsPoweredOn = false;
         }
     }

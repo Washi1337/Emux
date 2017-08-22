@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Emux.GameBoy.Audio
 {
-    public class GameBoySpu
+    public class GameBoySpu : IGameBoyComponent
     {
         private readonly byte[] _unused = new byte[9];
 
@@ -53,7 +53,19 @@ namespace Emux.GameBoy.Audio
         {
             get;
         }
-        
+
+        public void Initialize()
+        {
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void Shutdown()
+        {
+        }
+
         public void WriteRegister(ushort address, byte value)
         {
             switch (address)

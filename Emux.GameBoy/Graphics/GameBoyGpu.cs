@@ -7,7 +7,7 @@ namespace Emux.GameBoy.Graphics
     /// <summary>
     /// Represents the graphics processor unit of a GameBoy device.
     /// </summary>
-    public unsafe class GameBoyGpu
+    public unsafe class GameBoyGpu : IGameBoyComponent
     {
         public const int FrameWidth = 160;
         public const int FrameHeight = 144;
@@ -18,6 +18,9 @@ namespace Emux.GameBoy.Graphics
         public const int OneLineCycles = 456;
         public const int VBlankCycles = 456 * 10;
         public const int FullFrameCycles = 70224;
+
+        public event EventHandler HBlankStarted;
+        public event EventHandler VBlankStarted;
 
         private readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
         private readonly byte[] _frameBuffer = new byte[3 * FrameWidth * FrameHeight];
@@ -39,6 +42,17 @@ namespace Emux.GameBoy.Graphics
         private int _modeClock;
         private LcdControlFlags _lcdc;
         private byte _ly;
+        private byte _lyc;
+        
+        public GameBoyGpu(GameBoy device)
+        {
+            if (device == null)
+                throw new ArgumentNullException(nameof(device));
+            _device = device;
+            VideoOutput = new EmptyVideoOutput();
+            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
+        }
 
         public LcdControlFlags Lcdc
         {
@@ -65,9 +79,23 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        public LcdStatusFlags Stat;
-        public byte ScY;
-        public byte ScX;
+        public LcdStatusFlags Stat
+        {
+            get;
+            set;
+        }
+
+        public byte ScY
+        {
+            get;
+            set;
+        }
+
+        public byte ScX
+        {
+            get;
+            set;
+        }
 
         public byte LY
         {
@@ -82,14 +110,54 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        public byte LYC;
-        public byte Bgp;
-        public byte ObjP0;
-        public byte ObjP1;
-        public byte WY;
-        public byte WX;
+        public byte LYC
+        {
+            get { return _lyc; }
+            set
+            {
+                if (_lyc != value)
+                {
+                    _lyc = value;
+                    CheckCoincidenceInterrupt();
+                }
+            }
+        }
 
-        public byte BgpI;
+        public byte Bgp
+        {
+            get;
+            set;
+        }
+
+        public byte ObjP0
+        {
+            get;
+            set;
+        }
+
+        public byte ObjP1
+        {
+            get;
+            set;
+        }
+
+        public byte WY
+        {
+            get;
+            set;
+        }
+
+        public byte WX
+        {
+            get;
+            set;
+        }
+
+        public byte BgpI
+        {
+            get;
+            set;
+        }
 
         public byte BgpD
         {
@@ -102,7 +170,11 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        public byte ObpI;
+        public byte ObpI
+        {
+            get;
+            set;
+        }
 
         public byte ObpD
         {
@@ -115,16 +187,10 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        public byte Vbk;
-
-        public GameBoyGpu(GameBoy device)
+        public byte Vbk
         {
-            if (device == null)
-                throw new ArgumentNullException(nameof(device));
-            _device = device;
-            VideoOutput = new EmptyVideoOutput();
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
-            _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
+            get;
+            set;
         }
         
         /// <summary>
@@ -297,11 +363,35 @@ namespace Emux.GameBoy.Graphics
             throw new ArgumentOutOfRangeException(nameof(address));
         }
         
+        public void Initialize()
+        {
+            _device.Cpu.PerformedStep += CpuOnPerformedStep;
+        }
+
+        public void Reset()
+        {
+            _modeClock = 0;
+            LY = 0;
+            ScY = 0;
+            ScX = 0;
+            Stat = (LcdStatusFlags)0x85;
+        }
+
+        public void Shutdown()
+        {
+            _device.Cpu.PerformedStep -= CpuOnPerformedStep;
+        }
+
+        private void CpuOnPerformedStep(object sender, StepEventArgs args)
+        {
+            GpuStep(args.Cycles);
+        }
+
         /// <summary>
         /// Advances the execution of the graphical processor unit.
         /// </summary>
         /// <param name="cycles">The cycles the central processor unit has executed since last step.</param>
-        public void GpuStep(int cycles)
+        private void GpuStep(int cycles)
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
@@ -329,6 +419,7 @@ namespace Emux.GameBoy.Graphics
                             currentMode = LcdStatusFlags.HBlankMode;
                             if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
                                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
+                            OnHBlankStarted();
                             RenderScan();
                         }
                         break;
@@ -340,6 +431,7 @@ namespace Emux.GameBoy.Graphics
                             if (LY == FrameHeight )
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
+                                OnVBlankStarted();
                                 VideoOutput.RenderFrame(_frameBuffer);
                                 _device.Cpu.Registers.IF |= InterruptFlags.VBlank;
                                 if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
@@ -629,14 +721,6 @@ namespace Emux.GameBoy.Graphics
             return _frameIndices[y * FrameWidth + x];
         }
 
-        public void Reset()
-        {
-            _modeClock = 0;
-            LY = 0;
-            ScY = 0;
-            ScX = 0;
-            Stat = (LcdStatusFlags) 0x85;
-        }
 
         private void SwitchMode(LcdStatusFlags mode)
         {
@@ -646,6 +730,16 @@ namespace Emux.GameBoy.Graphics
         private int GetVRamOffset()
         {
             return _device.GbcMode ? 0x2000 * Vbk : 0;
+        }
+
+        protected virtual void OnHBlankStarted()
+        {
+            HBlankStarted?.Invoke(this, EventArgs.Empty);
+        }
+
+        protected virtual void OnVBlankStarted()
+        {
+            VBlankStarted?.Invoke(this, EventArgs.Empty);
         }
     }
 }

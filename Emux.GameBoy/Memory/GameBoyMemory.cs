@@ -6,7 +6,7 @@ namespace Emux.GameBoy.Memory
     /// <summary>
     /// Represents the memory controller of a GameBoy device.
     /// </summary>
-    public class GameBoyMemory
+    public class GameBoyMemory : IGameBoyComponent
     {
         private readonly GameBoy _device;
 
@@ -30,6 +30,21 @@ namespace Emux.GameBoy.Memory
         public DmaController DmaController
         {
             get;
+        }
+
+        public void Initialize()
+        {
+            DmaController.Initialize();
+        }
+
+        public void Reset()
+        {
+
+        }
+
+        public void Shutdown()
+        {
+
         }
 
         public byte ReadByte(ushort address)
@@ -223,6 +238,11 @@ namespace Emux.GameBoy.Memory
                                     _device.Gpu.WriteRegister((byte)(address & 0xFF), value);
                                     break;
                                 case 0x46:
+                                case 0x51:
+                                case 0x52:
+                                case 0x53:
+                                case 0x54:
+                                case 0x55:
                                     DmaController.WriteRegister(address, value);
                                     break;
                                 case 0x70:
@@ -315,5 +335,7 @@ namespace Emux.GameBoy.Memory
             if (section != null)
                 Buffer.BlockCopy(section, address, buffer, 0, buffer.Length);
         }
+
+ 
     }
 }

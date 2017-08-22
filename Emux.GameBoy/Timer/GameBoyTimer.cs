@@ -3,7 +3,7 @@ using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Timer
 {
-    public class GameBoyTimer
+    public class GameBoyTimer : IGameBoyComponent
     {
         private readonly GameBoy _device;
         public const int DivFrequency = 16384;
@@ -53,6 +53,20 @@ namespace Emux.GameBoy.Timer
             _device = device;
         }
 
+        public void Initialize()
+        {
+            _device.Cpu.PerformedStep += CpuOnPerformedStep;
+        }
+
+        public void Reset()
+        {
+        }
+
+        public void Shutdown()
+        {
+            _device.Cpu.PerformedStep -= CpuOnPerformedStep;
+        }
+
         public int GetTimaFrequency()
         {
             switch (Tac & TimerControlFlags.ClockMask)
@@ -73,8 +87,13 @@ namespace Emux.GameBoy.Timer
         {
             return (int)(GameBoyCpu.OfficialClockFrequency / GetTimaFrequency());
         }
-        
-        public void TimerStep(int cycles)
+
+        private void CpuOnPerformedStep(object sender, StepEventArgs args)
+        {
+            TimerStep(args.Cycles);
+        }
+
+        private void TimerStep(int cycles)
         {
             _divClock += cycles;
             while (_divClock > DivCycleInterval)
@@ -136,5 +155,6 @@ namespace Emux.GameBoy.Timer
                     break;
             }
         }
+
     }
 }
