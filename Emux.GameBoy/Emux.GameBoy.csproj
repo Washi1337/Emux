@@ -57,6 +57,7 @@
     <Compile Include="Cartridge\ICartridge.cs" />
     <Compile Include="Cartridge\MemoryBankController2.cs" />
     <Compile Include="Cartridge\MemoryBankController3.cs" />
+    <Compile Include="Cartridge\MemoryBankController5.cs" />
     <Compile Include="Cartridge\StreamedExternalMemory.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
