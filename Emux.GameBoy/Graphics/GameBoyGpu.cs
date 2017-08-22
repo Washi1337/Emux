@@ -415,8 +415,8 @@ namespace Emux.GameBoy.Graphics
             
             // Read first tile data to render.
             byte[] currentTileData = new byte[2];
-            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
-            int currentPaletteIndex = _device.GbcMode ? GetColorPaletteIndex(tileMapAddress, x >> 3 & 0x1F) : 0;
+            var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F) : 0;
+            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
 
             // Render scan line.
             for (int outputX = 0; outputX < FrameWidth; outputX++, x++)
@@ -424,17 +424,18 @@ namespace Emux.GameBoy.Graphics
                 if ((x & 7) == 0)
                 {
                     // Read next tile data to render.
-                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                     if (_device.GbcMode)
-                        currentPaletteIndex = GetColorPaletteIndex(tileMapAddress, x >> 3 & 0x1F);
+                        flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
+                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
                 }
 
                 int colorIndex = GetPixelColorIndex(x & 7, currentTileData);
 
                 if (_device.GbcMode)
                 {
-                    RenderPixel(outputX, LY, colorIndex,
-                        GetGbcColor(_bgPaletteMemory, currentPaletteIndex, colorIndex));
+                    // TODO: support other flags.
+
+                    RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, (int)(flags & SpriteDataFlags.PaletteNumberMask), colorIndex));
                 }
                 else
                 {
@@ -467,8 +468,8 @@ namespace Emux.GameBoy.Graphics
                 tileDataAddress += tileDataOffset;
 
                 int x = 0;
+                var flags = SpriteDataFlags.None;
                 byte[] currentTileData = new byte[2];
-                int currentPaletteIndex = 0;
 
                 // Render scan line.
                 for (int outputX = WX - 7; outputX < FrameWidth; outputX++, x++)
@@ -476,9 +477,9 @@ namespace Emux.GameBoy.Graphics
                     if ((x & 7) == 0)
                     {
                         // Read next tile data to render.
-                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData);
                         if (_device.GbcMode)
-                            currentPaletteIndex = GetColorPaletteIndex(tileMapAddress, x >> 3 & 0x1F);
+                            flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
+                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
                     }
 
                     if (outputX >= 0)
@@ -487,7 +488,7 @@ namespace Emux.GameBoy.Graphics
 
                         if (_device.GbcMode)
                         {
-                            RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, currentPaletteIndex, colorIndex));
+                            RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, (int)(flags & SpriteDataFlags.PaletteNumberMask), colorIndex));
                         }
                         else
                         {
@@ -573,7 +574,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer)
+        private void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer, SpriteDataFlags flags)
         {
             byte dataIndex = _vram[(ushort)(tileMapAddress + tileIndex)];
             if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) !=
@@ -582,13 +583,13 @@ namespace Emux.GameBoy.Graphics
                 // Index is signed number in [-128..127] => compensate for it.
                 dataIndex = unchecked((byte)((sbyte)dataIndex + 0x80));
             }
-            Buffer.BlockCopy(_vram, tileDataAddress + (dataIndex << 4), buffer, 0, 2);
+            int bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
+            Buffer.BlockCopy(_vram, bankOffset + tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
-
-        private byte GetColorPaletteIndex(int tileMapAddress, int tileIndex)
+        
+        private SpriteDataFlags GetTileDataFlags(int tileMapAddress, int tileIndex)
         {
-            byte colorPaletteIndex = _vram[(ushort)(0x2000 + tileMapAddress + tileIndex)];
-            return (byte)(colorPaletteIndex & 7);
+           return (SpriteDataFlags) _vram[(ushort)(0x2000 + tileMapAddress + tileIndex)];
         }
 
         private static Color GetGbcColor(byte[] paletteMemory, int paletteIndex, int colorIndex)
