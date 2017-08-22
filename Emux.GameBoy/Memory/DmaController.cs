@@ -1,10 +1,13 @@
 ﻿using System;
+using Emux.GameBoy.Graphics;
 
 namespace Emux.GameBoy.Memory
 {
     public class DmaController : IGameBoyComponent
     {
         private readonly GameBoy _device;
+        private bool _isTransferring;
+        private int _currentBlockIndex;
         private byte _sourceHigh;
         private byte _sourceLow;
         private byte _destinationHigh;
@@ -30,7 +33,7 @@ namespace Emux.GameBoy.Memory
 
         public int Length
         {
-            get { return (_dmaLengthMode & 0x7F + 1) * 0x10; }
+            get { return ((_dmaLengthMode & 0x7F) + 1) * 0x10; }
         }
 
         public void Initialize()
@@ -88,20 +91,42 @@ namespace Emux.GameBoy.Memory
                     _destinationLow = value;
                     break;
                 case 0xFF55:
-                    _dmaLengthMode = value;
-                    StartVramDmaTransfer();
+                    if (_isTransferring && (value & 0x80) == 0)
+                    {
+                        StopVramDmaTransfer();
+                    }
+                    else
+                    {
+                        _dmaLengthMode = value;
+                        StartVramDmaTransfer();
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(address));
             }
         }
 
+        private void StopVramDmaTransfer()
+        {
+            _dmaLengthMode |= 0x80;
+            _currentBlockIndex = 0;
+            _isTransferring = false;
+        }
+
         private void StartVramDmaTransfer()
         {
-            // TODO: distinguish between the two possible DMA transfer modes.
-            byte[] vram = new byte[Length];
-            _device.Memory.ReadBlock(SourceAddress, vram, 0, vram.Length);
-            _device.Gpu.WriteVRam((ushort) (DestinationAddress - 0x8000), vram, 0, vram.Length);
+            if ((_dmaLengthMode & 0x80) == 0)
+            {
+                byte[] vram = new byte[Length];
+                _device.Memory.ReadBlock(SourceAddress, vram, 0, vram.Length);
+                _device.Gpu.WriteVRam((ushort) (DestinationAddress - 0x8000), vram, 0, vram.Length);
+            }
+            else
+            {
+                _currentBlockIndex = 0;
+                _isTransferring = true;
+                _dmaLengthMode &= 0x7F;
+            }
         }
 
         private void PerformOamDmaTransfer(byte dma)
@@ -113,7 +138,27 @@ namespace Emux.GameBoy.Memory
 
         private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)
         {
+            if (_isTransferring && _device.Gpu.LY < GameBoyGpu.FrameHeight)
+                HDmaStep();
+        }
 
+        private void HDmaStep()
+        {
+            int currentOffset = _currentBlockIndex * 0x10;
+
+            byte[] block = new byte[0x10];
+            _device.Memory.ReadBlock((ushort) (SourceAddress + currentOffset), block, 0, block.Length);
+            _device.Gpu.WriteVRam((ushort)(DestinationAddress - 0x8000 + currentOffset), block, 0, block.Length);
+
+            _currentBlockIndex++;
+            int next = (_dmaLengthMode & 0x7F) - 1;
+            _dmaLengthMode = (byte) ((_dmaLengthMode & 0x80) | next);
+
+            if (next <= 0)
+            {
+                _dmaLengthMode = 0xFF;
+                _isTransferring = false;
+            }
         }
     }
 }

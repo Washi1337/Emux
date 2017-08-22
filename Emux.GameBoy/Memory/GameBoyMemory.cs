@@ -318,7 +318,7 @@ namespace Emux.GameBoy.Memory
                 case 0xD:
                     section = _internalSwitchableRam;
                     address -= 0xD000;
-                    address += (byte) GetSwitchableRamOffset();
+                    address += (ushort) GetSwitchableRamOffset();
                     break;
 
                 case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)

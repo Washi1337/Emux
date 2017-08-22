@@ -26,7 +26,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("rrca",                 0x0F, 0x00, 0, 4, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Rrc(d.Cpu.Registers.A, C, None, Z | N | H)),
             
             // 0x10 ... 0x1F
-            new Z80OpCode("stop",                 0x10, 0x00, 0, 4, Z80OpCode.NotSupported),
+            new Z80OpCode("stop",                 0x10, 0x00, 0, 4, (o, e) => { }),
             new Z80OpCode("ld de, {0:x4}",        0x11, 0x00, 2, 12, (d, i) => d.Cpu.Registers.DE = i.Operand16),
             new Z80OpCode("ld (de), a",           0x12, 0x00, 0, 8, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.DE, d.Cpu.Registers.A)),
             new Z80OpCode("inc de",               0x13, 0x00, 0, 8, (d, i) => d.Cpu.Registers.DE = d.Cpu.Alu.Increment(d.Cpu.Registers.DE)),

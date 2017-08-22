@@ -32,9 +32,9 @@ namespace Emux.GameBoy.Cartridge
         {
             if (address < 0x4000)
                 _cartridge.ReadFromAbsoluteAddress(address, buffer, bufferOffset, length);
-            if (address < 0x8000)
+            else if (address < 0x8000)
                 Buffer.BlockCopy(_romBank, address - 0x4000, buffer, bufferOffset, length);
-            if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address <= 0xBFFF)
+            else if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address <= 0xBFFF)
                 _cartridge.ExternalMemory.ReadBytes(address - 0xA000 + GetRamOffset(), buffer, bufferOffset, length);
         }
 

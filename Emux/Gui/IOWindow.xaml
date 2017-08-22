@@ -55,6 +55,10 @@
                             <local:RegisterItem Offset="0xFF49" DisplayName="OBJP1"/>
                             <local:RegisterItem Offset="0xFF4A" DisplayName="WY"/>
                             <local:RegisterItem Offset="0xFF4B" DisplayName="WX"/>
+                            <local:RegisterItem Offset="0xFF4F" DisplayName="VBK"/>
+                            <local:RegisterItem Offset="0xFF58" DisplayName="BGPI"/>
+                            <local:RegisterItem Offset="0xFF69" DisplayName="BGPD"/>
+                            <local:RegisterItem Offset="0xFF6A" DisplayName="OBPI"/>
                         </ListView.Items>
                     </ListView>
                     <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
