@@ -520,20 +520,31 @@ namespace Emux.GameBoy.Graphics
                         flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
                     CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
                 }
+                
+                RenderTileData(currentTileData, flags, outputX, x);
+            }
+        }
 
-                int colorIndex = GetPixelColorIndex(x & 7, currentTileData);
+        private void RenderTileData(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
+        {
+            if (_device.GbcMode)
+            {
+                // TODO: support other flags.
 
-                if (_device.GbcMode)
-                {
-                    // TODO: support other flags.
+                int actualX = localX & 7;
+                // Horizontal flip when specified.
+                if ((flags & SpriteDataFlags.XFlip) != 0)
+                    actualX = 7 - actualX;
 
-                    RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, (int)(flags & SpriteDataFlags.PaletteNumberMask), colorIndex));
-                }
-                else
-                {
-                    int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
-                    RenderPixel(outputX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
-                }
+                int paletteIndex = (int) (flags & SpriteDataFlags.PaletteNumberMask);
+                int colorIndex = GetPixelColorIndex(actualX, currentTileData);
+                RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
+            }
+            else
+            {
+                int colorIndex = GetPixelColorIndex(localX & 7, currentTileData);
+                int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
+                RenderPixel(outputX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
             }
         }
 
@@ -575,19 +586,7 @@ namespace Emux.GameBoy.Graphics
                     }
 
                     if (outputX >= 0)
-                    {
-                        int colorIndex = GetPixelColorIndex(x & 7, currentTileData);
-
-                        if (_device.GbcMode)
-                        {
-                            RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, (int)(flags & SpriteDataFlags.PaletteNumberMask), colorIndex));
-                        }
-                        else
-                        {
-                            int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
-                            RenderPixel(outputX, LY, colorIndex, _greyshades[greyshadeIndex]);
-                        }
-                    }
+                        RenderTileData(currentTileData, flags, outputX, x);
                 }
             }
         }
@@ -720,8 +719,7 @@ namespace Emux.GameBoy.Graphics
         {
             return _frameIndices[y * FrameWidth + x];
         }
-
-
+        
         private void SwitchMode(LcdStatusFlags mode)
         {
             Stat = (Stat & ~LcdStatusFlags.ModeMask) | mode;

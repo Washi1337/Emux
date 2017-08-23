@@ -4,18 +4,18 @@ Emux is a free and open source GameBoy emulator written in C# that allows you to
 
 Features
 ========
-- Play GameBoy Games and relive your nostalgic memories!
+- Play GameBoy and GameBoy Color games and relive your nostalgic memories!
     - Open ROM dumps and execute them like the original GameBoy does.
-        - Support for cartridges that contain memory bank controllers v1, v2 and v3.
+        - Support for cartridges that contain memory bank controllers v1, v2, v3 and v5.
         - Support for cartridges that contain external memory (for e.g. save files).
     - Disable the frame limit for the boring parts of the game that take forever and you'd rather skip (such as training your Pokémon, I won't judge).
-    - Listen to the good ol' tunes and sound effects that the original GameBoy produced.
+    - Listen and record to the good ol' tunes and sound effects that the original GameBoy produced.
 - Debugging capabilities
     - Break and continue execution whenever you want
     - View disassembly of the GameBoy memory.
     - Step through the code one instruction at a time.
     - Set breakpoints on specific memory addresses.
-    - View the values of general CPU registers.
+    - View and edit the values of various registers.
     - Virtual keypad for easier emulation of keypresses when paused or stepping through the code.
 - Oh and probably a lot of funny glitches because the emulation is far from completed at this time.
 
