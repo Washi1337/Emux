@@ -18,6 +18,7 @@
         <CommandBinding Command="local:MainWindow.KeyPadCommand" CanExecute="GameBoyExistsCanExecute" Executed="KeyPadCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.VideoOutputCommand" CanExecute="GameBoyExistsCanExecute" Executed="VideoOutputCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.IOMemoryCommand" CanExecute="GameBoyExistsCanExecute" Executed="IOMemoryCommandOnExecuted" />
+        <CommandBinding Command="local:MainWindow.CheatCodesCommand" CanExecute="GameBoyExistsCanExecute" Executed="CheatCodesCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.MixerCommand" CanExecute="GameBoyExistsCanExecute" Executed="MixerCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.EnableSoundCommand" CanExecute="GameBoyExistsCanExecute" />
         <CommandBinding Command="local:MainWindow.SourceCodeCommand" Executed="SourceCodeCommandOnExecuted" />
@@ -51,6 +52,7 @@
                         <MenuItem Header="Video output" Command="local:MainWindow.VideoOutputCommand"/>
                         <MenuItem Header="Virtual keypad" Command="local:MainWindow.KeyPadCommand"/>
                         <MenuItem Header="IO memory view" Command="local:MainWindow.IOMemoryCommand"/>
+                        <MenuItem Header="Cheat codes" Command="local:MainWindow.CheatCodesCommand"/>
                         <MenuItem Header="Audio Mixer" Command="local:MainWindow.MixerCommand"/>
                         <MenuItem x:Name="EnableSoundsMenuItem" Header="Enable sound" IsCheckable="True" IsChecked="{Binding ElementName=Root, Path=DeviceManager.AudioMixer.Enabled}" Command="local:MainWindow.EnableSoundCommand" />
                     </MenuItem.Items>

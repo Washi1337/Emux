@@ -69,6 +69,9 @@
     <Compile Include="Gui\AudioMixerWindow.xaml.cs">
       <DependentUpon>AudioMixerWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Gui\CheatsWindow.xaml.cs">
+      <DependentUpon>CheatsWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Gui\Converters\HexadecimalConverter.cs" />
     <Compile Include="Gui\Converters\InverseConverter.cs" />
     <Compile Include="Gui\RegisterItem.cs" />
@@ -95,6 +98,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Gui\AudioMixerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Gui\CheatsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

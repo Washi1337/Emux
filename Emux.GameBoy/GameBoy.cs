@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Emux.GameBoy.Audio;
 using Emux.GameBoy.Cartridge;
+using Emux.GameBoy.Cheating;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
@@ -105,7 +106,7 @@ namespace Emux.GameBoy
         {
             get;
         }
-        
+
         /// <summary>
         /// Gets a value indicating whether the GameBoy device is powered on.
         /// </summary>

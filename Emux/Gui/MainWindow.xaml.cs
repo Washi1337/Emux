@@ -81,6 +81,15 @@ namespace Emux.Gui
                 new KeyGesture(Key.F3)
             }));
 
+        public static readonly RoutedUICommand CheatCodesCommand = new RoutedUICommand(
+            "Open the cheat codes window",
+            "Cheat codes",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F4)
+            }));
+
         public static readonly RoutedUICommand KeyPadCommand = new RoutedUICommand(
             "Open the virtual keypad window",
             "Keypad",
@@ -96,7 +105,7 @@ namespace Emux.Gui
             typeof(MainWindow),
             new InputGestureCollection(new[]
             {
-                new KeyGesture(Key.F4)
+                new KeyGesture(Key.F6)
             }));
 
         public static readonly RoutedUICommand EnableSoundCommand = new RoutedUICommand(
@@ -126,6 +135,7 @@ namespace Emux.Gui
         private readonly AudioMixerWindow _mixerWindow;
         private readonly KeypadWindow _keypadWindow;
         private readonly IOWindow _ioWindow;
+        private readonly CheatsWindow _cheatsWindow;
         private GameBoy.GameBoy _currentDevice;
         
         public MainWindow()
@@ -135,6 +145,7 @@ namespace Emux.Gui
             _mixerWindow = new AudioMixerWindow();
             _keypadWindow = new KeypadWindow();
             _ioWindow = new IOWindow();
+            _cheatsWindow = new CheatsWindow();
 
             DeviceManager = App.Current.DeviceManager;
         }
@@ -171,6 +182,7 @@ namespace Emux.Gui
             _keypadWindow.Device = _currentDevice;
             _ioWindow.Device = _currentDevice;
             _mixerWindow.Mixer = DeviceManager.AudioMixer;
+            _cheatsWindow.GamesharkController = DeviceManager.GamesharkController;
 
             _videoWindow.Show();
 
@@ -331,10 +343,12 @@ namespace Emux.Gui
             _keypadWindow.Device = null;
             _ioWindow.Device = null;
             _mixerWindow.Mixer = null;
+            _cheatsWindow.GamesharkController = null;
             _videoWindow.Close();
             _keypadWindow.Close();
             _ioWindow.Close();
             _mixerWindow.Close();
+            _cheatsWindow.Close();
         }
 
         private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -352,6 +366,12 @@ namespace Emux.Gui
         {
             _mixerWindow.Show();
             _mixerWindow.Focus();
+        }
+
+        private void CheatCodesCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _cheatsWindow.Show();
+            _cheatsWindow.Focus();
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.IO;
 using Emux.Audio;
 using Emux.GameBoy.Cartridge;
+using Emux.GameBoy.Cheating;
 using NAudio.Wave;
 
 namespace Emux
@@ -21,6 +22,8 @@ namespace Emux
             var player = new DirectSoundOut();
             player.Init(AudioMixer);
             player.Play();
+
+            GamesharkController = new GamesharkController();
         }
 
         public GameBoyAudioMixer AudioMixer
@@ -39,10 +42,16 @@ namespace Emux
                     if (value != null)
                     {
                         AudioMixer.Connect(value.Spu);
+                        GamesharkController.Device = value;
                     }
                     OnDeviceChanged();
                 }
             }
+        }
+
+        public GamesharkController GamesharkController
+        {
+            get;
         }
 
         public void UnloadDevice()

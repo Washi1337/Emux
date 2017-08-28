@@ -59,6 +59,8 @@
     <Compile Include="Cartridge\MemoryBankController3.cs" />
     <Compile Include="Cartridge\MemoryBankController5.cs" />
     <Compile Include="Cartridge\StreamedExternalMemory.cs" />
+    <Compile Include="Cheating\GamesharkCode.cs" />
+    <Compile Include="Cheating\GamesharkController.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />

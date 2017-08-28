@@ -521,30 +521,7 @@ namespace Emux.GameBoy.Graphics
                     CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
                 }
                 
-                RenderTileData(currentTileData, flags, outputX, x);
-            }
-        }
-
-        private void RenderTileData(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
-        {
-            if (_device.GbcMode)
-            {
-                // TODO: support other flags.
-
-                int actualX = localX & 7;
-                // Horizontal flip when specified.
-                if ((flags & SpriteDataFlags.XFlip) != 0)
-                    actualX = 7 - actualX;
-
-                int paletteIndex = (int) (flags & SpriteDataFlags.PaletteNumberMask);
-                int colorIndex = GetPixelColorIndex(actualX, currentTileData);
-                RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
-            }
-            else
-            {
-                int colorIndex = GetPixelColorIndex(localX & 7, currentTileData);
-                int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
-                RenderPixel(outputX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
+                RenderTileDataPixel(currentTileData, flags, outputX, x);
             }
         }
 
@@ -586,7 +563,7 @@ namespace Emux.GameBoy.Graphics
                     }
 
                     if (outputX >= 0)
-                        RenderTileData(currentTileData, flags, outputX, x);
+                        RenderTileDataPixel(currentTileData, flags, outputX, x);
                 }
             }
         }
@@ -704,6 +681,29 @@ namespace Emux.GameBoy.Graphics
             int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
                                (((tileRowData[1] >> bitIndex) & 1) << 1);
             return paletteIndex;
+        }
+        
+        private void RenderTileDataPixel(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
+        {
+            if (_device.GbcMode)
+            {
+                // TODO: support other flags.
+
+                int actualX = localX & 7;
+                // Horizontal flip when specified.
+                if ((flags & SpriteDataFlags.XFlip) != 0)
+                    actualX = 7 - actualX;
+
+                int paletteIndex = (int)(flags & SpriteDataFlags.PaletteNumberMask);
+                int colorIndex = GetPixelColorIndex(actualX, currentTileData);
+                RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
+            }
+            else
+            {
+                int colorIndex = GetPixelColorIndex(localX & 7, currentTileData);
+                int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
+                RenderPixel(outputX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
+            }
         }
 
         private void RenderPixel(int x, int y, int colorIndex, Color color)

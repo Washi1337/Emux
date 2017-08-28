@@ -17,6 +17,8 @@ namespace Emux.Gui.Converters
                 return ((byte)value).ToString("X2");
             if (value is ushort)
                 return ((ushort)value).ToString("X4");
+            if (value is byte[])
+                return BitConverter.ToString((byte[]) value).Replace("-", "");
 
             throw new NotSupportedException();
         }
