@@ -1,0 +1,44 @@
+﻿<Window x:Class="Emux.Gui.CheatsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux.Gui"
+        xmlns:converters="clr-namespace:Emux.Gui.Converters"
+        xmlns:cheating="clr-namespace:Emux.GameBoy.Cheating;assembly=Emux.GameBoy"
+        mc:Ignorable="d"
+        Title="Cheats" Height="380.963" Width="473.849"
+        x:Name="Root" Closing="CheatsWindowOnClosing" WindowStyle="ToolWindow">
+    <Window.CommandBindings>
+        <CommandBinding Command="Close" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="CloseCommandOnExecuted"/>
+        <CommandBinding Command="New" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="NewCommandOnExecuted"/>
+        <CommandBinding Command="Delete" CanExecute="CommandBindingOnCanAlwaysExecute" Executed="DeleteCommandOnExecuted"/>
+    </Window.CommandBindings>
+    <Window.Resources>
+        <converters:HexadecimalConverter x:Key="HexadecimalConverter" />
+    </Window.Resources>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="5">
+            <Button Margin="5" Padding="20,5" Content="Close" IsCancel="True" MinWidth="100" Command="Close"/>
+        </StackPanel>
+
+        <TabControl>
+            <TabItem Header="Gameshark">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Vertical" Margin="5,0,5,5">
+                        <Button Margin="5" Padding="20,5" Content="Add" MinWidth="100" Command="New"/>
+                        <Button Margin="5" Padding="20,5" Content="Remove" MinWidth="100" Command="Delete"/>
+                    </StackPanel>
+                    <ListView x:Name="GamesharkCodesView" d:DataContext="{d:DesignInstance cheating:GamesharkCode}" ItemsSource="{Binding ElementName=Root, Path=GamesharkController.Codes}">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Code" Width="100" DisplayMemberBinding="{Binding Path=RawCode, Converter={StaticResource HexadecimalConverter}}"/>
+                                <GridViewColumn Header="Description" Width="250" DisplayMemberBinding="{Binding Path=Description}"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
