@@ -243,7 +243,7 @@ namespace Emux.GameBoy.Graphics
 
         public void WriteVRam(ushort address, byte[] buffer, int offset, int length)
         {
-            Buffer.BlockCopy(buffer, offset, _vram, address, length);
+            Buffer.BlockCopy(buffer, offset, _vram, address + GetVRamOffset(), length);
         }
 
         /// <summary>
