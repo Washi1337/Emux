@@ -51,6 +51,7 @@ namespace Emux.GameBoy.Graphics
             _device = device;
             VideoOutput = new EmptyVideoOutput();
             Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            ClearBuffers();
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
         }
 
@@ -395,7 +396,7 @@ namespace Emux.GameBoy.Graphics
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
-            
+
             _modeClock += cycles;
 
             unchecked
@@ -453,6 +454,7 @@ namespace Emux.GameBoy.Graphics
                             {
                                 currentMode = LcdStatusFlags.ScanLineOamMode;
                                 LY = 0;
+                                ClearBuffers();
                                 if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
                             }
@@ -466,6 +468,12 @@ namespace Emux.GameBoy.Graphics
                     stat |= LcdStatusFlags.Coincidence;
                 Stat = stat;
             }
+        }
+
+        private void ClearBuffers()
+        {
+            Utilities.Memset(_frameIndices, 0, _frameIndices.Length);
+            Utilities.Memset(_frameBuffer, 0, _frameBuffer.Length);
         }
 
         private void CheckCoincidenceInterrupt()
@@ -631,7 +639,7 @@ namespace Emux.GameBoy.Graphics
                                                 ? ObjP1
                                                 : ObjP0;
                                             int greyshadeIndex = GetGreyshadeIndex(palette, colorIndex);
-                                            RenderPixel(absoluteX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
+                                            RenderPixel(absoluteX, LY, colorIndex, _greyshades[greyshadeIndex]);
                                         }
                                     }
                                 }
@@ -702,7 +710,7 @@ namespace Emux.GameBoy.Graphics
             {
                 int colorIndex = GetPixelColorIndex(localX & 7, currentTileData);
                 int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
-                RenderPixel(outputX, LY, greyshadeIndex, _greyshades[greyshadeIndex]);
+                RenderPixel(outputX, LY, colorIndex, _greyshades[greyshadeIndex]);
             }
         }
 

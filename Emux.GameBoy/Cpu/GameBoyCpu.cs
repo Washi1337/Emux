@@ -44,7 +44,6 @@ namespace Emux.GameBoy.Cpu
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
         private TimeSpan _frameStartTime;
-        private int _frames;
         private ulong _frameStartTickCount;
 
         public GameBoyCpu(GameBoy device)
@@ -70,14 +69,10 @@ namespace Emux.GameBoy.Cpu
                 _frameStartSignal.Set();
                 var time = DateTime.Now.TimeOfDay;
                 var delta = time - _frameStartTime;
-               // if (delta.TotalSeconds >= 1)
-               // {
-                    CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
-                    FramesPerSecond = 1 / delta.TotalSeconds;
-                    _frames = 0;
-                    _frameStartTime = time;
-                    _frameStartTickCount = _ticks;
-               // }
+                CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
+                FramesPerSecond = 1 / delta.TotalSeconds;
+                _frameStartTime = time;
+                _frameStartTickCount = _ticks;
             }, 59);
         }
 
@@ -146,6 +141,18 @@ namespace Emux.GameBoy.Cpu
             get { return CyclesPerSecond / OfficialClockFrequency; }
         }
 
+        public bool DoubleSpeed
+        {
+            get;
+            internal set;
+        }
+
+        public bool IsPreparingSpeedSwitch
+        {
+            get;
+            internal set;
+        }
+
         public void Initialize()
         {
         }
@@ -180,7 +187,6 @@ namespace Emux.GameBoy.Cpu
                         cycles += CpuStep();
                         if (cycles >= 70224)
                         {
-                            _frames++;
                             _device.Spu.SpuStep(cycles);
                             cycles -= 70224;
                             if (EnableFrameLimit)
@@ -188,7 +194,6 @@ namespace Emux.GameBoy.Cpu
                                 WaitHandle.WaitAny(new WaitHandle[] { _breakSignal, _frameStartSignal });
                                 _frameStartSignal.Reset();
                             }
-
                         }
 
                         if (Breakpoints.Contains(Registers.PC))
@@ -375,5 +380,13 @@ namespace Emux.GameBoy.Cpu
             _halt = true;
         }
 
+        internal void Stop()
+        {
+            if (IsPreparingSpeedSwitch)
+            {
+                IsPreparingSpeedSwitch = false;
+                DoubleSpeed = !DoubleSpeed;
+            }
+        }
     }
 }

@@ -126,6 +126,9 @@ namespace Emux.GameBoy.Memory
                                     return _device.Gpu.ReadRegister((byte) (address & 0xFF));
                                 case 0x4C:
                                     return _io[address - 0xFF49];
+                                case 0x4D:
+                                    return (byte) ((_device.Cpu.DoubleSpeed ? (1 << 7) : 0) |
+                                                   (_device.Cpu.IsPreparingSpeedSwitch ? 1 : 0));
                                 case 0x70:
                                     return (byte) _internalRamBankIndex;
                                 default:
@@ -244,6 +247,9 @@ namespace Emux.GameBoy.Memory
                                 case 0x54:
                                 case 0x55:
                                     DmaController.WriteRegister(address, value);
+                                    break;
+                                case 0x4D:
+                                    _device.Cpu.IsPreparingSpeedSwitch = (value & 1) == 1; 
                                     break;
                                 case 0x70:
                                     SwitchRamBank(value);
