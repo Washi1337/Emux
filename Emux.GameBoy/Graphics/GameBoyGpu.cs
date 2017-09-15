@@ -509,14 +509,14 @@ namespace Emux.GameBoy.Graphics
                 : 0x0800;
 
             int tileDataOffset = ((LY + ScY) & 7) * 2;
-            tileDataAddress += tileDataOffset;
+            int flippedTileDataOffset = 13 - tileDataOffset;
 
             int x = ScX;
             
             // Read first tile data to render.
             byte[] currentTileData = new byte[2];
             var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F) : 0;
-            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
+            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
 
             // Render scan line.
             for (int outputX = 0; outputX < FrameWidth; outputX++, x++)
@@ -526,7 +526,7 @@ namespace Emux.GameBoy.Graphics
                     // Read next tile data to render.
                     if (_device.GbcMode)
                         flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
+                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
                 }
                 
                 RenderTileDataPixel(currentTileData, flags, outputX, x);
@@ -553,7 +553,7 @@ namespace Emux.GameBoy.Graphics
                     : 0x0800;
 
                 int tileDataOffset = ((LY - WY) & 7) * 2;
-                tileDataAddress += tileDataOffset;
+                int flippedTileDataOffset = 13 - tileDataOffset;
 
                 int x = 0;
                 var flags = SpriteDataFlags.None;
@@ -567,7 +567,7 @@ namespace Emux.GameBoy.Graphics
                         // Read next tile data to render.
                         if (_device.GbcMode)
                             flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress, currentTileData, flags);
+                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
                     }
 
                     if (outputX >= 0)
