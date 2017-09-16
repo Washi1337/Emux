@@ -24,7 +24,7 @@ namespace Emux.GameBoy.Audio
             _spu = spu;
         }
 
-        public byte NR0
+        public virtual byte NR0
         {
             get { return _nr0; }
             set { _nr0 = value; }
@@ -167,22 +167,25 @@ namespace Emux.GameBoy.Audio
 
             const float maxAmplitude = 0.05f;
 
-            double realFrequency = 131072.0 / (2048.0 - Frequency) / 2;
+            double realFrequency = 131072.0 / (2048.0 - Frequency);
             int sampleRate = ChannelOutput.SampleRate;
-            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor * 2;
-            int sampleCount = (int) (timeDelta * sampleRate);
+            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
+            int sampleCount = (int)(timeDelta * sampleRate * 2);
             float[] buffer = new float[sampleCount];
 
             if (!UseSoundLength || _length >= 0)
             {
-                for (int i = 0; i < buffer.Length; i++)
+                for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    buffer[i] = (float) (maxAmplitude * (_volume / 15.0)                                // Volume adjustments.
-                        * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
+                    float sample = (float)(maxAmplitude * (_volume / 15.0)                                                 // Volume adjustments.
+                                           * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
+                    buffer[i] = sample;
+                    if (i < buffer.Length - 1)
+                        buffer[i + 1] = sample;
                     _coordinate = (_coordinate + 1) % sampleRate;
                 }
 
-                if(UseSoundLength)
+                if (UseSoundLength)
                     _length -= timeDelta;
             }
 

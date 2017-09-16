@@ -14,9 +14,19 @@ namespace Emux.GameBoy.Audio
             _spu = spu;
         }
 
+        public override byte NR0
+        {
+            get { return base.NR0; }
+            set
+            {
+                base.NR0 = value;
+                _frequencySweepClock = 0;
+            }
+        }
+
         public float SweepFrequency
         {
-            get { return (NR0 >> 4) / 128f; }
+            get { return ((NR0 >> 4) & 7) / 128f; }
         }
 
         public bool SweepIncrease
@@ -33,10 +43,10 @@ namespace Emux.GameBoy.Audio
         {
             if (SweepShiftCount > 0 && _spu.Device.Cpu.SpeedFactor > 0.5)
             {
-                double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor * 2;
+                double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor;
                 _frequencySweepClock += timeDelta;
                 
-                double sweepInterval = 1.0 / SweepFrequency;
+                double sweepInterval = SweepFrequency;
                 while (_frequencySweepClock >= sweepInterval)
                 {
                     _frequencySweepClock -= sweepInterval;

@@ -105,7 +105,7 @@ namespace Emux.Audio
         {
             lock (this)
             {
-                if (IsRecording)
+                if (!IsRecording)
                     throw new InvalidOperationException("Cannot stop a recording when a recording is not happening.");
                 try
                 {
