@@ -38,6 +38,12 @@ namespace Emux.GameBoy.Audio
             set;
         }
 
+        float ChannelVolume
+        {
+            get;
+            set;
+        }
+
         IAudioChannelOutput ChannelOutput
         {
             get;

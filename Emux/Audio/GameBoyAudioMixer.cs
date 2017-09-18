@@ -84,7 +84,11 @@ namespace Emux.Audio
         public void Connect(GameBoySpu spu)
         {
             for (var i = 0; i < spu.Channels.Count; i++)
-                spu.Channels[i].ChannelOutput = Channels[i];
+            {
+                var channel = spu.Channels[i];
+                channel.ChannelOutput = Channels[i];
+                channel.ChannelVolume = 0.05f;
+            }
         }
 
         public void StartRecording(Stream outputStream)

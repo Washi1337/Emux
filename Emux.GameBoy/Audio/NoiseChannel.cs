@@ -23,6 +23,7 @@ namespace Emux.GameBoy.Audio
             if (spu == null)
                 throw new ArgumentNullException(nameof(spu));
             _spu = spu;
+            ChannelVolume = 1;
         }
 
         public byte NR0
@@ -68,6 +69,12 @@ namespace Emux.GameBoy.Audio
         }
 
         public bool Active
+        {
+            get;
+            set;
+        }
+
+        public float ChannelVolume
         {
             get;
             set;
@@ -155,7 +162,6 @@ namespace Emux.GameBoy.Audio
                 return;
 
             UpdateVolume(cycles);
-            const float maxAmplitude = 0.05f;
 
             double ratio = DividingRatio == 0 ? 0.5 : DividingRatio;
             double frequency = 524288 / ratio / Math.Pow(2, ShiftClockFrequency + 1) * 2;
@@ -169,7 +175,7 @@ namespace Emux.GameBoy.Audio
             {
                 for (int i = 0; i < buffer.Length; i++)
                 {
-                    buffer[i] = (float) (maxAmplitude * (_volume / 15.0) * _currentValue);
+                    buffer[i] = (float) (ChannelVolume * (_volume / 15.0) * _currentValue);
                     _coordinate += timeDelta;
                     if (_coordinate >= (1 / frequency)*2)
                     {

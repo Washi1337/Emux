@@ -51,7 +51,6 @@ namespace Emux.GameBoy.Graphics
             _device = device;
             VideoOutput = new EmptyVideoOutput();
             Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
-            ClearBuffers();
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
         }
 
@@ -454,7 +453,6 @@ namespace Emux.GameBoy.Graphics
                             {
                                 currentMode = LcdStatusFlags.ScanLineOamMode;
                                 LY = 0;
-                                ClearBuffers();
                                 if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
                             }
@@ -469,13 +467,7 @@ namespace Emux.GameBoy.Graphics
                 Stat = stat;
             }
         }
-
-        private void ClearBuffers()
-        {
-            Utilities.Memset(_frameIndices, 0, _frameIndices.Length);
-            Utilities.Memset(_frameBuffer, 0, _frameBuffer.Length);
-        }
-
+        
         private void CheckCoincidenceInterrupt()
         {
             if (LY == LYC && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)

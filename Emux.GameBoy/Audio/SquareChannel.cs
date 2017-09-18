@@ -22,6 +22,7 @@ namespace Emux.GameBoy.Audio
             if (spu == null)
                 throw new ArgumentNullException(nameof(spu));
             _spu = spu;
+            ChannelVolume = 1;
         }
 
         public virtual byte NR0
@@ -70,7 +71,14 @@ namespace Emux.GameBoy.Audio
                 Frequency = (Frequency & 0xFF) | (value & 0b111) << 8;
             }
         }
+
         public bool Active
+        {
+            get;
+            set;
+        }
+
+        public float ChannelVolume
         {
             get;
             set;
@@ -165,8 +173,6 @@ namespace Emux.GameBoy.Audio
 
             UpdateVolume(cycles);
 
-            const float maxAmplitude = 0.05f;
-
             double realFrequency = 131072.0 / (2048.0 - Frequency);
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
@@ -177,7 +183,7 @@ namespace Emux.GameBoy.Audio
             {
                 for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    float sample = (float)(maxAmplitude * (_volume / 15.0)                                                 // Volume adjustments.
+                    float sample = (float)(ChannelVolume * (_volume / 15.0)                                                 // Volume adjustments.
                                            * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
                     buffer[i] = sample;
                     if (i < buffer.Length - 1)
