@@ -84,7 +84,7 @@ namespace Emux.Gui
         private void VideoWindowOnKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
-                Device.Cpu.EnableFrameLimit = true;
+                Device.Cpu.EnableFrameLimit = false;
             else if (GetBindedButton(e.Key, out var button))
                 Device.KeyPad.PressedButtons |= button;
         }
