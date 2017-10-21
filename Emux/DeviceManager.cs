@@ -3,6 +3,7 @@ using System.IO;
 using Emux.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cheating;
+using Emux.GameBoy.Graphics;
 using NAudio.Wave;
 
 namespace Emux
@@ -24,6 +25,7 @@ namespace Emux
             player.Play();
 
             GamesharkController = new GamesharkController();
+            Properties.Settings.Default.PropertyChanged += SettingsOnPropertyChanged;
         }
 
         public GameBoyAudioMixer AudioMixer
@@ -71,7 +73,8 @@ namespace Emux
             UnloadDevice();
             _currentExternalMemory = new StreamedExternalMemory(File.Open(ramFilePath, FileMode.OpenOrCreate));
             var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
-            CurrentDevice = new GameBoy.GameBoy(cartridge, true);
+            CurrentDevice = new GameBoy.GameBoy(cartridge, !Properties.Settings.Default.ForceOriginalGameBoy);
+            ApplyColorPalettes();
             OnDeviceLoaded(new DeviceEventArgs(CurrentDevice));
         }
 
@@ -88,6 +91,28 @@ namespace Emux
         protected virtual void OnDeviceUnloaded(DeviceEventArgs e)
         {
             DeviceUnloaded?.Invoke(this, e);
+        }
+
+        private static Color ConvertColor(System.Windows.Media.Color color)
+        {
+            return new Color(color.R, color.G, color.B);
+        }
+
+        private void ApplyColorPalettes()
+        {
+            if (CurrentDevice != null)
+            {
+                CurrentDevice.Gpu.Color0 = ConvertColor(Properties.Settings.Default.GBColor0);
+                CurrentDevice.Gpu.Color1 = ConvertColor(Properties.Settings.Default.GBColor1);
+                CurrentDevice.Gpu.Color2 = ConvertColor(Properties.Settings.Default.GBColor2);
+                CurrentDevice.Gpu.Color3 = ConvertColor(Properties.Settings.Default.GBColor3);
+            }
+        }
+
+        private void SettingsOnPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName.Contains("GBColor"))
+                ApplyColorPalettes();
         }
     }
 }

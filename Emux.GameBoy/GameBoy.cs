@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Emux.GameBoy.Audio;
 using Emux.GameBoy.Cartridge;
-using Emux.GameBoy.Cheating;
 using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;

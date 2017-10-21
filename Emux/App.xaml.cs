@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Navigation;
 using Emux.Gui;
+using Emux.Properties;
 
 namespace Emux
 {
@@ -11,7 +12,9 @@ namespace Emux
     {
         public App()
         {
+            System.Windows.Forms.Application.EnableVisualStyles();
             DeviceManager = new DeviceManager();
+            Settings.Default.Reload();
         }
         
         public new static App Current
@@ -24,6 +27,10 @@ namespace Emux
             get;
         }
 
-        
+        protected override void OnExit(ExitEventArgs e)
+        {
+            Settings.Default.Save();
+            base.OnExit(e);
+        }
     }
 }

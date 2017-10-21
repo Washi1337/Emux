@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
 
@@ -16,35 +19,41 @@ namespace Emux.Gui
     public partial class VideoWindow : IVideoOutput
     {
         private readonly WriteableBitmap _bitmap = new WriteableBitmap(GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight, 96, 96, PixelFormats.Rgb24, null);
-        private readonly IDictionary<Key, GameBoyPadButton> _keyMapping = new Dictionary<Key, GameBoyPadButton>()
-        {
-            [Key.Up] = GameBoyPadButton.Up,
-            [Key.Down] = GameBoyPadButton.Down,
-            [Key.Left] = GameBoyPadButton.Left,
-            [Key.Right] = GameBoyPadButton.Right,
-            [Key.X] = GameBoyPadButton.A,
-            [Key.Z] = GameBoyPadButton.B,
-            [Key.Enter] = GameBoyPadButton.Start,
-            [Key.LeftShift] = GameBoyPadButton.Select
-        };
-        private readonly Timer _frameRateTimer = new Timer(1000);
+        private readonly DispatcherTimer _frameRateTimer;
 
         private GameBoy.GameBoy _device;
         
         public VideoWindow()
         {
             InitializeComponent();
+            _frameRateTimer = new DispatcherTimer();
+            _frameRateTimer.Tick += FrameRateTimerOnTick;
+            _frameRateTimer.Interval = new TimeSpan(0, 0, 1);
             _frameRateTimer.Start();
-            _frameRateTimer.Elapsed += FrameRateTimerOnElapsed;
         }
 
-        private void FrameRateTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        private bool GetBindedButton(Key key, out GameBoyPadButton button)
+        {
+            foreach (var name in Enum.GetValues(typeof(GameBoyPadButton)).Cast<GameBoyPadButton>().Where(x => x != GameBoyPadButton.None))
+            {
+                var bindedKey = (Key) Properties.Settings.Default["KeyBinding" + name];
+                if (bindedKey == key)
+                {
+                    button = name;
+                    return true;
+                }
+            }
+            button = GameBoyPadButton.A;
+            return false;
+        }
+
+        private void FrameRateTimerOnTick(object sender, EventArgs eventArgs)
         {
             if (Device != null)
             {
                 lock (this)
                 {
-                    Dispatcher.Invoke(() => Title = string.Format("GameBoy Video Output ({0:0.00} %)",
+                    Dispatcher.Invoke(() => Title = string.Format("Video Output ({0:0.00} %)",
                         _device.Cpu.SpeedFactor * 100));
                 }
             }
@@ -75,9 +84,8 @@ namespace Emux.Gui
         private void VideoWindowOnKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
-                Device.Cpu.EnableFrameLimit = false;
-            GameBoyPadButton button;
-            if (_keyMapping.TryGetValue(e.Key, out button))
+                Device.Cpu.EnableFrameLimit = true;
+            else if (GetBindedButton(e.Key, out var button))
                 Device.KeyPad.PressedButtons |= button;
         }
 
@@ -86,8 +94,7 @@ namespace Emux.Gui
         {
             if (e.Key == Key.Space)
                 Device.Cpu.EnableFrameLimit = true;
-            GameBoyPadButton button;
-            if (_keyMapping.TryGetValue(e.Key, out button))
+            else if (GetBindedButton(e.Key, out var button))
                 Device.KeyPad.PressedButtons &= ~button;
         }
 

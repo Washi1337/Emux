@@ -5,5 +5,58 @@
     <Setting Name="Repository" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://github.com/Washi1337/Emux</Value>
     </Setting>
+    <Setting Name="VideoBitmapScalingMode" Type="System.Windows.Media.BitmapScalingMode" Scope="User">
+      <Value Profile="(Default)">NearestNeighbor</Value>
+    </Setting>
+    <Setting Name="VideoStretchMode" Type="System.Windows.Media.Stretch" Scope="User">
+      <Value Profile="(Default)">Uniform</Value>
+    </Setting>
+    <Setting Name="ForceOriginalGameBoy" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="GBColor0" Type="System.Windows.Media.Color" Scope="User">
+      <Value Profile="(Default)">#FFE0F8D0</Value>
+    </Setting>
+    <Setting Name="GBColor1" Type="System.Windows.Media.Color" Scope="User">
+      <Value Profile="(Default)">#FF88C070</Value>
+    </Setting>
+    <Setting Name="GBColor2" Type="System.Windows.Media.Color" Scope="User">
+      <Value Profile="(Default)">#FF346856</Value>
+    </Setting>
+    <Setting Name="GBColor3" Type="System.Windows.Media.Color" Scope="User">
+      <Value Profile="(Default)">#FF081820</Value>
+    </Setting>
+    <Setting Name="KeyBindingA" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;X&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingSelect" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;LeftShift&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingUp" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Up&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingDown" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Down&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingLeft" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Left&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingRight" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Right&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingStart" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Return&lt;/Key&gt;</Value>
+    </Setting>
+    <Setting Name="KeyBindingB" Type="System.Windows.Input.Key" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;Key&gt;Z&lt;/Key&gt;</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

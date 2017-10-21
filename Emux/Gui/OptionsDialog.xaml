@@ -1,0 +1,119 @@
+﻿<Window x:Class="Emux.Gui.OptionsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Emux.Gui"
+        xmlns:emux="clr-namespace:Emux"
+        xmlns:properties="clr-namespace:Emux.Properties"
+        mc:Ignorable="d"
+        Title="Options" Height="383.591" Width="340.434" Closing="OptionsDialogOnClosing" WindowStyle="ToolWindow">
+    <DockPanel Margin="10">
+        <StackPanel DockPanel.Dock="Bottom" HorizontalAlignment="Left" Margin="0,10,0,0">
+            <Button Content="Reset to Defaults" Padding="15,5" Click="ResetToDefaultsButtonOnClick"/>
+        </StackPanel>
+        <TabControl>
+            <TabItem Header="General">
+                <StackPanel Margin="5">
+                    <CheckBox IsChecked="{emux:SettingBinding ForceOriginalGameBoy}">
+                        <AccessText TextWrapping="Wrap">Force original GameBoy mode (requires reset of GameBoy)</AccessText>
+                    </CheckBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Video">
+                <StackPanel Margin="5">
+                    <GroupBox Header="Scaling">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Grid.Row="0" Grid.Column="0" Content="Bitmap scaling mode:" Margin="3"/>
+                            <ComboBox Grid.Row="0" 
+                                      Grid.Column="1" 
+                                      ItemsSource="{Binding Source={StaticResource EnumDescriptions}, Path=BitmapScalingModeItems}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key"
+                                      SelectedValue="{emux:SettingBinding VideoBitmapScalingMode}"
+                                      Margin="3"/>
+
+                            <Label Grid.Row="1" Grid.Column="0" Content="Stretch mode:" Margin="3"/>
+                            <ComboBox Grid.Row="1" 
+                                      Grid.Column="1" 
+                                      ItemsSource="{Binding Source={StaticResource EnumDescriptions}, Path=StretchItems}"
+                                      DisplayMemberPath="Value"
+                                      SelectedValuePath="Key"
+                                      SelectedValue="{emux:SettingBinding VideoStretchMode}"
+                                      Margin="3"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox Header="Original GameBoy Colors">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Tag="0" Width="20" Height="20" Margin="10" Click="PaletteButtonOnClick">
+                                <Button.Background>
+                                    <SolidColorBrush Color="{emux:SettingBinding GBColor0}"/>
+                                </Button.Background>
+                            </Button>
+                            <Button Tag="1" Width="20" Height="20" Margin="10" Click="PaletteButtonOnClick" >
+                                <Button.Background>
+                                    <SolidColorBrush Color="{emux:SettingBinding GBColor1}"/>
+                                </Button.Background>
+                            </Button>
+                            <Button Tag="2" Width="20" Height="20" Margin="10" Click="PaletteButtonOnClick" >
+                                <Button.Background>
+                                    <SolidColorBrush Color="{emux:SettingBinding GBColor2}"/>
+                                </Button.Background>
+                            </Button>
+                            <Button Tag="3" Width="20" Height="20" Margin="10" Click="PaletteButtonOnClick" >
+                                <Button.Background>
+                                    <SolidColorBrush Color="{emux:SettingBinding GBColor3}"/>
+                                </Button.Background>
+                            </Button>
+                        </StackPanel>
+                    </GroupBox>
+                </StackPanel>
+            </TabItem>
+            <TabItem Header="Keybindings">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Margin="3" Content="Up"/>
+                    <Button Grid.Row="0" Grid.Column="1" Margin="3" Tag="Up" Click="KeyBindingButtonOnClick" KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus" Content="{emux:SettingBinding KeyBindingUp}"/>
+                    <Label Grid.Row="1" Grid.Column="0" Margin="3" Content="Down"/>
+                    <Button Grid.Row="1" Grid.Column="1" Margin="3" Tag="Down" Click="KeyBindingButtonOnClick"   KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingDown}"/>
+                    <Label Grid.Row="2" Grid.Column="0" Margin="3" Content="Left"/>
+                    <Button Grid.Row="2" Grid.Column="1" LostFocus="KeyBindingButtonOnLostFocus" Margin="3" Tag="Left" Click="KeyBindingButtonOnClick"  KeyDown="KeyBindingButtonOnKeyDown"  Content="{emux:SettingBinding KeyBindingLeft}"/>
+                    <Label Grid.Row="3" Grid.Column="0" Margin="3" Content="Right"/>
+                    <Button Grid.Row="3" Grid.Column="1" Margin="3" Tag="Right" Click="KeyBindingButtonOnClick"  KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingRight}"/>
+
+                    <Label Grid.Row="4" Grid.Column="0" Margin="3" Content="A"/>
+                    <Button Grid.Row="4" Grid.Column="1" Margin="3" Tag="A" Click="KeyBindingButtonOnClick"   KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingA}"/>
+                    <Label Grid.Row="5" Grid.Column="0" Margin="3" Content="B"/>
+                    <Button Grid.Row="5" Grid.Column="1" Margin="3" Tag="B" Click="KeyBindingButtonOnClick"  KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingB}"/>
+                    <Label Grid.Row="6" Grid.Column="0" Margin="3" Content="Start"/>
+                    <Button Grid.Row="6" Grid.Column="1" Margin="3" Tag="Start" Click="KeyBindingButtonOnClick"   KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingStart}"/>
+                    <Label Grid.Row="7" Grid.Column="0" Margin="3" Content="Select"/>
+                    <Button Grid.Row="7" Grid.Column="1" Margin="3" Tag="Select" Click="KeyBindingButtonOnClick"  KeyDown="KeyBindingButtonOnKeyDown" LostFocus="KeyBindingButtonOnLostFocus"  Content="{emux:SettingBinding KeyBindingSelect}"/>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

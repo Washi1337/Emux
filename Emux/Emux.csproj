@@ -42,6 +42,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -74,6 +76,10 @@
     </Compile>
     <Compile Include="Gui\Converters\HexadecimalConverter.cs" />
     <Compile Include="Gui\Converters\InverseConverter.cs" />
+    <Compile Include="Gui\OptionsDialog.xaml.cs">
+      <DependentUpon>OptionsDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="EnumDescriptions.cs" />
     <Compile Include="Gui\RegisterItem.cs" />
     <Compile Include="Gui\TitledOverlay.xaml.cs">
       <DependentUpon>TitledOverlay.xaml</DependentUpon>
@@ -93,6 +99,7 @@
     <Compile Include="Gui\VideoWindow.xaml.cs">
       <DependentUpon>VideoWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SettingsBinding.cs" />
     <Page Include="Gui\AboutDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -102,6 +109,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Gui\CheatsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Gui\OptionsDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

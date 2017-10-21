@@ -113,6 +113,15 @@ namespace Emux.Gui
             "Enable sound",
             typeof(MainWindow));
 
+        public static readonly RoutedUICommand OptionsCommand = new RoutedUICommand(
+            "Edit application settings.",
+            "Options",
+            typeof(MainWindow),
+            new InputGestureCollection(new[]
+            {
+                new KeyGesture(Key.F7)
+            }));
+
         public static readonly RoutedUICommand SourceCodeCommand = new RoutedUICommand(
             "View the source code of the program.",
             "Source Code",
@@ -126,7 +135,7 @@ namespace Emux.Gui
             {
                 new KeyGesture(Key.F1)
             }));
-
+        
         public static readonly DependencyProperty DeviceManagerProperty = DependencyProperty.Register(
             "DeviceManager", typeof(DeviceManager), typeof(MainWindow),
             new PropertyMetadata((o, e) => ((MainWindow) o).OnDeviceManagerChanged(e)));
@@ -137,7 +146,8 @@ namespace Emux.Gui
         private readonly IOWindow _ioWindow;
         private readonly CheatsWindow _cheatsWindow;
         private GameBoy.GameBoy _currentDevice;
-        
+        private readonly OptionsDialog _optionsDialog;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -146,8 +156,10 @@ namespace Emux.Gui
             _keypadWindow = new KeypadWindow();
             _ioWindow = new IOWindow();
             _cheatsWindow = new CheatsWindow();
+            _optionsDialog = new OptionsDialog();
 
             DeviceManager = App.Current.DeviceManager;
+
         }
 
         public DeviceManager DeviceManager
@@ -344,11 +356,13 @@ namespace Emux.Gui
             _ioWindow.Device = null;
             _mixerWindow.Mixer = null;
             _cheatsWindow.GamesharkController = null;
+            _optionsDialog.CanClose = true;
             _videoWindow.Close();
             _keypadWindow.Close();
             _ioWindow.Close();
             _mixerWindow.Close();
             _cheatsWindow.Close();
+            _optionsDialog.Close();
         }
 
         private void EnableSoundCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -372,6 +386,12 @@ namespace Emux.Gui
         {
             _cheatsWindow.Show();
             _cheatsWindow.Focus();
+        }
+
+        private void OptionsCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            _optionsDialog.Show();
+            _optionsDialog.Focus();
         }
     }
 }

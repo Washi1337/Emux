@@ -7,6 +7,6 @@
         mc:Ignorable="d"
         Title="GameBoy Video Output" Height="400" Width="444" KeyDown="VideoWindowOnKeyDown" KeyUp="VideoWindowOnKeyUp" Background="Black" Closing="VideoWindowOnClosing">
     <Grid>
-        <Image x:Name="VideoImage" RenderOptions.BitmapScalingMode="NearestNeighbor" Stretch="Fill" />
+        <Image x:Name="VideoImage" RenderOptions.BitmapScalingMode="{local:SettingBinding VideoBitmapScalingMode}" Stretch="{local:SettingBinding VideoStretchMode}" />
     </Grid>
 </Window>

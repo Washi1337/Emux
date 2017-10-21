@@ -33,10 +33,10 @@ namespace Emux.GameBoy.Graphics
 
         private readonly Color[] _greyshades =
         {
-            new Color(255,255,255),
-            new Color(192,192,192),
-            new Color(96,96,96),
-            new Color(0,0,0),
+            new Color(224, 248, 208),
+            new Color(136, 192, 112),
+            new Color(52, 104, 86),
+            new Color(8, 24, 32),
         };
 
         private int _modeClock;
@@ -52,6 +52,30 @@ namespace Emux.GameBoy.Graphics
             VideoOutput = new EmptyVideoOutput();
             Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
+        }
+
+        public Color Color0
+        {
+            get { return _greyshades[0]; }
+            set { _greyshades[0] = value; }
+        }
+
+        public Color Color1
+        {
+            get { return _greyshades[1]; }
+            set { _greyshades[1] = value; }
+        }
+
+        public Color Color2
+        {
+            get { return _greyshades[2]; }
+            set { _greyshades[2] = value; }
+        }
+
+        public Color Color3
+        {
+            get { return _greyshades[3]; }
+            set { _greyshades[3] = value; }
         }
 
         public LcdControlFlags Lcdc

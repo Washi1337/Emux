@@ -21,6 +21,7 @@
         <CommandBinding Command="local:MainWindow.CheatCodesCommand" CanExecute="GameBoyExistsCanExecute" Executed="CheatCodesCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.MixerCommand" CanExecute="GameBoyExistsCanExecute" Executed="MixerCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.EnableSoundCommand" CanExecute="GameBoyExistsCanExecute" />
+        <CommandBinding Command="local:MainWindow.OptionsCommand" Executed="OptionsCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.SourceCodeCommand" Executed="SourceCodeCommandOnExecuted" />
         <CommandBinding Command="local:MainWindow.AboutCommand" Executed="AboutCommandOnExecuted" />
     </Window.CommandBindings>
@@ -55,6 +56,8 @@
                         <MenuItem Header="Cheat codes" Command="local:MainWindow.CheatCodesCommand"/>
                         <MenuItem Header="Audio Mixer" Command="local:MainWindow.MixerCommand"/>
                         <MenuItem x:Name="EnableSoundsMenuItem" Header="Enable sound" IsCheckable="True" IsChecked="{Binding ElementName=Root, Path=DeviceManager.AudioMixer.Enabled}" Command="local:MainWindow.EnableSoundCommand" />
+                        <Separator/>
+                        <MenuItem Header="Options" Command="local:MainWindow.OptionsCommand"/>
                     </MenuItem.Items>
                 </MenuItem>
                 <MenuItem Header="Help">
