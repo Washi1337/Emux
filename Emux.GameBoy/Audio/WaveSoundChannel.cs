@@ -120,15 +120,21 @@ namespace Emux.GameBoy.Audio
         public void ChannelStep(int cycles)
         {
             double cpuSpeedFactor = _spu.Device.Cpu.SpeedFactor;
-            if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
+            if (!Active 
+                || !SoundEnabled
+                || double.IsNaN(cpuSpeedFactor) 
+                || double.IsInfinity(cpuSpeedFactor)
+                || cpuSpeedFactor < 0.5)
+            {
                 return;
-            
+            }
+
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
             int sampleCount = (int) (timeDelta * sampleRate * 2);
             float[] buffer = new float[sampleCount];
 
-            double interval = 1.0 / Frequency / cpuSpeedFactor;
+            double interval = 1.0 / Frequency;
             int intervalSampleCount = (int) (interval * sampleRate * 2);
             for (int i = 0; i < buffer.Length; i++)
             {
