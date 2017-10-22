@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using Emux.GameBoy.Graphics;
 
 namespace Emux.GameBoy.Cpu
 {
@@ -138,7 +139,7 @@ namespace Emux.GameBoy.Cpu
 
         public double SpeedFactor
         {
-            get { return CyclesPerSecond / OfficialClockFrequency; }
+            get { return CyclesPerSecond / (OfficialClockFrequency * (DoubleSpeed ? 2 : 1)); }
         }
 
         public bool DoubleSpeed
@@ -185,10 +186,10 @@ namespace Emux.GameBoy.Cpu
                     do
                     {
                         cycles += CpuStep();
-                        if (cycles >= 70224)
+                        if (cycles >= GameBoyGpu.FullFrameCycles * (DoubleSpeed ? 2 : 1))
                         {
-                            _device.Spu.SpuStep(cycles);
-                            cycles -= 70224;
+                            _device.Spu.SpuStep(cycles / (DoubleSpeed ? 2 : 1));
+                            cycles -= GameBoyGpu.FullFrameCycles * (DoubleSpeed ? 2 : 1);
                             if (EnableFrameLimit)
                             {
                                 WaitHandle.WaitAny(new WaitHandle[] { _breakSignal, _frameStartSignal });
@@ -247,7 +248,7 @@ namespace Emux.GameBoy.Cpu
             }
 
             // Update cycle dependent components.
-            OnPerformedStep(new StepEventArgs(cycles));
+            OnPerformedStep(new StepEventArgs(cycles / (DoubleSpeed ? 2 : 1)));
 
             _ticks = (_ticks + (ulong) cycles) & long.MaxValue;
             return cycles;
@@ -282,7 +283,7 @@ namespace Emux.GameBoy.Cpu
             _continueSignal.Reset();
             _terminateSignal.Set();
         }
-
+        
         protected virtual void OnResumed()
         {
             Resumed?.Invoke(this, EventArgs.Empty);

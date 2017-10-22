@@ -87,7 +87,7 @@ namespace Emux.GameBoy.Timer
         {
             return (int)(GameBoyCpu.OfficialClockFrequency / GetTimaFrequency());
         }
-
+        
         private void CpuOnPerformedStep(object sender, StepEventArgs args)
         {
             TimerStep(args.Cycles);
