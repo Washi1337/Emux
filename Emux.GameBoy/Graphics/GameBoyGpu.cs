@@ -525,7 +525,7 @@ namespace Emux.GameBoy.Graphics
                 : 0x0800;
 
             int tileDataOffset = ((LY + ScY) & 7) * 2;
-            int flippedTileDataOffset = 13 - tileDataOffset;
+            int flippedTileDataOffset = 14 - tileDataOffset;
 
             int x = ScX;
             
@@ -569,7 +569,7 @@ namespace Emux.GameBoy.Graphics
                     : 0x0800;
 
                 int tileDataOffset = ((LY - WY) & 7) * 2;
-                int flippedTileDataOffset = 13 - tileDataOffset;
+                int flippedTileDataOffset = 14 - tileDataOffset;
 
                 int x = 0;
                 var flags = SpriteDataFlags.None;
