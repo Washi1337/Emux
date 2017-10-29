@@ -59,6 +59,10 @@ namespace Emux.GameBoy.Cartridge
             {
                 _ramBankIndex = value & 0xF;
             }
+            else if (_cartridge.ExternalMemory.IsActive && address >= 0xA000 && address - 0xA000 < _cartridge.ExternalRamSize)
+            {
+                _cartridge.ExternalMemory.WriteByte(address - 0xA000 + GetRamOffset(), value);
+            }
         }
 
         private void SwitchRomBank(int index)
