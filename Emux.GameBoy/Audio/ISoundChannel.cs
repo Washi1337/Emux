@@ -1,7 +1,12 @@
 namespace Emux.GameBoy.Audio
 {
     public interface ISoundChannel
-    { 
+    {
+        int ChannelNumber
+        {
+            get;
+        }
+
         byte NR0
         {
             get;

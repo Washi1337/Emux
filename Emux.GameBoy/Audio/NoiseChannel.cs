@@ -25,6 +25,11 @@ namespace Emux.GameBoy.Audio
             _spu = spu;
             ChannelVolume = 1;
         }
+        
+        public virtual int ChannelNumber
+        {
+            get { return 4; }
+        }
 
         public byte NR0
         {
@@ -167,19 +172,22 @@ namespace Emux.GameBoy.Audio
             double frequency = 524288 / ratio / Math.Pow(2, ShiftClockFrequency + 1) * 2;
 
             int sampleRate = ChannelOutput.SampleRate;
-            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor * 2;
-            int sampleCount = (int) (timeDelta * sampleRate);
+            double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
+            int sampleCount = (int) (timeDelta * sampleRate) * 2;
             float[] buffer = new float[sampleCount];
 
             if (!UseSoundLength || _length >= 0)
             {
-                for (int i = 0; i < buffer.Length; i++)
+                for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    buffer[i] = (float) (ChannelVolume * (_volume / 15.0) * _currentValue);
+                    float sample = (float) (ChannelVolume * (_volume / 15.0) * _currentValue);
+
+                    _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+
                     _coordinate += timeDelta;
-                    if (_coordinate >= (1 / frequency)*2)
+                    if (_coordinate >= (1 / frequency) * 2)
                     {
-                        _coordinate -= (1 / frequency)*2;
+                        _coordinate -= (1 / frequency) * 2;
                         _currentValue = _random.NextDouble();
                     }
                 }

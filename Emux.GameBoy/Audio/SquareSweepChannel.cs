@@ -14,6 +14,11 @@ namespace Emux.GameBoy.Audio
             _spu = spu;
         }
 
+        public override int ChannelNumber
+        {
+            get { return 1; }
+        }
+
         public override byte NR0
         {
             get { return base.NR0; }

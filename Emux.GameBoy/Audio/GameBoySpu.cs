@@ -32,7 +32,7 @@ namespace Emux.GameBoy.Audio
             set;
         }
 
-        public byte NR52
+        public SpuOutputSelection NR52
         {
             get;
             set;
@@ -42,6 +42,30 @@ namespace Emux.GameBoy.Audio
         {
             get;
             set;
+        }
+
+        public bool EnableSO1
+        {
+            get { return (NR51 & (1 << 3)) != 0; }
+            set { NR51 = (byte)((NR51 & ~(1 << 3)) | (value ? 1 : 0) << 3); }
+        }
+
+        public byte SO1Volume
+        {
+            get { return (byte)(NR51 & 0x7); }
+            set { NR51 = (byte)((NR51 & ~0x7) | (value << 4)); }
+        }
+
+        public bool EnableSO2
+        {
+            get { return (NR51 & (1 << 7)) != 0; }
+            set { NR51 = (byte) ((NR51 & ~(1 << 7)) | (value ? 1 : 0) << 7); }
+        }
+
+        public byte SO2Volume
+        {
+            get { return (byte) ((NR51 >> 4) & 0x7); }
+            set { NR51 = (byte) ((NR51 & ~(0x7 << 4)) | ((value & 0x7) << 4)); }
         }
 
         public IList<ISoundChannel> Channels
@@ -74,7 +98,7 @@ namespace Emux.GameBoy.Audio
                     NR51 = value;
                     break;
                 case 0xFF25:
-                    NR52 = value;
+                    NR52 = (SpuOutputSelection) value;
                     break;
                 case 0xFF26:
                     NR53 = value;
@@ -93,11 +117,7 @@ namespace Emux.GameBoy.Audio
                         int relativeAddress = address - 0xFF10;
                         int channelIndex = relativeAddress / 5;
                         var channel = Channels[channelIndex];
-
-                        // TODO: remove
-                        if (channel == null)
-                            return;
-
+                        
                         switch (relativeAddress % 5)
                         {
                             case 0:
@@ -128,7 +148,7 @@ namespace Emux.GameBoy.Audio
                 case 0xFF24:
                     return NR51;
                 case 0xFF25:
-                    return NR52;
+                    return (byte) NR52;
                 case 0xFF26:
                     return NR53;
                 default:
@@ -188,5 +208,27 @@ namespace Emux.GameBoy.Audio
                     channel.Active = false;
             }
         }
+
+        internal void WriteToSoundBuffer(int channel, float[] totalBuffer, int index, float sample)
+        {
+            sample *= SO1Volume / 7f;
+            if (((int)NR52 & (1 << (channel - 1))) != 0)
+                totalBuffer[index + 1] = sample;
+            if (((int)NR52 & (1 << (channel + 3))) != 0)
+                totalBuffer[index] = sample;
+        }
+    }
+
+    [Flags]
+    public enum SpuOutputSelection : byte
+    {
+        OutputChannel1ToS01 = 1 << 0,
+        OutputChannel2ToS01 = 1 << 1,
+        OutputChannel3ToS01 = 1 << 2,
+        OutputChannel4ToS01 = 1 << 3,
+        OutputChannel1ToS02 = 1 << 4,
+        OutputChannel2ToS02 = 1 << 5,
+        OutputChannel3ToS02 = 1 << 6,
+        OutputChannel4ToS02 = 1 << 7,
     }
 }

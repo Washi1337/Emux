@@ -13,6 +13,7 @@ namespace Emux.GameBoy.Audio
         private byte _nr3;
         private byte _nr4;
         private int _coordinate;
+        private bool _top;
 
         public WaveSoundChannel(GameBoySpu spu)
         {
@@ -20,6 +21,11 @@ namespace Emux.GameBoy.Audio
                 throw new ArgumentNullException(nameof(spu));
             _spu = spu;
             ChannelVolume = 1;
+        }
+
+        public virtual int ChannelNumber
+        {
+            get { return 3; }
         }
 
         public byte NR0
@@ -131,19 +137,30 @@ namespace Emux.GameBoy.Audio
 
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
-            int sampleCount = (int) (timeDelta * sampleRate * 2);
+            int sampleCount = (int) (timeDelta * sampleRate) * 2;
             float[] buffer = new float[sampleCount];
 
             double interval = 1.0 / Frequency;
-            int intervalSampleCount = (int) (interval * sampleRate * 2);
-            for (int i = 0; i < buffer.Length; i++)
+            int intervalSampleCount = (int) (interval * sampleRate);
+
+            for (int i = 0; i < buffer.Length; i+=2)
             {
-                _coordinate = (_coordinate + 1) % intervalSampleCount;
+                _coordinate++;
+                if (_coordinate >= intervalSampleCount)
+                {
+                    _top = !_top;
+                    _coordinate = 0;
+                }
+
                 int waveRamCoordinate = (int) (_coordinate / (double) intervalSampleCount * _waveRam.Length);
 
-                buffer[i] = ChannelVolume * OutputLevel * ((_waveRam[waveRamCoordinate] & 0xF) - 7) / 15f;
-                if (i < buffer.Length - 1)
-                    buffer[i + 1] = ChannelVolume * OutputLevel * (((_waveRam[waveRamCoordinate] >> 4) & 0xF) - 7) / 15f;
+                int waveDataSample = _top
+                    ? (_waveRam[waveRamCoordinate] & 0xF)
+                    : ((_waveRam[waveRamCoordinate] >> 4) & 0xF);
+
+                float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
+
+                _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
 
             }
 
