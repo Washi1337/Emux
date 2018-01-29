@@ -190,7 +190,7 @@ namespace Emux.GameBoy.Graphics
             {
                 _bgPaletteMemory[BgpI & 0x3f] = value;
                 if ((BgpI & 0x80) != 0)
-                    BgpI++;
+                    BgpI = (byte)(0x80 | ((BgpI + 1) & 0x3F));
             }
         }
 
@@ -420,13 +420,12 @@ namespace Emux.GameBoy.Graphics
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
 
-            _modeClock += cycles;
-
             unchecked
             {
                 LcdStatusFlags stat = Stat;
-                
                 var currentMode = stat & LcdStatusFlags.ModeMask;
+                _modeClock += cycles;
+
                 switch (currentMode)
                 {
                     case LcdStatusFlags.ScanLineOamMode:
@@ -712,12 +711,16 @@ namespace Emux.GameBoy.Graphics
             if (_device.GbcMode)
             {
                 // TODO: support other flags.
-
                 int actualX = localX & 7;
+
                 // Horizontal flip when specified.
                 if ((flags & SpriteDataFlags.XFlip) != 0)
                     actualX = 7 - actualX;
+                
+                if (LY == 0)
+                {
 
+                }
                 int paletteIndex = (int)(flags & SpriteDataFlags.PaletteNumberMask);
                 int colorIndex = GetPixelColorIndex(actualX, currentTileData);
                 RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
