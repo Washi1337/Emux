@@ -288,7 +288,10 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("push hl",              0xE5, 0x00, 0, 16, (d, i) => d.Cpu.Push(d.Cpu.Registers.HL)),
             new Z80OpCode("and {0:x2}",           0xE6, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.And(i.Operand8)),
             new Z80OpCode("rst 20",               0xE7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x20)),
-            new Z80OpCode("add sp, {0:x2}",       0xE8, 0x00, 1, 16, (d, i) => d.Cpu.Registers.SP = d.Cpu.Alu.Add(d.Cpu.Registers.SP, unchecked((sbyte)i.Operand8), H | C, None, Z | N)),
+            new Z80OpCode("add sp, {0:x2}",       0xE8, 0x00, 1, 16, (d, i) => 
+            {
+                d.Cpu.Registers.SP = d.Cpu.Alu.Add(d.Cpu.Registers.SP, unchecked((sbyte)i.Operand8), H | C, None, Z | N);
+            }),
             new Z80OpCode("jp (hl)",              0xE9, 0x00, 0, 4, (d, i) => d.Cpu.Jump(d.Cpu.Registers.HL)),
             new Z80OpCode("ld ({0:x4}), a",       0xEA, 0x00, 2, 16, (d, i) => d.Memory.WriteByte(i.Operand16, d.Cpu.Registers.A)),
             new Z80OpCode("0xEB",                 0xEB, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
@@ -310,7 +313,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("push af",              0xF5, 0x00, 0, 16, (d, i) => d.Cpu.Push(d.Cpu.Registers.AF)),
             new Z80OpCode("or {0:x2}",            0xF6, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Or(i.Operand8)),
             new Z80OpCode("rst 30",               0xF7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x30)),
-            new Z80OpCode("ld hl, sp+{0:x2}",     0xF8, 0x00, 1, 12, (d, i) => d.Cpu.Registers.HL = (ushort)(d.Cpu.Registers.SP + unchecked((sbyte)i.Operand8))),
+            new Z80OpCode("ld hl, sp+{0:x2}",     0xF8, 0x00, 1, 12, (d, i) => d.Cpu.Registers.HL = d.Cpu.Alu.Add(d.Cpu.Registers.SP, unchecked((sbyte)i.Operand8), H | C, None, Z | N)),
             new Z80OpCode("ld sp, hl",            0xF9, 0x00, 0, 4, (d, i) => d.Cpu.Registers.SP = d.Cpu.Registers.HL),
             new Z80OpCode("ld a, ({0:x4})",       0xFA, 0x00, 2, 16, (d, i) => d.Cpu.Registers.A = d.Memory.ReadByte(i.Operand16)),
             new Z80OpCode("ei",                   0xFB, 0x00, 0, 0, (d, i) => 

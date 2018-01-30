@@ -15,14 +15,22 @@ namespace Emux.GameBoy.Cpu
         {
             int intermediate = operation(a, b);
             ushort result = (ushort) (intermediate & 0xFFFF);
+            int carryBits = (a ^ b ^ intermediate);
+            int halfCarryBits = (a ^ b ^ result);
+
             _registers.ClearFlags(affectedFlags);
+
             var setAffected = RegisterFlags.None;
-            if ((intermediate & (1 << 16)) == (1 << 16))
+
+            if ((carryBits & 0x10000) == 0x10000)
                 setAffected |= RegisterFlags.C;
-            if ((operation((ushort) (a & 0xFFF), (ushort) (b & 0xFFF)) & (1 << 12)) == (1 << 12))
+
+            if ((halfCarryBits & 0x1000) == 0x1000)
                 setAffected |= RegisterFlags.H;
+
             if (result == 0)
                 setAffected |= RegisterFlags.Z;
+
             _registers.SetFlags(setAffected & affectedFlags);
             return result;
         }
@@ -31,12 +39,18 @@ namespace Emux.GameBoy.Cpu
         {
             int intermediate = operation(a, b);
             byte result = (byte) (intermediate & 0xFF);
+            int carryBits = (a ^ b ^ intermediate);
+            
             _registers.ClearFlags(affectedFlags);
+
             var setAffected = RegisterFlags.None;
-            if ((intermediate & (1 << 8)) == (1 << 8))
+
+            if ((carryBits & 0x100) == 0x100)
                 setAffected |= RegisterFlags.C;
-            if ((operation((byte) (a & 0xF), (byte) (b & 0xF)) & (1 << 4)) == (1 << 4))
+
+            if ((carryBits & 0x10) == 0x10)
                 setAffected |= RegisterFlags.H;
+
             if (result == 0)
                 setAffected |= RegisterFlags.Z;
             _registers.SetFlags(setAffected & affectedFlags);
@@ -47,14 +61,21 @@ namespace Emux.GameBoy.Cpu
         {
             int intermediate = operation(a, b);
             ushort result = (ushort) (intermediate & 0xFFFF);
+            int carryBits = (a ^ b ^ intermediate);
+
             _registers.ClearFlags(affectedFlags);
+
             var setAffected = RegisterFlags.None;
-            if ((intermediate & (1 << 8)) == (1 << 8))
+
+            if ((carryBits & 0x100) == 0x100)
                 setAffected |= RegisterFlags.C;
-            if ((operation((ushort) (a & 0xF), (sbyte) (b & 0xF)) & (1 << 4)) == (1 << 4))
+
+            if ((carryBits & 0x10) == 0x10)
                 setAffected |= RegisterFlags.H;
+
             if (result == 0)
                 setAffected |= RegisterFlags.Z;
+
             _registers.SetFlags(setAffected & affectedFlags);
             return result;
         }
@@ -337,7 +358,7 @@ namespace Emux.GameBoy.Cpu
                 value -= correction;
             }
 
-            if ((value & (1 << 8)) == (1 << 8))
+            if (((correction << 2) & 0x100) != 0)
                 flags |= RegisterFlags.C;
             if (_registers.A == 0)
                 flags |= RegisterFlags.Z;
