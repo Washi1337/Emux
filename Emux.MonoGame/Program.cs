@@ -62,7 +62,7 @@ namespace Emux.MonoGame
             using (var saveFs = File.Open(saveFile, FileMode.OpenOrCreate))
             {
                 var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), new StreamedExternalMemory(saveFs));
-                var device = new GameBoy.GameBoy(cartridge, game, false);
+                var device = new GameBoy.GameBoy(cartridge, game, true);
                 game.GameBoy = device;
                 device.Gpu.VideoOutput = game;
                 
