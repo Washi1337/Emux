@@ -74,7 +74,7 @@ namespace Emux
             _currentExternalMemory = new StreamedExternalMemory(File.Open(ramFilePath, FileMode.OpenOrCreate));
             var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
             _currentExternalMemory.SetBufferSize(cartridge.ExternalRamSize);
-            CurrentDevice = new GameBoy.GameBoy(cartridge, !Properties.Settings.Default.ForceOriginalGameBoy);
+            CurrentDevice = new GameBoy.GameBoy(cartridge, new WinMmTimer(59), !Properties.Settings.Default.ForceOriginalGameBoy);
             ApplyColorPalettes();
             OnDeviceLoaded(new DeviceEventArgs(CurrentDevice));
         }

@@ -99,6 +99,7 @@
     <Compile Include="Gui\VideoWindow.xaml.cs">
       <DependentUpon>VideoWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WinMmTimer.cs" />
     <Compile Include="SettingsBinding.cs" />
     <Page Include="Gui\AboutDialog.xaml">
       <SubType>Designer</SubType>

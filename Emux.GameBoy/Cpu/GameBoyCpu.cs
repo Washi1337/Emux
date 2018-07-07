@@ -41,40 +41,39 @@ namespace Emux.GameBoy.Cpu
         private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
-        private readonly NativeTimer _frameTimer;
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
         private TimeSpan _frameStartTime;
         private ulong _frameStartTickCount;
 
-        public GameBoyCpu(GameBoy device)
+        public GameBoyCpu(GameBoy device, IClock clock)
         {
-            if (device == null)
-                throw new ArgumentNullException(nameof(device));
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
             _disassembler = new Z80Disassembler(device.Memory);
 
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
             Breakpoints = new HashSet<ushort>();
             EnableFrameLimit = true;
+            Clock = clock ?? throw new ArgumentNullException(nameof(clock));
 
+            Clock.Tick += ClockOnTick; 
             new Thread(CpuLoop)
             {
                 Name = "Z80CPULOOP",
                 IsBackground = true
             }.Start();
+        }
 
-            _frameTimer = new NativeTimer((timerid, msg, user, dw1, dw2) =>
-            {
-                _frameStartSignal.Set();
-                var time = DateTime.Now.TimeOfDay;
-                var delta = time - _frameStartTime;
-                CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
-                FramesPerSecond = 1 / delta.TotalSeconds;
-                _frameStartTime = time;
-                _frameStartTickCount = _ticks;
-            }, 59);
+        private void ClockOnTick(object sender, EventArgs e)
+        {
+            _frameStartSignal.Set();
+            var time = DateTime.Now.TimeOfDay;
+            var delta = time - _frameStartTime;
+            CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
+            FramesPerSecond = 1 / delta.TotalSeconds;
+            _frameStartTime = time;
+            _frameStartTickCount = _ticks;
         }
 
         /// <summary>
@@ -152,6 +151,11 @@ namespace Emux.GameBoy.Cpu
         {
             get;
             internal set;
+        }
+        
+        public IClock Clock
+        {
+            get;
         }
 
         public void Initialize()
@@ -256,7 +260,7 @@ namespace Emux.GameBoy.Cpu
 
         public void Step()
         {
-            _frameTimer.Stop();
+            Clock.Stop();
             _break = true;
             _continueSignal.Set();
         }
@@ -264,7 +268,7 @@ namespace Emux.GameBoy.Cpu
         public void Run()
         {
             _frameStartTime = DateTime.Now.TimeOfDay;
-            _frameTimer.Start();
+            Clock.Start();
             _break = false;
             _continueSignal.Set();
         }
@@ -272,14 +276,14 @@ namespace Emux.GameBoy.Cpu
         public void Break()
         {
             _breakSignal.Set();
-            _frameTimer.Stop();
+            Clock.Stop();
             _continueSignal.Reset();
             _break = true;
         }
 
         public void Terminate()
         {
-            _frameTimer.Stop();
+            Clock.Stop();
             _continueSignal.Reset();
             _terminateSignal.Set();
         }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Emux.GameBoy;
+using Emux.GameBoy.Cpu;
 
-namespace Emux.GameBoy
+namespace Emux
 {
-    internal class NativeTimer
+    internal class WinMmTimer : IClock
     {
         public delegate void MmTimerProc(uint timerid, uint msg, IntPtr user, uint dw1, uint dw2);
 
@@ -23,11 +25,13 @@ namespace Emux.GameBoy
         private readonly int _frequency;
         private uint _timerId;
 
-        public NativeTimer(MmTimerProc callback, int frequency)
+        public WinMmTimer(int frequency)
         {
-            _callback = callback;
+            _callback = (timerid, msg, user, dw1, dw2) => Tick?.Invoke(null, EventArgs.Empty);
             _frequency = frequency;
         }
+
+        public event EventHandler Tick;
 
         public void Start()
         {

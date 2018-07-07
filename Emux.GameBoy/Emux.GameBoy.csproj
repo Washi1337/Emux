@@ -63,12 +63,12 @@
     <Compile Include="Cheating\GamesharkCode.cs" />
     <Compile Include="Cheating\GamesharkController.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
+    <Compile Include="Cpu\IClock.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />
     <Compile Include="Cpu\RegisterFlags.cs" />
     <Compile Include="Cpu\StepEventArgs.cs" />
     <Compile Include="IGameBoyComponent.cs" />
     <Compile Include="Memory\DmaController.cs" />
-    <Compile Include="NativeTimer.cs" />
     <Compile Include="Timer\GameBoyTimer.cs" />
     <Compile Include="Cpu\Z80Disassembler.cs" />
     <Compile Include="Cpu\Z80Instruction.cs" />
