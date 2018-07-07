@@ -1,23 +1,11 @@
 ﻿using System;
 using System.IO;
-using Emux.GameBoy.Audio;
 using Emux.GameBoy.Cartridge;
+using Emux.NAudio;
+using NAudio.Wave;
 
 namespace Emux.MonoGame
 {
-    internal class AudioOutput : IAudioChannelOutput
-    {
-        public int SampleRate
-        {
-            get { return 1; }
-        }
-
-        public void BufferSoundSamples(float[] sampleData, int offset, int length)
-        {
-            
-        }
-    }
-    
     public static class Program
     {
         private static void PrintAbout()
@@ -58,20 +46,21 @@ namespace Emux.MonoGame
                 return;
             }
 
+            
             using (var game = new EmuxHost())
             using (var saveFs = File.Open(saveFile, FileMode.OpenOrCreate))
             {
                 var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), new StreamedExternalMemory(saveFs));
                 var device = new GameBoy.GameBoy(cartridge, game, true);
                 game.GameBoy = device;
+                
                 device.Gpu.VideoOutput = game;
                 
-                for (var i = 0; i < device.Spu.Channels.Count; i++)
-                {
-                    var channel = device.Spu.Channels[i];
-                    channel.ChannelOutput = new AudioOutput();
-                    channel.ChannelVolume = 0.05f;
-                }
+                var mixer = new GameBoyNAudioMixer();
+                mixer.Connect(device.Spu);
+                var player = new DirectSoundOut();
+                player.Init(mixer);
+                player.Play();
                 
                 game.Run();
             }

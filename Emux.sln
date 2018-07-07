@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.GameBoy.Tests", "Emux.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.MonoGame", "Emux.MonoGame\Emux.MonoGame.csproj", "{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.NAudio", "Emux.NAudio\Emux.NAudio.csproj", "{D22215C8-3A0F-49DE-A663-D8FF12349215}"
+EndProject
 Global
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
@@ -36,6 +38,10 @@ Global
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D22215C8-3A0F-49DE-A663-D8FF12349215}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D22215C8-3A0F-49DE-A663-D8FF12349215}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D22215C8-3A0F-49DE-A663-D8FF12349215}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D22215C8-3A0F-49DE-A663-D8FF12349215}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

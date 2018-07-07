@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using Emux.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cheating;
 using Emux.GameBoy.Graphics;
+using Emux.NAudio;
 using NAudio.Wave;
 
 namespace Emux
@@ -19,7 +19,7 @@ namespace Emux
 
         public DeviceManager()
         {
-            AudioMixer = new GameBoyAudioMixer();
+            AudioMixer = new GameBoyNAudioMixer();
             var player = new DirectSoundOut();
             player.Init(AudioMixer);
             player.Play();
@@ -28,7 +28,7 @@ namespace Emux
             Properties.Settings.Default.PropertyChanged += SettingsOnPropertyChanged;
         }
 
-        public GameBoyAudioMixer AudioMixer
+        public GameBoyNAudioMixer AudioMixer
         {
             get;
         }

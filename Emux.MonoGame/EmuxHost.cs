@@ -5,8 +5,10 @@ using Emux.GameBoy.Cpu;
 using Emux.GameBoy.Graphics;
 using Emux.GameBoy.Input;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
 using Color = Microsoft.Xna.Framework.Color;
 
 namespace Emux.MonoGame

@@ -12,5 +12,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Emux.GameBoy\Emux.GameBoy.csproj" />
+    <ProjectReference Include="..\Emux.NAudio\Emux.NAudio.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="NAudio, Version=1.9.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\NAudio.1.9.0-preview1\lib\net35\NAudio.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

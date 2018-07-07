@@ -4,16 +4,16 @@ using System.Runtime.CompilerServices;
 using Emux.GameBoy.Audio;
 using NAudio.Wave;
 
-namespace Emux.Audio
+namespace Emux.NAudio
 {
     public class NAudioChannelOutput : BufferedWaveProvider, IAudioChannelOutput, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private readonly GameBoyAudioMixer _mixer;
+        private readonly GameBoyNAudioMixer _mixer;
         private bool _enabled;
 
-        public NAudioChannelOutput(GameBoyAudioMixer mixer, string name)
+        public NAudioChannelOutput(GameBoyNAudioMixer mixer, string name)
             : base(mixer.WaveFormat)
         {
             if (mixer == null)
