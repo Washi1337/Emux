@@ -81,7 +81,11 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("inc (hl)",             0x34, 0x00, 0, 12, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, d.Cpu.Alu.Increment(d.Memory.ReadByte(d.Cpu.Registers.HL), Z | H, None, N))),
             new Z80OpCode("dec (hl)",             0x35, 0x00, 0, 12, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, d.Cpu.Alu.Decrement(d.Memory.ReadByte(d.Cpu.Registers.HL), Z | H, N))),
             new Z80OpCode("ld (hl), {0:x2}",      0x36, 0x00, 1, 8, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, i.Operand8)),
-            new Z80OpCode("scf",                  0x37, 0x00, 0, 4, (d, i) => d.Cpu.Registers.SetFlags(C)),
+            new Z80OpCode("scf",                  0x37, 0x00, 0, 4, (d, i) =>
+            {
+                d.Cpu.Registers.SetFlags(C);
+                d.Cpu.Registers.ClearFlags(N | H);
+            }),
             new Z80OpCode("jr c, {0:x2}",         0x38, 0x00, 1, 12, 8, (d, i) => d.Cpu.JumpFlag(i.OpCode, (ushort) (d.Cpu.Registers.PC + unchecked((sbyte) i.Operand8)), d.Cpu.Registers.GetFlags(C))),
             new Z80OpCode("add hl, sp",           0x39, 0x00, 0, 8, (d, i) => d.Cpu.Registers.HL = d.Cpu.Alu.Add(d.Cpu.Registers.HL, d.Cpu.Registers.SP, H | C, None, N)),
             new Z80OpCode("ld a, (hl-)",          0x3A, 0x00, 0, 8, (d, i) =>

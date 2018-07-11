@@ -332,6 +332,7 @@ namespace Emux.GameBoy.Cpu
                 _registers.ClearFlags(RegisterFlags.C);
             else
                 _registers.SetFlags(RegisterFlags.C);
+            _registers.ClearFlags(RegisterFlags.N | RegisterFlags.H);
         }
 
         internal void Daa()
