@@ -308,7 +308,7 @@ namespace Emux.Gui
                     }
                     else
                     {
-                        _currentDevice.Cpu.Breakpoints.Add(address);
+                        _currentDevice.Cpu.SetBreakpoint(address);
                     }
                 }
             }
@@ -322,7 +322,7 @@ namespace Emux.Gui
 
         private void ClearBreakpointsCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _currentDevice.Cpu.Breakpoints.Clear();
+            _currentDevice.Cpu.ClearBreakpoints();
         }
 
         private void KeyPadCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)

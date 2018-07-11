@@ -64,12 +64,19 @@
     </ApplicationDefinition>
     <Compile Include="DeviceEventArgs.cs" />
     <Compile Include="DeviceManager.cs" />
+    <Compile Include="Expressions\ExpressionLexer.cs" />
+    <Compile Include="Expressions\ExpressionParser.cs" />
+    <Compile Include="Expressions\Terminal.cs" />
+    <Compile Include="Expressions\Token.cs" />
     <Compile Include="Gui\AboutDialog.xaml.cs">
       <DependentUpon>AboutDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Audio\NAudioChannelOutput.cs" />
     <Compile Include="Gui\AudioMixerWindow.xaml.cs">
       <DependentUpon>AudioMixerWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Gui\BreakpointDialog.xaml.cs">
+      <DependentUpon>BreakpointDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="Gui\CheatsWindow.xaml.cs">
       <DependentUpon>CheatsWindow.xaml</DependentUpon>
@@ -105,6 +112,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Gui\AudioMixerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Gui\BreakpointDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

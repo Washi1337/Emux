@@ -1,4 +1,6 @@
 ﻿using System.Windows;
+using Emux.Expressions;
+using Emux.GameBoy.Cpu;
 using Emux.Properties;
 
 namespace Emux

@@ -38,14 +38,18 @@ namespace Emux.GameBoy.Cpu
         private readonly GameBoy _device;
         private readonly ManualResetEvent _continueSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _terminateSignal = new ManualResetEvent(false);
+        
         private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
+        
         private readonly NativeTimer _frameTimer;
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
         private TimeSpan _frameStartTime;
         private ulong _frameStartTickCount;
+        
+        private readonly IDictionary<ushort, Breakpoint> _breakpoints = new Dictionary<ushort, Breakpoint>();
 
         public GameBoyCpu(GameBoy device)
         {
@@ -56,7 +60,6 @@ namespace Emux.GameBoy.Cpu
 
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
-            Breakpoints = new HashSet<ushort>();
             EnableFrameLimit = true;
 
             new Thread(CpuLoop)
@@ -105,14 +108,6 @@ namespace Emux.GameBoy.Cpu
         {
             get;
             private set;
-        }
-
-        /// <summary>
-        /// Gets a collection of memory addresses to break the execution on.
-        /// </summary>
-        public ISet<ushort> Breakpoints
-        {
-            get;
         }
 
         /// <summary>
@@ -197,7 +192,7 @@ namespace Emux.GameBoy.Cpu
                             }
                         }
 
-                        if (Breakpoints.Contains(Registers.PC))
+                        if (_breakpoints.TryGetValue(Registers.PC, out var breakpoint) && breakpoint.Condition(this))
                             _break = true;
 
                     } while (!_break);
@@ -282,6 +277,38 @@ namespace Emux.GameBoy.Cpu
             _frameTimer.Stop();
             _continueSignal.Reset();
             _terminateSignal.Set();
+        }
+
+        public Breakpoint SetBreakpoint(ushort address)
+        {
+            if (!_breakpoints.TryGetValue(address, out var breakpoint))
+            {
+                breakpoint = new Breakpoint(address);
+                _breakpoints.Add(address, breakpoint);
+            }
+
+            return breakpoint;
+        }
+
+        public void RemoveBreakpoint(ushort address)
+        {
+            _breakpoints.Remove(address);
+        }
+
+        public IEnumerable<Breakpoint> GetBreakpoints()
+        {
+            return _breakpoints.Values;
+        }
+
+        public Breakpoint GetBreakpointAtAddress(ushort address)
+        {
+            _breakpoints.TryGetValue(address, out var breakpoint);
+            return breakpoint;
+        }
+
+        public void ClearBreakpoints()
+        {
+            _breakpoints.Clear();
         }
         
         protected virtual void OnResumed()
