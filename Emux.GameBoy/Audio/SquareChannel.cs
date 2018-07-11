@@ -5,11 +5,10 @@ namespace Emux.GameBoy.Audio
 {
     public class SquareChannel : ISoundChannel
     {
-        private readonly GameBoySpu _spu;
+        private readonly VolumeEnvelope _volumeEnvelope;
+        
         private int _coordinate = 0;
         private double _length = 0;
-        private int _volume = 0;
-        private double _volumeEnvelopeTimer = 0;
 
         private byte _nr4;
         private byte _nr2;
@@ -19,10 +18,14 @@ namespace Emux.GameBoy.Audio
 
         public SquareChannel(GameBoySpu spu)
         {
-            if (spu == null)
-                throw new ArgumentNullException(nameof(spu));
-            _spu = spu;
+            Spu = spu ?? throw new ArgumentNullException(nameof(spu));
             ChannelVolume = 1;
+            _volumeEnvelope = new VolumeEnvelope(this);
+        }
+
+        public GameBoySpu Spu
+        {
+            get;
         }
 
         public virtual int ChannelNumber
@@ -52,7 +55,7 @@ namespace Emux.GameBoy.Audio
             set
             {
                 _nr2 = value;
-                _volume = InitialEnvelopeVolume;
+                _volumeEnvelope.Reset();
             }
         }
 
@@ -141,54 +144,13 @@ namespace Emux.GameBoy.Audio
             get { return (NR4 & (1 << 6)) != 0; }
         }
 
-        public int InitialEnvelopeVolume
-        {
-            get { return NR2 >> 4; }
-        }
-
-        public bool EnvelopeIncrease
-        {
-            get { return (NR2 & (1 << 3)) != 0; }
-        }
-
-        public int EnvelopeSweepCount
-        {
-            get { return NR2 & 7; }
-            set { NR2 = (byte) ((NR2 & ~7) | value & 7); }
-        }
-
-        private void UpdateVolume(int cycles)
-        {
-            if (EnvelopeSweepCount > 0)
-            {
-                double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor;
-                _volumeEnvelopeTimer += timeDelta;
-
-                double stepInterval = EnvelopeSweepCount / 64.0;
-                while (_volumeEnvelopeTimer >= stepInterval)
-                {
-                    _volumeEnvelopeTimer -= stepInterval;
-                    if (EnvelopeIncrease)
-                        _volume++;
-                    else
-                        _volume--;
-                    
-                    if (_volume < 0)
-                        _volume = 0;
-                    if (_volume > 15)
-                        _volume = 15;
-                }
-
-            }
-        }
-
         public virtual void ChannelStep(int cycles)
         {
-            double cpuSpeedFactor = _spu.Device.Cpu.SpeedFactor;
+            double cpuSpeedFactor = Spu.Device.Cpu.SpeedFactor;
             if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
                 return;
 
-            UpdateVolume(cycles);
+            _volumeEnvelope.Update(cycles);
 
             double realFrequency = Frequency;
             int sampleRate = ChannelOutput.SampleRate;
@@ -197,7 +159,7 @@ namespace Emux.GameBoy.Audio
             int sampleCount = (int) (timeDelta * sampleRate) * 2;
             var buffer = new float[sampleCount];
 
-            double amplitude = ChannelVolume * (_volume / 15.0);
+            double amplitude = ChannelVolume * (_volumeEnvelope.Volume / 15.0);
             double period = (float) (1f / realFrequency);
             
             if (!UseSoundLength || _length >= 0)
@@ -210,7 +172,7 @@ namespace Emux.GameBoy.Audio
 
                     float sample = saw1 - saw2;
 
-                    _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
 
                     _coordinate = (_coordinate + 1) % sampleRate;
                 }

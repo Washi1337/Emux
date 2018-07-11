@@ -49,6 +49,7 @@
     <Compile Include="Audio\SpuOutputSelection.cs" />
     <Compile Include="Audio\SquareChannel.cs" />
     <Compile Include="Audio\SquareSweepChannel.cs" />
+    <Compile Include="Audio\VolumeEnvelope.cs" />
     <Compile Include="Audio\WaveSoundChannel.cs" />
     <Compile Include="Cartridge\GameBoyColorFlag.cs" />
     <Compile Include="Cartridge\IExternalMemory.cs" />

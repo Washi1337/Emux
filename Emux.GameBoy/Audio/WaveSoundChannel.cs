@@ -6,7 +6,6 @@ namespace Emux.GameBoy.Audio
     public class WaveSoundChannel : ISoundChannel
     {
         private readonly byte[] _waveRam = new byte[0x10];
-        private readonly GameBoySpu _spu;
         private byte _nr0;
         private byte _nr1;
         private byte _nr2;
@@ -17,10 +16,13 @@ namespace Emux.GameBoy.Audio
 
         public WaveSoundChannel(GameBoySpu spu)
         {
-            if (spu == null)
-                throw new ArgumentNullException(nameof(spu));
-            _spu = spu;
+            Spu = spu ?? throw new ArgumentNullException(nameof(spu));
             ChannelVolume = 1;
+        }
+
+        public GameBoySpu Spu
+        {
+            get;
         }
 
         public virtual int ChannelNumber
@@ -125,7 +127,7 @@ namespace Emux.GameBoy.Audio
 
         public void ChannelStep(int cycles)
         {
-            double cpuSpeedFactor = _spu.Device.Cpu.SpeedFactor;
+            double cpuSpeedFactor = Spu.Device.Cpu.SpeedFactor;
             if (!Active 
                 || !SoundEnabled
                 || double.IsNaN(cpuSpeedFactor) 
@@ -162,7 +164,7 @@ namespace Emux.GameBoy.Audio
 
                     float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
 
-                    _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
                 }
             }
 
