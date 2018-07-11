@@ -56,10 +56,10 @@ namespace Emux.GameBoy.Audio
                 {
                     _frequencySweepClock -= SweepTime;
                     
-                    int delta = (int) (Frequency / Math.Pow(2, SweepShiftCount));
+                    int delta = (int) (FrequencyRegister / Math.Pow(2, SweepShiftCount));
                     if (!SweepIncrease)
                         delta = -delta;
-                    Frequency = Frequency + delta;
+                    FrequencyRegister = FrequencyRegister + delta;
                 }
             }
         }

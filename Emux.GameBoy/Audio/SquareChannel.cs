@@ -150,30 +150,28 @@ namespace Emux.GameBoy.Audio
             if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
                 return;
 
+            // Update volume and calculate wave amplitude.
             _volumeEnvelope.Update(cycles);
+            double amplitude = ChannelVolume * (_volumeEnvelope.Volume / 15.0);
 
-            double realFrequency = Frequency;
-            int sampleRate = ChannelOutput.SampleRate;
+            // Obtain elapsed gameboy time. 
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
            
-            int sampleCount = (int) (timeDelta * sampleRate) * 2;
+            // Allocate sound buffer.
+            int sampleRate = ChannelOutput.SampleRate;
+            int sampleCount = (int) Math.Ceiling(timeDelta * sampleRate) * 2;
             var buffer = new float[sampleCount];
-
-            double amplitude = ChannelVolume * (_volumeEnvelope.Volume / 15.0);
-            double period = (float) (1f / realFrequency);
             
             if (!UseSoundLength || _length >= 0)
             {
+                double period = 1f / Frequency;
                 for (int i = 0; i < buffer.Length; i += 2)
                 {
+                    // Get current x coordinate and compute current sample value. 
                     double x = (double) _coordinate / sampleRate;
-                    float saw1 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period)));
-                    float saw2 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period - (1-Duty)*Math.PI)));
-
-                    float sample = saw1 - saw2;
-
+                    float sample = DutyWave(amplitude, x, period);
                     Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-
+                    
                     _coordinate = (_coordinate + 1) % sampleRate;
                 }
 
@@ -184,10 +182,17 @@ namespace Emux.GameBoy.Audio
             ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
         }
 
-        internal static double Cot(double x)
+        private float DutyWave(double amplitude, double x, double period)
+        {
+            // Pulse waves with a duty can be constructed by subtracting a saw wave from the same but shifted saw wave.
+            float saw1 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period)));
+            float saw2 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period - (1 - Duty) * Math.PI)));
+            return saw1 - saw2;
+        }
+
+        private static double Cot(double x)
         {
             return 1 / Math.Tan(x);
         }
-
     }
 }

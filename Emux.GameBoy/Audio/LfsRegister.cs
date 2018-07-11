@@ -2,6 +2,10 @@
 
 namespace Emux.GameBoy.Audio
 {
+    /// <summary>
+    /// Represents either a 7 bit or a 15 bit linear-feedback shift register used in the GameBoy.
+    /// The taps that the GameBoy uses are 0 and 1.  
+    /// </summary>
     public class LfsRegister
     {
         private readonly ISoundChannel _channel;
@@ -35,17 +39,8 @@ namespace Emux.GameBoy.Audio
         public void PerformShift()
         {
             byte nextBit = (byte) (((_state >> 1) & 1) ^ (_state & 1));
-            
-            if (Use7BitStepWidth)
-            {
-                _state >>= 1;
-                _state |= (short) (nextBit << 6);
-            }
-            else
-            {
-                _state >>= 1;
-                _state |= (short) (nextBit << 14);
-            }
+            _state >>= 1;
+            _state |= (short) (nextBit << (Use7BitStepWidth ? 6 : 14));
         }
     }
 }
