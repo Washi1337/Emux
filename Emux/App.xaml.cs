@@ -1,6 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Navigation;
-using Emux.Gui;
 using Emux.Properties;
 
 namespace Emux

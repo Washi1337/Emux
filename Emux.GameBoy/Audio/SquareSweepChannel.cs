@@ -7,7 +7,7 @@ namespace Emux.GameBoy.Audio
     {
         private readonly GameBoySpu _spu;
         private double _frequencySweepClock;
-
+        
         public SquareSweepChannel(GameBoySpu spu)
             : base(spu)
         {
@@ -29,7 +29,7 @@ namespace Emux.GameBoy.Audio
             }
         }
 
-        public float SweepFrequency
+        public float SweepTime
         {
             get { return ((NR0 >> 4) & 7) / 128f; }
         }
@@ -42,19 +42,20 @@ namespace Emux.GameBoy.Audio
         public int SweepShiftCount
         {
             get { return NR0 & 0b111; }
+            set { NR0 = (byte) ((NR0 & ~0b111) | value & 0b111); }
         }
 
         protected void UpdateFrequency(int cycles)
         {
-            if (SweepShiftCount > 0 && _spu.Device.Cpu.SpeedFactor > 0.5)
+            if (SweepTime > 0 && _spu.Device.Cpu.SpeedFactor > 0.5)
             {
                 double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor;
                 _frequencySweepClock += timeDelta;
-                
-                double sweepInterval = SweepFrequency;
-                while (_frequencySweepClock >= sweepInterval)
+
+                while (_frequencySweepClock >= SweepTime)
                 {
-                    _frequencySweepClock -= sweepInterval;
+                    _frequencySweepClock -= SweepTime;
+                    
                     int delta = (int) (Frequency / Math.Pow(2, SweepShiftCount));
                     if (!SweepIncrease)
                         delta = -delta;

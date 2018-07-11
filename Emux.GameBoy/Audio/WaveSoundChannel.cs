@@ -143,25 +143,27 @@ namespace Emux.GameBoy.Audio
             double interval = 1.0 / Frequency;
             int intervalSampleCount = (int) (interval * sampleRate);
 
-            for (int i = 0; i < buffer.Length; i+=2)
+            if (intervalSampleCount > 0)
             {
-                _coordinate++;
-                if (_coordinate >= intervalSampleCount)
+                for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    _top = !_top;
-                    _coordinate = 0;
+                    _coordinate++;
+                    if (_coordinate >= intervalSampleCount)
+                    {
+                        _top = !_top;
+                        _coordinate = 0;
+                    }
+
+                    int waveRamCoordinate = (int) (_coordinate / (double) intervalSampleCount * _waveRam.Length);
+
+                    int waveDataSample = _top
+                        ? (_waveRam[waveRamCoordinate] & 0xF)
+                        : ((_waveRam[waveRamCoordinate] >> 4) & 0xF);
+
+                    float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
+
+                    _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
                 }
-
-                int waveRamCoordinate = (int) (_coordinate / (double) intervalSampleCount * _waveRam.Length);
-
-                int waveDataSample = _top
-                    ? (_waveRam[waveRamCoordinate] & 0xF)
-                    : ((_waveRam[waveRamCoordinate] >> 4) & 0xF);
-
-                float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
-
-                _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-
             }
 
             ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
