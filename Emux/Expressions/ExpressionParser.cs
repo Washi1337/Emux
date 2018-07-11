@@ -42,9 +42,9 @@ namespace Emux.Expressions
                 switch (token.Terminal)
                 {
                     case Terminal.Register:
-                        stack.Push(Expression.PropertyOrField(
+                        stack.Push(Expression.Convert(Expression.PropertyOrField(
                             Expression.Property(CpuParameter, "Registers"),
-                            token.Text.ToUpperInvariant()));
+                            token.Text.ToUpperInvariant()), typeof(ushort)));
                         break;
                     
                     case Terminal.Hexadecimal:

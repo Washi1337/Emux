@@ -9,6 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
@@ -17,7 +18,12 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         
-        <StackPanel Margin="5" Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+        <Label Grid.Row="0" Grid.Column="0" Content="Address:" />
+        <TextBox Grid.Row="0" Grid.Column="1" IsReadOnly="True" x:Name="AddressTextBox"/>
+        <Label  Grid.Row="1" Grid.Column="0" Content="Condition:"/>
+        <TextBox Grid.Row="1" Grid.Column="1" x:Name="ConditionTextBox" />
+        
+        <StackPanel Margin="5" Grid.Row="2" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Margin = "5" Content="OK" Width="75" Click="OkButtonOnClick" IsDefault="True"/>
             <Button Margin = "5" Content="Cancel" Width="75" Click ="CancelButtonOnClick" IsCancel="True"/>
         </StackPanel>

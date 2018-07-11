@@ -78,6 +78,7 @@
     <Compile Include="Gui\BreakpointDialog.xaml.cs">
       <DependentUpon>BreakpointDialog.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Gui\BreakpointInfo.cs" />
     <Compile Include="Gui\CheatsWindow.xaml.cs">
       <DependentUpon>CheatsWindow.xaml</DependentUpon>
     </Compile>

@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using Emux.GameBoy.Cpu;
 using Microsoft.Win32;
@@ -308,7 +307,8 @@ namespace Emux.Gui
                     }
                     else
                     {
-                        _currentDevice.Cpu.SetBreakpoint(address);
+                        var bp = _currentDevice.Cpu.SetBreakpoint(address);
+                        DeviceManager.Breakpoints[address] = new BreakpointInfo(bp);
                     }
                 }
             }
@@ -392,6 +392,16 @@ namespace Emux.Gui
         {
             _optionsDialog.Show();
             _optionsDialog.Focus();
+        }
+
+        private void DisassemblyItemOnMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            var instruction = (InstructionItem) DisassemblyView.SelectedItem;
+            if (instruction.Breakpoint != null)
+            {
+                var dialog = new BreakpointDialog(instruction.Breakpoint);
+                dialog.ShowDialog();
+            }
         }
     }
 }

@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using Emux.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cheating;
 using Emux.GameBoy.Graphics;
+using Emux.Gui;
 using NAudio.Wave;
 
 namespace Emux
@@ -26,6 +28,8 @@ namespace Emux
 
             GamesharkController = new GamesharkController();
             Properties.Settings.Default.PropertyChanged += SettingsOnPropertyChanged;
+            
+            Breakpoints = new Dictionary<ushort, BreakpointInfo>();
         }
 
         public GameBoyAudioMixer AudioMixer
@@ -52,6 +56,11 @@ namespace Emux
         }
 
         public GamesharkController GamesharkController
+        {
+            get;
+        }
+
+        public IDictionary<ushort, BreakpointInfo> Breakpoints
         {
             get;
         }

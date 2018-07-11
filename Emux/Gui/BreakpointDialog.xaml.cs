@@ -1,4 +1,7 @@
-﻿using System.Windows;
+﻿using System;
+using System.Data;
+using System.Windows;
+using Emux.Expressions;
 
 namespace Emux.Gui
 {
@@ -7,14 +10,28 @@ namespace Emux.Gui
     /// </summary>
     public partial class BreakpointDialog : Window
     {
-        public BreakpointDialog()
+        private readonly BreakpointInfo _info;
+
+        public BreakpointDialog(BreakpointInfo info)
         {
+            _info = info;
             InitializeComponent();
+            AddressTextBox.Text = info.Address.ToString("X4");
+            ConditionTextBox.Text = info.ConditionString;
         }
 
         private void OkButtonOnClick(object sender, RoutedEventArgs e)
         {
-            Close();
+            try
+            {
+                _info.Breakpoint.Condition = ExpressionParser.CompileExpression(ConditionTextBox.Text);
+                _info.ConditionString = ConditionTextBox.Text;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Parser error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void CancelButtonOnClick(object sender, RoutedEventArgs e)

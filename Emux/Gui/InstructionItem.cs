@@ -26,7 +26,7 @@ namespace Emux.Gui
 
         public bool IsBreakpoint
         {
-            get { return _gameBoy.Cpu.GetBreakpointAtAddress(_instruction.Offset) != null; }
+            get { return Breakpoint != null; }
             set
             {
                 if (value)
@@ -37,9 +37,18 @@ namespace Emux.Gui
             }
         }
 
-        public Breakpoint Breakpoint
+        public BreakpointInfo Breakpoint
         {
-            get { return _gameBoy.Cpu.GetBreakpointAtAddress(_instruction.Offset); }
+            get
+            {
+                var bp = _gameBoy.Cpu.GetBreakpointAtAddress(_instruction.Offset);
+                if (bp == null)
+                    return null;
+                App.Current.DeviceManager.Breakpoints.TryGetValue(_instruction.Offset, out var breakpointInfo);
+                if (breakpointInfo == null || breakpointInfo.Breakpoint != bp)
+                    breakpointInfo = new BreakpointInfo(bp);
+                return breakpointInfo;
+            }
         }
 
         public bool IsCurrentInstruction
