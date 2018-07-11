@@ -7,8 +7,9 @@ namespace Emux.GameBoy.Audio
     {
         private readonly Random _random = new Random();
         private readonly VolumeEnvelope _volumeEnvelope;
+        private readonly LfsRegister _lfsr;
 
-        private double _coordinate = 0;
+        private int _clock = 0;
         private double _length = 0;
         private double _currentValue = 0;
 
@@ -22,6 +23,7 @@ namespace Emux.GameBoy.Audio
             Spu = spu ?? throw new ArgumentNullException(nameof(spu));
             ChannelVolume = 1;
             _volumeEnvelope = new VolumeEnvelope(this);
+            _lfsr = new LfsRegister(this);
         }
 
         public GameBoySpu Spu
@@ -66,7 +68,8 @@ namespace Emux.GameBoy.Audio
             set
             {
                 _nr3 = value;
-                _coordinate = 0;
+                _clock = 0;
+                _lfsr.Reset();
             }
         }
 
@@ -95,22 +98,25 @@ namespace Emux.GameBoy.Audio
         
         public int ShiftClockFrequency
         {
-            get { return _nr3 >> 4; }
-            set { _nr3 = (byte) ((_nr3 & 0b1111) | (value << 4)); }
-        }
-
-        public bool Use7BitStepWidth
-        {
-            get { return (_nr3 & (1 << 3)) != 0; }
-            set { _nr3 = (byte) ((_nr3 & ~(1 << 3)) | (value ? (1 << 3) : 0)); }
+            get { return NR3 >> 4; }
+            set { NR3 = (byte) ((NR3 & 0b1111) | (value << 4)); }
         }
 
         public int DividingRatio
         {
-            get { return _nr3 & 0b111; }
-            set { _nr3 = (byte) ((_nr3 & ~0b111) | value & 0b111); }
+            get { return NR3 & 0b111; }
+            set { NR3 = (byte) ((NR3 & ~0b111) | value & 0b111); }
         }
 
+        public float Frequency
+        {
+            get
+            {
+                double ratio = DividingRatio == 0 ? 0.5 : DividingRatio;
+                return (float) (GameBoyCpu.OfficialClockFrequency / 8 / ratio / Math.Pow(2, ShiftClockFrequency + 1));
+            }
+        }
+        
         public bool UseSoundLength
         {
             get { return (_nr4 & (1 << 6)) != 0; }
@@ -129,35 +135,57 @@ namespace Emux.GameBoy.Audio
                 return;
 
             _volumeEnvelope.Update(cycles);
-
-            double ratio = DividingRatio == 0 ? 0.5 : DividingRatio;
-            double frequency = 524288 / ratio / Math.Pow(2, ShiftClockFrequency + 1);
-            double period = (1 / frequency);
+            
 
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
             int sampleCount = (int) (timeDelta * sampleRate) * 2;
             float[] buffer = new float[sampleCount];
-
+            
+            
             if (!UseSoundLength || _length >= 0)
             {
+                double period = 1 / Frequency;
+                int periodSamples = (int) (period * sampleRate);
+                
+                
                 for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    float sample = (float) (ChannelVolume * (_volumeEnvelope.Volume / 15.0) * _currentValue);
-
+                    float sample = ChannelVolume * _volumeEnvelope.Volume / 15.0f * (_lfsr.CurrentValue ? 1f : 0f);
                     Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-
-                    _coordinate += timeDelta;
-                    if (_coordinate >= period)
+                    
+                    _clock += 2;
+                    if (_clock >= periodSamples)
                     {
-                        _coordinate -= period;
-                        _currentValue = _random.Next(0, 2) == 0 ? -1 : 1;
+                        _lfsr.PerformShift();
+                        _clock -= periodSamples;
                     }
-                }
-
+                }         
+             
                 if (UseSoundLength)
                     _length -= timeDelta;
             }
+
+//
+//            if (!UseSoundLength || _length >= 0)
+//            {
+//                for (int i = 0; i < buffer.Length; i += 2)
+//                {
+//                    float sample = (float) (ChannelVolume * (_volumeEnvelope.Volume / 15.0) * _currentValue);
+//
+//                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+//
+//                    _coordinate += timeDelta;
+//                    if (_coordinate >= period)
+//                    {
+//                        _coordinate -= period;
+//                        _currentValue = _random.Next(0, 2) == 0 ? -1 : 1;
+//                    }
+//                }
+//
+//                if (UseSoundLength)
+//                    _length -= timeDelta;
+//            }
 
             ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
         }
