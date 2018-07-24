@@ -34,10 +34,9 @@ namespace Emux.Expressions
         public static Predicate<GameBoyCpu> CompileExpression(string code)
         {
             var lexer = new ExpressionLexer(new StringReader(code));
-            var postFix = ToPostfix(lexer).ToArray();
-
+            
             var stack = new Stack<Expression>();
-            foreach (var token in postFix)
+            foreach (var token in ToPostfix(lexer))
             {
                 switch (token.Terminal)
                 {
