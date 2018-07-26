@@ -1,11 +1,14 @@
 ﻿using System;
+using System.ComponentModel;
 using Emux.Expressions;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.Gui
 {
-    public class BreakpointInfo
+    public class BreakpointInfo : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+        
         private string _conditionString;
 
         public BreakpointInfo(Breakpoint breakpoint)
@@ -30,11 +33,19 @@ namespace Emux.Gui
             {
                 if (_conditionString != value)
                 {
-                    var predicate = ExpressionParser.CompileExpression(value);
-                    Breakpoint.Condition = predicate;
+                    Breakpoint.Condition = string.IsNullOrEmpty(value)
+                        ? Breakpoint.BreakAlways
+                        : ExpressionParser.CompileExpression(value);
+
                     _conditionString = value;
+                    OnPropertyChanged(nameof(ConditionString));
                 }
             }
+        }
+        
+        protected virtual void OnPropertyChanged(string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

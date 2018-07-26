@@ -397,8 +397,13 @@ namespace Emux.Gui
         private void DisassemblyItemOnMouseUp(object sender, MouseButtonEventArgs e)
         {
             var instruction = (InstructionItem) DisassemblyView.SelectedItem;
-            if (instruction.Breakpoint != null)
+            if (instruction != null)
             {
+                if (instruction.Breakpoint == null)
+                {
+                    _currentDevice.Cpu.SetBreakpoint((ushort) instruction.Offset);
+                }
+                
                 var dialog = new BreakpointDialog(instruction.Breakpoint);
                 dialog.ShowDialog();
             }

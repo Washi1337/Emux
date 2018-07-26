@@ -46,7 +46,11 @@ namespace Emux.Gui
                     return null;
                 App.Current.DeviceManager.Breakpoints.TryGetValue(_instruction.Offset, out var breakpointInfo);
                 if (breakpointInfo == null || breakpointInfo.Breakpoint != bp)
+                {
                     breakpointInfo = new BreakpointInfo(bp);
+                    breakpointInfo.PropertyChanged += (sender, args) => OnPropertyChanged(nameof(IsBreakpoint));
+                }
+
                 return breakpointInfo;
             }
         }

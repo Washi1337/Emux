@@ -2,6 +2,7 @@
 using System.Data;
 using System.Windows;
 using Emux.Expressions;
+using Emux.GameBoy.Cpu;
 
 namespace Emux.Gui
 {
@@ -24,7 +25,6 @@ namespace Emux.Gui
         {
             try
             {
-                _info.Breakpoint.Condition = ExpressionParser.CompileExpression(ConditionTextBox.Text);
                 _info.ConditionString = ConditionTextBox.Text;
                 Close();
             }
