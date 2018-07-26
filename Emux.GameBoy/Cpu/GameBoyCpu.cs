@@ -223,8 +223,8 @@ namespace Emux.GameBoy.Cpu
 
             // Check for interrupts.
             bool interrupted = false;
-            if (Registers.IME && !Registers.IMESet 
-                && Registers.IE != InterruptFlags.None
+            
+            if (Registers.IE != InterruptFlags.None
                 && Registers.IF != (InterruptFlags) 0xE0)
             {
                 byte firedAndEnabled = (byte) (Registers.IE & Registers.IF);
@@ -232,11 +232,15 @@ namespace Emux.GameBoy.Cpu
                 {
                     if ((firedAndEnabled & (1 << i)) == (1 << i))
                     {
-                        Registers.IF &= (InterruptFlags) ~(1u << i);
-                        Registers.IME = false;
-                        interrupted = true;
-                        Rst((byte) (0x40 + (i << 3)));
-                        cycles += 12;
+                        if (Registers.IME && !Registers.IMESet)
+                        {
+                            Registers.IF &= (InterruptFlags) ~(1u << i);
+                            Registers.IME = false;
+                            interrupted = true;
+                            Rst((byte) (0x40 + (i << 3)));
+                            cycles += 12;
+                        }
+
                         _halt = false;
                     }
                 }

@@ -13,11 +13,19 @@ namespace Emux.GameBoy.Timer
         private int _timerClock;
         private TimerControlFlags _tac;
         private byte _tima;
-
+        private byte _div;
+        private bool _overflowing = false;
+        private int _clocksToReset = 0;
+        
         public byte Div
         {
-            get;
-            set;
+            get { return _div; }
+            set
+            {
+                _div = value;
+                _timerClock = 0;
+                _divClock = 0;
+            }
         }
 
         public byte Tima
@@ -99,10 +107,22 @@ namespace Emux.GameBoy.Timer
             while (_divClock > DivCycleInterval)
             {
                 _divClock -= DivCycleInterval;
-                Div = (byte) ((Div + 1) % 0xFF);
+                _div = (byte) ((Div + 1) % 0xFF);
             }
-
-            if ((Tac & TimerControlFlags.EnableTimer) == TimerControlFlags.EnableTimer)
+            
+            if (_overflowing)
+            {
+                _clocksToReset -= cycles;
+                if (_clocksToReset < 0)
+                {
+                    _clocksToReset = 0;
+                    _overflowing = false;
+                    _tima = Tma;
+                    _device.Cpu.Registers.IF |= InterruptFlags.Timer;
+                }
+            }
+            
+            if ((_tac & TimerControlFlags.EnableTimer) == TimerControlFlags.EnableTimer)
             {
                 _timerClock += cycles;
                 int timaCycles = GetTimaClockCycles();
@@ -114,8 +134,8 @@ namespace Emux.GameBoy.Timer
                     _tima = (byte) (result & 0xFF);
                     if (result > 0xFF)
                     {
-                        _tima = Tma;
-                        _device.Cpu.Registers.IF |= InterruptFlags.Timer;
+                        _tima = 0;
+                        _overflowing = true;
                     }
                 }
             }

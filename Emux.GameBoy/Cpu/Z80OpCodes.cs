@@ -550,7 +550,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("res 7, a",             0xCB, 0xBF, 0, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Res(d.Cpu.Registers.A, 7)),
 
             
-            // 0x80 .. 0x8F
+            // 0xC0 .. 0xCF
             new Z80OpCode("set 0, b",             0xCB, 0xC0, 0, 8, (d, i) => d.Cpu.Registers.B = d.Cpu.Alu.Set(d.Cpu.Registers.B, 0)),
             new Z80OpCode("set 0, c",             0xCB, 0xC1, 0, 8, (d, i) => d.Cpu.Registers.C = d.Cpu.Alu.Set(d.Cpu.Registers.C, 0)),
             new Z80OpCode("set 0, d",             0xCB, 0xC2, 0, 8, (d, i) => d.Cpu.Registers.D = d.Cpu.Alu.Set(d.Cpu.Registers.D, 0)),
@@ -568,7 +568,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("set 1, (hl)",          0xCB, 0xCE, 0, 16, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, d.Cpu.Alu.Set(d.Memory.ReadByte(d.Cpu.Registers.HL), 1))),
             new Z80OpCode("set 1, a",             0xCB, 0xCF, 0, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Set(d.Cpu.Registers.A, 1)),      
            
-            // 0x90 .. 0x9F
+            // 0xD0 .. 0xDF
             new Z80OpCode("set 2, b",             0xCB, 0xD0, 0, 8, (d, i) => d.Cpu.Registers.B = d.Cpu.Alu.Set(d.Cpu.Registers.B, 2)),
             new Z80OpCode("set 2, c",             0xCB, 0xD1, 0, 8, (d, i) => d.Cpu.Registers.C = d.Cpu.Alu.Set(d.Cpu.Registers.C, 2)),
             new Z80OpCode("set 2, d",             0xCB, 0xD2, 0, 8, (d, i) => d.Cpu.Registers.D = d.Cpu.Alu.Set(d.Cpu.Registers.D, 2)),
@@ -586,7 +586,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("set 3, (hl)",          0xCB, 0xDE, 0, 16, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, d.Cpu.Alu.Set(d.Memory.ReadByte(d.Cpu.Registers.HL), 3))),
             new Z80OpCode("set 3, a",             0xCB, 0xDF, 0, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Set(d.Cpu.Registers.A, 3)),
         
-            // 0xA0 .. 0xAF
+            // 0xE0 .. 0xEF
             new Z80OpCode("set 4, b",             0xCB, 0xE0, 0, 8, (d, i) => d.Cpu.Registers.B = d.Cpu.Alu.Set(d.Cpu.Registers.B, 4)),
             new Z80OpCode("set 4, c",             0xCB, 0xE1, 0, 8, (d, i) => d.Cpu.Registers.C = d.Cpu.Alu.Set(d.Cpu.Registers.C, 4)),
             new Z80OpCode("set 4, d",             0xCB, 0xE2, 0, 8, (d, i) => d.Cpu.Registers.D = d.Cpu.Alu.Set(d.Cpu.Registers.D, 4)),
@@ -604,7 +604,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("set 5, (hl)",          0xCB, 0xEE, 0, 16, (d, i) => d.Memory.WriteByte(d.Cpu.Registers.HL, d.Cpu.Alu.Set(d.Memory.ReadByte(d.Cpu.Registers.HL), 5))),
             new Z80OpCode("set 5, a",             0xCB, 0xEF, 0, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Set(d.Cpu.Registers.A, 5)),
         
-            // 0xB0 .. 0xBF
+            // 0xF0 .. 0xFF
             new Z80OpCode("set 6, b",             0xCB, 0xF0, 0, 8, (d, i) => d.Cpu.Registers.B = d.Cpu.Alu.Set(d.Cpu.Registers.B, 6)),
             new Z80OpCode("set 6, c",             0xCB, 0xF1, 0, 8, (d, i) => d.Cpu.Registers.C = d.Cpu.Alu.Set(d.Cpu.Registers.C, 6)),
             new Z80OpCode("set 6, d",             0xCB, 0xF2, 0, 8, (d, i) => d.Cpu.Registers.D = d.Cpu.Alu.Set(d.Cpu.Registers.D, 6)),
