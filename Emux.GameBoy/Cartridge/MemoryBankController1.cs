@@ -12,10 +12,21 @@ namespace Emux.GameBoy.Cartridge
 
         public MemoryBankController1(IFullyAccessibleCartridge cartridge)
         {
-            if (cartridge == null)
-                throw new ArgumentNullException(nameof(cartridge));
-            _cartridge = cartridge;
+            _cartridge = cartridge ?? throw new ArgumentNullException(nameof(cartridge));
+        }
+
+        public void Initialize()
+        {
+            Reset();
+        }
+
+        public void Reset()
+        {
             SwitchRomBank(1);
+        }
+
+        public void Shutdown()
+        {
         }
 
         public byte ReadByte(ushort address)

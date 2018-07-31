@@ -43,6 +43,13 @@ namespace Emux.GameBoy.Memory
 
         public void Reset()
         {
+            _isTransferring = false;
+            _currentBlockIndex = 0;
+            _sourceHigh = 0;
+            _sourceLow = 0;
+            _destinationHigh = 0;
+            _destinationLow = 0;
+            _dmaLengthMode = 0;
         }
 
         public void Shutdown()

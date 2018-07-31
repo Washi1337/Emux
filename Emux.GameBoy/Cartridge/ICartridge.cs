@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides members for accessing an inserted GameBoy cartridge.
     /// </summary>
-    public interface ICartridge
+    public interface ICartridge : IGameBoyComponent
     {
         /// <summary>
         /// Gets the compressed Nintendo Logo bitmap used by the BIOS.

@@ -26,19 +26,19 @@ namespace Emux.GameBoy.Audio
             get;
         }
 
-        public byte NR51
+        public byte NR50
         {
             get;
             set;
         }
 
-        public SpuOutputSelection NR52
+        public SpuOutputSelection NR51
         {
             get;
             set;
         }
 
-        public byte NR53
+        public byte NR52
         {
             get;
             set;
@@ -46,26 +46,26 @@ namespace Emux.GameBoy.Audio
 
         public bool EnableSO1
         {
-            get { return (NR51 & (1 << 3)) != 0; }
-            set { NR51 = (byte)((NR51 & ~(1 << 3)) | (value ? 1 : 0) << 3); }
+            get { return (NR50 & (1 << 3)) != 0; }
+            set { NR50 = (byte)((NR50 & ~(1 << 3)) | (value ? 1 : 0) << 3); }
         }
 
         public byte SO1Volume
         {
-            get { return (byte)(NR51 & 0x7); }
-            set { NR51 = (byte)((NR51 & ~0x7) | (value << 4)); }
+            get { return (byte)(NR50 & 0x7); }
+            set { NR50 = (byte)((NR50 & ~0x7) | (value << 4)); }
         }
 
         public bool EnableSO2
         {
-            get { return (NR51 & (1 << 7)) != 0; }
-            set { NR51 = (byte) ((NR51 & ~(1 << 7)) | (value ? 1 : 0) << 7); }
+            get { return (NR50 & (1 << 7)) != 0; }
+            set { NR50 = (byte) ((NR50 & ~(1 << 7)) | (value ? 1 : 0) << 7); }
         }
 
         public byte SO2Volume
         {
-            get { return (byte) ((NR51 >> 4) & 0x7); }
-            set { NR51 = (byte) ((NR51 & ~(0x7 << 4)) | ((value & 0x7) << 4)); }
+            get { return (byte) ((NR50 >> 4) & 0x7); }
+            set { NR50 = (byte) ((NR50 & ~(0x7 << 4)) | ((value & 0x7) << 4)); }
         }
 
         public IList<ISoundChannel> Channels
@@ -80,10 +80,33 @@ namespace Emux.GameBoy.Audio
 
         public void Initialize()
         {
+            Reset();
         }
 
         public void Reset()
         {
+            Channels[0].NR0 = 0x80;
+            Channels[0].NR1 = 0xBF;
+            Channels[0].NR2 = 0xF3;
+            Channels[0].NR4 = 0xBF;
+            
+            Channels[1].NR1 = 0x3F;
+            Channels[1].NR2 = 0x00;
+            Channels[1].NR4 = 0xBF;
+            
+            Channels[2].NR0 = 0x7F;
+            Channels[2].NR1 = 0xFF;
+            Channels[2].NR2 = 0x9F;
+            Channels[2].NR3 = 0xBF;
+            
+            Channels[3].NR1 = 0xFF;
+            Channels[3].NR2 = 0x00;
+            Channels[3].NR3 = 0x00;
+            Channels[3].NR4 = 0xBF;
+
+            NR50 = 0x77;
+            NR51 = (SpuOutputSelection) 0xF3;
+            NR52 = 0xF1;
         }
 
         public void Shutdown()
@@ -95,13 +118,13 @@ namespace Emux.GameBoy.Audio
             switch (address)
             {
                 case 0xFF24:
-                    NR51 = value;
+                    NR50 = value;
                     break;
                 case 0xFF25:
-                    NR52 = (SpuOutputSelection) value;
+                    NR51 = (SpuOutputSelection) value;
                     break;
                 case 0xFF26:
-                    NR53 = value;
+                    NR52 = value;
                     break;
                 default:
                     if (address >= 0xFF27 && address < 0xFF30)
@@ -146,11 +169,11 @@ namespace Emux.GameBoy.Audio
             switch (address)
             {
                 case 0xFF24:
-                    return NR51;
+                    return NR50;
                 case 0xFF25:
-                    return (byte) NR52;
+                    return (byte) NR51;
                 case 0xFF26:
-                    return NR53;
+                    return NR52;
                 default:
                     if (address >= 0xFF27 && address < 0xFF30)
                         return _unused[address - 0xFF27];
@@ -184,7 +207,7 @@ namespace Emux.GameBoy.Audio
 
         public void SpuStep(int cycles)
         {
-            if ((NR53 & (1 << 7)) != 0)
+            if ((NR52 & (1 << 7)) != 0)
             {
                 foreach (var channel in Channels)
                     channel?.ChannelStep(cycles);
@@ -212,9 +235,9 @@ namespace Emux.GameBoy.Audio
         internal void WriteToSoundBuffer(int channel, float[] totalBuffer, int index, float sample)
         {
             sample *= SO1Volume / 7f;
-            if (((int)NR52 & (1 << (channel - 1))) != 0)
+            if (((int)NR51 & (1 << (channel - 1))) != 0)
                 totalBuffer[index + 1] = sample;
-            if (((int)NR52 & (1 << (channel + 3))) != 0)
+            if (((int)NR51 & (1 << (channel + 3))) != 0)
                 totalBuffer[index] = sample;
         }
     }

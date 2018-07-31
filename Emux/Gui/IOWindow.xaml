@@ -212,6 +212,32 @@
                     </GroupBox>
                 </Grid>
             </TabItem>
+            <TabItem Header="Misc">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1*"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <GroupBox Header="Timer">
+                        <ListView x:Name="TimerRegisterView" d:DataContext="{d:DesignInstance local:RegisterItem}" MouseDoubleClick="RegistersViewOnItemActivate">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Path=Offset, Converter={StaticResource HexConverter}}"/>
+                                    <GridViewColumn Header="Name" Width="50" DisplayMemberBinding="{Binding DisplayName}"/>
+                                    <GridViewColumn Header="Value" Width="50" DisplayMemberBinding="{Binding Value, Converter={StaticResource HexConverter}}"/>
+                                </GridView>
+                            </ListView.View>
+                            <ListView.Items>
+                                <local:RegisterItem Offset="0xFF04" DisplayName="DIV"/>
+                                <local:RegisterItem Offset="0xFF05" DisplayName="TIMA"/>
+                                <local:RegisterItem Offset="0xFF06" DisplayName="TMA"/>
+                                <local:RegisterItem Offset="0xFF07" DisplayName="TAC"/>
+                            </ListView.Items>
+                        </ListView>
+                    </GroupBox>
+                </Grid>                
+            </TabItem>
         </TabControl>
 
         <StackPanel Grid.Row="1" Grid.Column="0" Margin="5" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Stretch">

@@ -14,8 +14,6 @@ namespace Emux.GameBoy.Timer
         private TimerControlFlags _tac;
         private byte _tima;
         private byte _div;
-        private bool _overflowing = false;
-        private int _clocksToReset = 0;
         
         public byte Div
         {
@@ -68,6 +66,10 @@ namespace Emux.GameBoy.Timer
 
         public void Reset()
         {
+            Div = 0x1E;
+            Tima = 0;
+            Tma = 0;
+            Tac = 0;
         }
 
         public void Shutdown()
@@ -110,18 +112,6 @@ namespace Emux.GameBoy.Timer
                 _div = (byte) ((Div + 1) % 0xFF);
             }
             
-            if (_overflowing)
-            {
-                _clocksToReset -= cycles;
-                if (_clocksToReset < 0)
-                {
-                    _clocksToReset = 0;
-                    _overflowing = false;
-                    _tima = Tma;
-                    _device.Cpu.Registers.IF |= InterruptFlags.Timer;
-                }
-            }
-            
             if ((_tac & TimerControlFlags.EnableTimer) == TimerControlFlags.EnableTimer)
             {
                 _timerClock += cycles;
@@ -134,8 +124,8 @@ namespace Emux.GameBoy.Timer
                     _tima = (byte) (result & 0xFF);
                     if (result > 0xFF)
                     {
-                        _tima = 0;
-                        _overflowing = true;
+                        _tima = Tma;
+                        _device.Cpu.Registers.IF |= InterruptFlags.Timer;
                     }
                 }
             }

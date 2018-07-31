@@ -18,6 +18,20 @@ namespace Emux.GameBoy.Cartridge
                 _ramBank = new byte[0x2000];
         }
 
+        public void Initialize()
+        {
+            Reset();
+        }
+
+        public void Reset()
+        {
+            _ramEnabled = false;
+        }
+
+        public void Shutdown()
+        {
+        }
+
         public byte ReadByte(ushort address)
         {
             if (address < 0x8000)

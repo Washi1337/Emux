@@ -148,5 +148,20 @@ namespace Emux.GameBoy.Cartridge
         {
             Buffer.BlockCopy(_romContents, address, buffer, bufferOffset, length);
         }
+
+        public void Initialize()
+        {
+            BankController.Initialize();
+        }
+
+        public void Reset()
+        {
+            BankController.Reset();
+        }
+
+        public void Shutdown()
+        {
+            BankController.Shutdown();
+        }
     }
 }

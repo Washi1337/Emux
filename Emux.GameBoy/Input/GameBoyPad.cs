@@ -48,6 +48,8 @@ namespace Emux.GameBoy.Input
 
         public void Reset()
         {
+            _joyP = 0;
+            _pressedButtons = GameBoyPadButton.None;
         }
 
         public void Shutdown()

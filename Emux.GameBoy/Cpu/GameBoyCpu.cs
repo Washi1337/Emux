@@ -46,6 +46,7 @@ namespace Emux.GameBoy.Cpu
         private readonly NativeTimer _frameTimer;
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
+        
         private TimeSpan _frameStartTime;
         private ulong _frameStartTickCount;
         
@@ -154,7 +155,17 @@ namespace Emux.GameBoy.Cpu
         }
 
         public void Reset()
-        {
+        {            
+            Registers.A = _device.GbcMode ? (byte) 0x11 : (byte) 0x01;
+            Registers.F = 0xB0;
+            Registers.BC = 0x0013;
+            Registers.DE = 0x00D8;
+            Registers.HL = 0x014D;
+            Registers.PC = 0x100;
+            Registers.SP = 0xFFFE;
+            Registers.IE = 0;
+            Registers.IF = (InterruptFlags) 0xE1;
+            Registers.IME = false;
         }
 
         public void Shutdown()
