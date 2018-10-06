@@ -17,30 +17,7 @@ namespace Emux.MonoGame
     {
         public new event EventHandler Tick;
         
-        private static readonly IDictionary<Buttons, GameBoyPadButton> ControllerBindings = new Dictionary<Buttons, GameBoyPadButton>
-        {
-            [Buttons.A] = GameBoyPadButton.A,
-            [Buttons.B] = GameBoyPadButton.B,
-            [Buttons.DPadUp] = GameBoyPadButton.Up,
-            [Buttons.DPadDown] = GameBoyPadButton.Down,
-            [Buttons.DPadLeft] = GameBoyPadButton.Left,
-            [Buttons.DPadRight] = GameBoyPadButton.Right,
-            [Buttons.Start] = GameBoyPadButton.Start,
-            [Buttons.Back] = GameBoyPadButton.Select,
-        };
-        
-        private static readonly IDictionary<Keys, GameBoyPadButton> KeyboardBindings = new Dictionary<Keys, GameBoyPadButton>
-        {
-            [Keys.X] = GameBoyPadButton.A,
-            [Keys.Z] = GameBoyPadButton.B,
-            [Keys.Up] = GameBoyPadButton.Up,
-            [Keys.Down] = GameBoyPadButton.Down,
-            [Keys.Left] = GameBoyPadButton.Left,
-            [Keys.Right] = GameBoyPadButton.Right,
-            [Keys.Enter] = GameBoyPadButton.Start,
-            [Keys.LeftShift] = GameBoyPadButton.Select,
-        };
-        
+        private readonly Settings _settings;
         private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
         private Texture2D _video;
@@ -55,8 +32,9 @@ namespace Emux.MonoGame
         
         private double _speedFactor;
 
-        public EmuxHost()
+        public EmuxHost(Settings settings)
         {
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
@@ -99,7 +77,7 @@ namespace Emux.MonoGame
 
         private void HandleInput(GamePadState gamePadState, KeyboardState keyboardState)
         {
-            foreach (var binding in ControllerBindings)
+            foreach (var binding in _settings.ControllerBindings)
             {
                 if (gamePadState.IsButtonDown(binding.Key))
                     GameBoy.KeyPad.PressedButtons |= binding.Value;
@@ -107,7 +85,7 @@ namespace Emux.MonoGame
                     GameBoy.KeyPad.PressedButtons &= ~binding.Value;
             }
 
-            foreach (var binding in KeyboardBindings)
+            foreach (var binding in _settings.KeyboardBindings)
             {
                 if (keyboardState.IsKeyDown(binding.Key))
                     GameBoy.KeyPad.PressedButtons |= binding.Value;
