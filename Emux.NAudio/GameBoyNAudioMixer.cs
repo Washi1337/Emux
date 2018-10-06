@@ -7,9 +7,9 @@ using System.Runtime.CompilerServices;
 using Emux.GameBoy.Audio;
 using NAudio.Wave;
 
-namespace Emux.Audio
+namespace Emux.NAudio
 {
-    public class GameBoyAudioMixer : IWaveProvider, INotifyPropertyChanged
+    public class GameBoyNAudioMixer : IWaveProvider, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -18,7 +18,7 @@ namespace Emux.Audio
         private WaveFileWriter _writer;
         private bool _isRecording;
 
-        public GameBoyAudioMixer()
+        public GameBoyNAudioMixer()
         {
             Channels = new List<NAudioChannelOutput>
             {

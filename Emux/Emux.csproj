@@ -38,8 +38,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NAudio, Version=1.7.3.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\NAudio.1.7.3\lib\net35\NAudio.dll</HintPath>
+    <Reference Include="NAudio, Version=1.9.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\NAudio.1.9.0-preview1\lib\net35\NAudio.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -72,7 +73,6 @@
     <Compile Include="Gui\AboutDialog.xaml.cs">
       <DependentUpon>AboutDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Audio\NAudioChannelOutput.cs" />
     <Compile Include="Gui\AudioMixerWindow.xaml.cs">
       <DependentUpon>AudioMixerWindow.xaml</DependentUpon>
     </Compile>
@@ -104,10 +104,10 @@
     <Compile Include="Gui\KeypadWindow.xaml.cs">
       <DependentUpon>KeypadWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Audio\GameBoyAudioMixer.cs" />
     <Compile Include="Gui\VideoWindow.xaml.cs">
       <DependentUpon>VideoWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="WinMmTimer.cs" />
     <Compile Include="SettingsBinding.cs" />
     <Page Include="Gui\AboutDialog.xaml">
       <SubType>Designer</SubType>
@@ -200,6 +200,10 @@
     <ProjectReference Include="..\Emux.GameBoy\Emux.GameBoy.csproj">
       <Project>{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}</Project>
       <Name>Emux.GameBoy</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Emux.NAudio\Emux.NAudio.csproj">
+      <Project>{d22215c8-3a0f-49de-a663-d8ff12349215}</Project>
+      <Name>Emux.NAudio</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

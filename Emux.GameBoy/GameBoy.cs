@@ -14,7 +14,7 @@ namespace Emux.GameBoy
     /// </summary>
     public class GameBoy
     {
-        public GameBoy(ICartridge cartridge, bool preferGbcMode)
+        public GameBoy(ICartridge cartridge, IClock clock, bool preferGbcMode)
         {
             GbcMode = preferGbcMode && (cartridge.GameBoyColorFlag & GameBoyColorFlag.SupportsColor) != 0;
 
@@ -22,7 +22,7 @@ namespace Emux.GameBoy
             {
                 (Cartridge = cartridge),
                 (Memory = new GameBoyMemory(this)),
-                (Cpu = new GameBoyCpu(this)),
+                (Cpu = new GameBoyCpu(this, clock)),
                 (Gpu = new GameBoyGpu(this)),
                 (Spu = new GameBoySpu(this)),
                 (KeyPad = new GameBoyPad(this)),

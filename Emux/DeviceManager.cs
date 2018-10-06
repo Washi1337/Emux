@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Emux.Audio;
 using Emux.GameBoy.Cartridge;
 using Emux.GameBoy.Cheating;
 using Emux.GameBoy.Graphics;
+using Emux.NAudio;
 using Emux.Gui;
 using NAudio.Wave;
 
@@ -21,7 +21,7 @@ namespace Emux
 
         public DeviceManager()
         {
-            AudioMixer = new GameBoyAudioMixer();
+            AudioMixer = new GameBoyNAudioMixer();
             var player = new DirectSoundOut();
             player.Init(AudioMixer);
             player.Play();
@@ -32,7 +32,7 @@ namespace Emux
             Breakpoints = new Dictionary<ushort, BreakpointInfo>();
         }
 
-        public GameBoyAudioMixer AudioMixer
+        public GameBoyNAudioMixer AudioMixer
         {
             get;
         }
@@ -83,7 +83,7 @@ namespace Emux
             _currentExternalMemory = new StreamedExternalMemory(File.Open(ramFilePath, FileMode.OpenOrCreate));
             var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
             _currentExternalMemory.SetBufferSize(cartridge.ExternalRamSize);
-            CurrentDevice = new GameBoy.GameBoy(cartridge, !Properties.Settings.Default.ForceOriginalGameBoy);
+            CurrentDevice = new GameBoy.GameBoy(cartridge, new WinMmTimer(60), !Properties.Settings.Default.ForceOriginalGameBoy);
             ApplyColorPalettes();
             OnDeviceLoaded(new DeviceEventArgs(CurrentDevice));
         }

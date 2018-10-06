@@ -2,7 +2,7 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
-using Emux.Audio;
+using Emux.NAudio;
 using Microsoft.Win32;
 
 namespace Emux.Gui
@@ -13,7 +13,7 @@ namespace Emux.Gui
     public partial class AudioMixerWindow : Window
     {
         public static readonly DependencyProperty MixerProperty = DependencyProperty.Register(
-            "Mixer", typeof(GameBoyAudioMixer), typeof(AudioMixerWindow), new PropertyMetadata(default(GameBoyAudioMixer)));
+            "Mixer", typeof(GameBoyNAudioMixer), typeof(AudioMixerWindow), new PropertyMetadata(default(GameBoyNAudioMixer)));
 
         public static readonly RoutedUICommand StartRecordingCommand = new RoutedUICommand(
             "Start a new audio recording.",
@@ -31,9 +31,9 @@ namespace Emux.Gui
             InitializeComponent();
         }
         
-        public GameBoyAudioMixer Mixer
+        public GameBoyNAudioMixer Mixer
         {
-            get { return (GameBoyAudioMixer) GetValue(MixerProperty); }
+            get { return (GameBoyNAudioMixer) GetValue(MixerProperty); }
             set { SetValue(MixerProperty, value); }
         }
 
