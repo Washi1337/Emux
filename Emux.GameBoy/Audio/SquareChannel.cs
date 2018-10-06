@@ -184,12 +184,21 @@ namespace Emux.GameBoy.Audio
             int sampleCount = (int) (timeDelta * sampleRate) * 2;
             float[] buffer = new float[sampleCount];
 
+            double amplitude = ChannelVolume * (_volume / 15.0);
+            double period = (float) (1f / realFrequency);
+            
             if (!UseSoundLength || _length >= 0)
             {
                 for (int i = 0; i < buffer.Length; i += 2)
                 {
-                    float sample = (float)(ChannelVolume * (_volume / 15.0)                                                // Volume adjustments.
-                                           * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
+                    double x = (double) _coordinate / sampleRate;
+                    float saw1 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period)));
+                    float saw2 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period - Duty*Math.PI)));
+
+                    float c = 1 - 2 * Duty;
+                    float sample = (float) -(saw1 - saw2 + amplitude * c);
+//                    float sample = (float)(ChannelVolume * (_volume / 15.0)                                                // Volume adjustments.
+//                                           * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
 
                     _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
 
@@ -201,6 +210,11 @@ namespace Emux.GameBoy.Audio
             }
 
             ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
+        }
+
+        internal static double Cot(double x)
+        {
+            return 1 / Math.Tan(x);
         }
 
     }
