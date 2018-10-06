@@ -47,14 +47,14 @@ namespace Emux.MonoGame
             }
 
             
-            using (var game = new EmuxHost())
+            using (var host = new EmuxHost())
             using (var saveFs = File.Open(saveFile, FileMode.OpenOrCreate))
             {
                 var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), new StreamedExternalMemory(saveFs));
-                var device = new GameBoy.GameBoy(cartridge, game, true);
-                game.GameBoy = device;
+                var device = new GameBoy.GameBoy(cartridge, host, true);
+                host.GameBoy = device;
                 
-                device.Gpu.VideoOutput = game;
+                device.Gpu.VideoOutput = host;
                 
                 var mixer = new GameBoyNAudioMixer();
                 mixer.Connect(device.Spu);
@@ -62,7 +62,7 @@ namespace Emux.MonoGame
                 player.Init(mixer);
                 player.Play();
                 
-                game.Run();
+                host.Run();
             }
         }
     }

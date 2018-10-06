@@ -73,7 +73,7 @@
                 <ColumnDefinition Width="150"/>
             </Grid.ColumnDefinitions>
 
-            <ListView x:Name="DisassemblyView" FontFamily="Consolas" d:DataContext="{d:DesignData local:InstructionItem }">
+            <ListView x:Name="DisassemblyView" FontFamily="Consolas" d:DataContext="{d:DesignData local:InstructionItem }" MouseDoubleClick="DisassemblyItemOnMouseUp" >
                 <ListView.Resources>
                     <Style TargetType="ListViewItem">
                         <Style.Triggers>
@@ -94,7 +94,7 @@
                         <GridViewColumn Header="Disassembly" Width="200">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock d:DataContext="{d:DesignInstance local:InstructionItem}" Text="{Binding Disassembly}">
+                                    <TextBlock d:DataContext="{d:DesignInstance local:InstructionItem}" Text="{Binding Disassembly}" MouseUp="DisassemblyItemOnMouseUp">
                                         <TextBlock.Style>
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>

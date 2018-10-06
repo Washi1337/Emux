@@ -38,13 +38,17 @@ namespace Emux.GameBoy.Cpu
         private readonly GameBoy _device;
         private readonly ManualResetEvent _continueSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _terminateSignal = new ManualResetEvent(false);
+        
         private ulong _ticks;
         private bool _break = true;
         private bool _halt = false;
         private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);
         private readonly ManualResetEvent _breakSignal = new ManualResetEvent(false);
+        
         private TimeSpan _frameStartTime;
         private ulong _frameStartTickCount;
+        
+        private readonly IDictionary<ushort, Breakpoint> _breakpoints = new Dictionary<ushort, Breakpoint>();
 
         public GameBoyCpu(GameBoy device, IClock clock)
         {
@@ -53,7 +57,6 @@ namespace Emux.GameBoy.Cpu
 
             Registers = new RegisterBank();
             Alu = new GameBoyAlu(Registers);
-            Breakpoints = new HashSet<ushort>();
             EnableFrameLimit = true;
             Clock = clock ?? throw new ArgumentNullException(nameof(clock));
 
@@ -107,14 +110,6 @@ namespace Emux.GameBoy.Cpu
         }
 
         /// <summary>
-        /// Gets a collection of memory addresses to break the execution on.
-        /// </summary>
-        public ISet<ushort> Breakpoints
-        {
-            get;
-        }
-
-        /// <summary>
         /// Gets or sets a value indicating whether the processor should limit the execution speed to the original GameBoy clock speed. 
         /// Disable this if experiencing heavy performance losses.
         /// </summary>
@@ -163,7 +158,17 @@ namespace Emux.GameBoy.Cpu
         }
 
         public void Reset()
-        {
+        {            
+            Registers.A = _device.GbcMode ? (byte) 0x11 : (byte) 0x01;
+            Registers.F = 0xB0;
+            Registers.BC = 0x0013;
+            Registers.DE = 0x00D8;
+            Registers.HL = 0x014D;
+            Registers.PC = 0x100;
+            Registers.SP = 0xFFFE;
+            Registers.IE = 0;
+            Registers.IF = (InterruptFlags) 0xE1;
+            Registers.IME = false;
         }
 
         public void Shutdown()
@@ -201,7 +206,7 @@ namespace Emux.GameBoy.Cpu
                             }
                         }
 
-                        if (Breakpoints.Contains(Registers.PC))
+                        if (_breakpoints.TryGetValue(Registers.PC, out var breakpoint) && breakpoint.Condition(this))
                             _break = true;
 
                     } while (!_break);
@@ -232,8 +237,8 @@ namespace Emux.GameBoy.Cpu
 
             // Check for interrupts.
             bool interrupted = false;
-            if (Registers.IME && !Registers.IMESet 
-                && Registers.IE != InterruptFlags.None
+            
+            if (Registers.IE != InterruptFlags.None
                 && Registers.IF != (InterruptFlags) 0xE0)
             {
                 byte firedAndEnabled = (byte) (Registers.IE & Registers.IF);
@@ -241,11 +246,15 @@ namespace Emux.GameBoy.Cpu
                 {
                     if ((firedAndEnabled & (1 << i)) == (1 << i))
                     {
-                        Registers.IF &= (InterruptFlags) ~(1u << i);
-                        Registers.IME = false;
-                        interrupted = true;
-                        Rst((byte) (0x40 + (i << 3)));
-                        cycles += 12;
+                        if (Registers.IME && !Registers.IMESet)
+                        {
+                            Registers.IF &= (InterruptFlags) ~(1u << i);
+                            Registers.IME = false;
+                            interrupted = true;
+                            Rst((byte) (0x40 + (i << 3)));
+                            cycles += 12;
+                        }
+
                         _halt = false;
                     }
                 }
@@ -286,6 +295,38 @@ namespace Emux.GameBoy.Cpu
             Clock.Stop();
             _continueSignal.Reset();
             _terminateSignal.Set();
+        }
+
+        public Breakpoint SetBreakpoint(ushort address)
+        {
+            if (!_breakpoints.TryGetValue(address, out var breakpoint))
+            {
+                breakpoint = new Breakpoint(address);
+                _breakpoints.Add(address, breakpoint);
+            }
+
+            return breakpoint;
+        }
+
+        public void RemoveBreakpoint(ushort address)
+        {
+            _breakpoints.Remove(address);
+        }
+
+        public IEnumerable<Breakpoint> GetBreakpoints()
+        {
+            return _breakpoints.Values;
+        }
+
+        public Breakpoint GetBreakpointAtAddress(ushort address)
+        {
+            _breakpoints.TryGetValue(address, out var breakpoint);
+            return breakpoint;
+        }
+
+        public void ClearBreakpoints()
+        {
+            _breakpoints.Clear();
         }
         
         protected virtual void OnResumed()

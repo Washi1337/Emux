@@ -45,10 +45,12 @@
     <Compile Include="Audio\GameBoySpu.cs" />
     <Compile Include="Audio\IAudioChannelOutput.cs" />
     <Compile Include="Audio\ISoundChannel.cs" />
+    <Compile Include="Audio\LfsRegister.cs" />
     <Compile Include="Audio\NoiseChannel.cs" />
     <Compile Include="Audio\SpuOutputSelection.cs" />
     <Compile Include="Audio\SquareChannel.cs" />
     <Compile Include="Audio\SquareSweepChannel.cs" />
+    <Compile Include="Audio\VolumeEnvelope.cs" />
     <Compile Include="Audio\WaveSoundChannel.cs" />
     <Compile Include="Cartridge\GameBoyColorFlag.cs" />
     <Compile Include="Cartridge\IExternalMemory.cs" />
@@ -62,6 +64,7 @@
     <Compile Include="Cartridge\StreamedExternalMemory.cs" />
     <Compile Include="Cheating\GamesharkCode.cs" />
     <Compile Include="Cheating\GamesharkController.cs" />
+    <Compile Include="Cpu\Breakpoint.cs" />
     <Compile Include="Cpu\GameBoyAlu.cs" />
     <Compile Include="Cpu\IClock.cs" />
     <Compile Include="Cpu\InterruptFlags.cs" />

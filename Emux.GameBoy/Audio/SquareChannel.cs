@@ -5,24 +5,27 @@ namespace Emux.GameBoy.Audio
 {
     public class SquareChannel : ISoundChannel
     {
-        private readonly GameBoySpu _spu;
+        private readonly VolumeEnvelope _volumeEnvelope;
+        
         private int _coordinate = 0;
         private double _length = 0;
-        private int _volume = 0;
-        private double _volumeEnvelopeTimer = 0;
 
-        protected int Frequency = 0;
         private byte _nr4;
         private byte _nr2;
         private byte _nr1;
         private byte _nr0;
+        private int _frequencyRegister;
 
         public SquareChannel(GameBoySpu spu)
         {
-            if (spu == null)
-                throw new ArgumentNullException(nameof(spu));
-            _spu = spu;
+            Spu = spu ?? throw new ArgumentNullException(nameof(spu));
             ChannelVolume = 1;
+            _volumeEnvelope = new VolumeEnvelope(this);
+        }
+
+        public GameBoySpu Spu
+        {
+            get;
         }
 
         public virtual int ChannelNumber
@@ -52,14 +55,14 @@ namespace Emux.GameBoy.Audio
             set
             {
                 _nr2 = value;
-                _volume = InitialEnvelopeVolume;
+                _volumeEnvelope.Reset();
             }
         }
 
         public byte NR3
         {
-            get { return (byte) (Frequency & 0xFF); }
-            set { Frequency = (Frequency & ~0xFF) | value; }
+            get { return (byte) (FrequencyRegister & 0xFF); }
+            set { FrequencyRegister = (FrequencyRegister & ~0xFF) | value; }
         }
 
         public byte NR4
@@ -73,10 +76,22 @@ namespace Emux.GameBoy.Audio
                     _length = SoundLength;
                     _coordinate = 0;
                 }
-                Frequency = (Frequency & 0xFF) | (value & 0b111) << 8;
+                FrequencyRegister = (FrequencyRegister & 0xFF) | (value & 0b111) << 8;
             }
         }
 
+        protected int FrequencyRegister
+        {
+            get { return _frequencyRegister; }
+            set { _frequencyRegister = value & 0b111_1111_1111; }
+        }
+
+        protected float Frequency
+        {
+            get { return (float) (GameBoyCpu.OfficialClockFrequency / (32 * (2048 - FrequencyRegister))); }
+            set { FrequencyRegister = (int) (2048 - GameBoyCpu.OfficialClockFrequency / (32 * value)); }
+        }
+        
         public bool Active
         {
             get;
@@ -129,79 +144,34 @@ namespace Emux.GameBoy.Audio
             get { return (NR4 & (1 << 6)) != 0; }
         }
 
-        public int InitialEnvelopeVolume
-        {
-            get { return NR2 >> 4; }
-        }
-
-        public bool EnvelopeIncrease
-        {
-            get { return (NR2 & (1 << 3)) != 0; }
-        }
-
-        public int EnvelopeSweepCount
-        {
-            get { return NR2 & 7; }
-            set { NR2 = (byte) ((NR2 & ~7) | value & 7); }
-        }
-
-        private void UpdateVolume(int cycles)
-        {
-            if (EnvelopeSweepCount > 0)
-            {
-                double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / _spu.Device.Cpu.SpeedFactor * 2;
-                _volumeEnvelopeTimer += timeDelta;
-
-                double stepInterval = EnvelopeSweepCount / 64.0 * 2;
-                while (_volumeEnvelopeTimer >= stepInterval)
-                {
-                    _volumeEnvelopeTimer -= stepInterval;
-                    if (EnvelopeIncrease)
-                        _volume++;
-                    else
-                        _volume--;
-                    
-                    if (_volume < 0)
-                        _volume = 0;
-                    if (_volume > 15)
-                        _volume = 15;
-                }
-
-            }
-        }
-
         public virtual void ChannelStep(int cycles)
         {
-            double cpuSpeedFactor = _spu.Device.Cpu.SpeedFactor;
+            double cpuSpeedFactor = Spu.Device.Cpu.SpeedFactor;
             if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
                 return;
 
-            UpdateVolume(cycles);
+            // Update volume and calculate wave amplitude.
+            _volumeEnvelope.Update(cycles);
+            double amplitude = ChannelVolume * (_volumeEnvelope.Volume / 15.0);
 
-            double realFrequency = 131072.0 / (2048.0 - Frequency);
-            int sampleRate = ChannelOutput.SampleRate;
+            // Obtain elapsed gameboy time. 
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
-            int sampleCount = (int) (timeDelta * sampleRate) * 2;
-            float[] buffer = new float[sampleCount];
-
-            double amplitude = ChannelVolume * (_volume / 15.0);
-            double period = (float) (1f / realFrequency);
+           
+            // Allocate sound buffer.
+            int sampleRate = ChannelOutput.SampleRate;
+            int sampleCount = (int) Math.Ceiling(timeDelta * sampleRate) * 2;
+            var buffer = new float[sampleCount];
             
             if (!UseSoundLength || _length >= 0)
             {
+                double period = 1f / Frequency;
                 for (int i = 0; i < buffer.Length; i += 2)
                 {
+                    // Get current x coordinate and compute current sample value. 
                     double x = (double) _coordinate / sampleRate;
-                    float saw1 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period)));
-                    float saw2 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period - Duty*Math.PI)));
-
-                    float c = 1 - 2 * Duty;
-                    float sample = (float) -(saw1 - saw2 + amplitude * c);
-//                    float sample = (float)(ChannelVolume * (_volume / 15.0)                                                // Volume adjustments.
-//                                           * Math.Sign(Math.Sin(2 * Math.PI * realFrequency * _coordinate / sampleRate))); // Square wave formula
-
-                    _spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-
+                    float sample = DutyWave(amplitude, x, period);
+                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+                    
                     _coordinate = (_coordinate + 1) % sampleRate;
                 }
 
@@ -212,10 +182,17 @@ namespace Emux.GameBoy.Audio
             ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
         }
 
-        internal static double Cot(double x)
+        private float DutyWave(double amplitude, double x, double period)
+        {
+            // Pulse waves with a duty can be constructed by subtracting a saw wave from the same but shifted saw wave.
+            float saw1 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period)));
+            float saw2 = (float) (-2 * amplitude / Math.PI * Math.Atan(Cot(x * Math.PI / period - (1 - Duty) * Math.PI)));
+            return saw1 - saw2;
+        }
+
+        private static double Cot(double x)
         {
             return 1 / Math.Tan(x);
         }
-
     }
 }

@@ -3,7 +3,7 @@
     /// <summary>
     /// Provides methods for emulation of a memory bank controller (MBC).
     /// </summary>
-    public interface IMemoryBankController
+    public interface IMemoryBankController : IGameBoyComponent
     {
         byte ReadByte(ushort address);
 

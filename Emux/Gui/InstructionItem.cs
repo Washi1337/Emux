@@ -9,6 +9,8 @@ namespace Emux.Gui
 {
     public class InstructionItem : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+        
         private readonly GameBoy.GameBoy _gameBoy;
         private readonly Z80Instruction _instruction;
         
@@ -24,14 +26,32 @@ namespace Emux.Gui
 
         public bool IsBreakpoint
         {
-            get { return _gameBoy.Cpu.Breakpoints.Contains(_instruction.Offset); }
+            get { return Breakpoint != null; }
             set
             {
                 if (value)
-                    _gameBoy.Cpu.Breakpoints.Add(_instruction.Offset);
+                    _gameBoy.Cpu.SetBreakpoint(_instruction.Offset);
                 else
-                    _gameBoy.Cpu.Breakpoints.Remove(_instruction.Offset);
+                    _gameBoy.Cpu.RemoveBreakpoint(_instruction.Offset);
                 OnPropertyChanged(nameof(IsBreakpoint));
+            }
+        }
+
+        public BreakpointInfo Breakpoint
+        {
+            get
+            {
+                var bp = _gameBoy.Cpu.GetBreakpointAtAddress(_instruction.Offset);
+                if (bp == null)
+                    return null;
+                App.Current.DeviceManager.Breakpoints.TryGetValue(_instruction.Offset, out var breakpointInfo);
+                if (breakpointInfo == null || breakpointInfo.Breakpoint != bp)
+                {
+                    breakpointInfo = new BreakpointInfo(bp);
+                    breakpointInfo.PropertyChanged += (sender, args) => OnPropertyChanged(nameof(IsBreakpoint));
+                }
+
+                return breakpointInfo;
             }
         }
 
@@ -75,9 +95,6 @@ namespace Emux.Gui
             get;
             set;
         }
-
-
-        public event PropertyChangedEventHandler PropertyChanged;
         
         protected virtual void OnPropertyChanged(string propertyName = null)
         {

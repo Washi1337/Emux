@@ -332,41 +332,37 @@ namespace Emux.GameBoy.Cpu
                 _registers.ClearFlags(RegisterFlags.C);
             else
                 _registers.SetFlags(RegisterFlags.C);
+            _registers.ClearFlags(RegisterFlags.N | RegisterFlags.H);
         }
 
         internal void Daa()
         {
-            var flags = RegisterFlags.None;
+            // Reference: https://ehaskins.com/2018-01-30%20Z80%20DAA/
+            
+            int a = _registers.A;
 
-            int value = _registers.A;
+            int correction = 0;
+            var setFlagC = RegisterFlags.None;
 
-            int correction = _registers.GetFlags(RegisterFlags.C) ? 0x60 : 0x00;
-
-            if (_registers.GetFlags(RegisterFlags.H))
+            if (_registers.GetFlags(RegisterFlags.H) || (!_registers.GetFlags(RegisterFlags.N) && (a & 0xF) > 9))
                 correction |= 0x6;
 
-            if (!_registers.GetFlags(RegisterFlags.N))
+            if (_registers.GetFlags(RegisterFlags.C) || (!_registers.GetFlags(RegisterFlags.N) && a > 0x99))
             {
-                if ((value & 0xF) > 0x9)
-                    correction |= 6;
-                if (value > 0x99)
-                    correction |= 0x60;
-                value += correction;
-            }
-            else
-            {
-                value -= correction;
+                correction |= 0x60;
+                setFlagC = RegisterFlags.C;
             }
 
-            if (((correction << 2) & 0x100) != 0)
-                flags |= RegisterFlags.C;
-            if (_registers.A == 0)
-                flags |= RegisterFlags.Z;
+            a += _registers.GetFlags(RegisterFlags.N) ? -correction : correction;
+            a &= 0xFF;
 
-            _registers.A = (byte) (value & 0xFF);
+            var setFlagZ = a == 0 ? RegisterFlags.Z : RegisterFlags.None;
 
-            _registers.ClearFlags(RegisterFlags.Z | RegisterFlags.H | RegisterFlags.C);
-            _registers.SetFlags(flags);
+            var newFlags = (RegisterFlags) _registers.F & ~(RegisterFlags.H | RegisterFlags.Z | RegisterFlags.C);
+            newFlags |= setFlagC | setFlagZ;
+            
+            _registers.OverwriteFlags(newFlags);
+            _registers.A = (byte) a;
         }
     }
 }

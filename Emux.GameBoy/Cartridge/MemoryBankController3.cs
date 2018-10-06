@@ -15,7 +15,20 @@ namespace Emux.GameBoy.Cartridge
             if (cartridge == null)
                 throw new ArgumentNullException(nameof(cartridge));
             _cartridge = cartridge;
+        }
+
+        public void Initialize()
+        {
+            Reset();
+        }
+
+        public void Reset()
+        {
             SwitchRomBank(1);
+        }
+
+        public void Shutdown()
+        {
         }
 
         public byte ReadByte(ushort address)

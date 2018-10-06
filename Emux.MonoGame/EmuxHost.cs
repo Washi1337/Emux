@@ -120,9 +120,13 @@ namespace Emux.MonoGame
         {
             GraphicsDevice.Clear(Color.Black);
 
-            _spriteBatch.Begin();
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             DrawFrame();
+            
+            #if DEBUG
             DrawDebugInformation(gameTime);
+            #endif
+            
             _spriteBatch.End();
             
             base.Draw(gameTime);
@@ -153,6 +157,7 @@ namespace Emux.MonoGame
                 Color.White);
         }
 
+#if DEBUG
         private void DrawDebugInformation(GameTime time)
         {
             _fps.Add(1 / time.ElapsedGameTime.TotalSeconds);
@@ -186,6 +191,7 @@ namespace Emux.MonoGame
             _spriteBatch.DrawString(_font, info, new Vector2(1, 1), Color.Black);
             _spriteBatch.DrawString(_font, info, new Vector2(0, 0), Color.Cyan);
         }
+#endif
         
         public void Start()
         {

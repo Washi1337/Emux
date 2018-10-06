@@ -399,6 +399,19 @@ namespace Emux.GameBoy.Graphics
             ScY = 0;
             ScX = 0;
             Stat = (LcdStatusFlags)0x85;
+
+            Lcdc = (LcdControlFlags) 0x91;
+            ScY = 0;
+            ScX = 0;
+            _lyc = 0;
+            Bgp = 0xFC;
+            ObjP0 = 0xFF;
+            ObjP1 = 0xFF;
+            WY = 0;
+            WX = 0;
+            
+            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            Utilities.Memset(_vram, 0, _vram.Length);
         }
 
         public void Shutdown()

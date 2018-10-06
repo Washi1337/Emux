@@ -92,6 +92,8 @@ namespace Emux.Gui
                 item.Value = Device.Memory.ReadByte(item.Offset);
             foreach (var item in MasterSoundRegistersView.Items.Cast<RegisterItem>())
                 item.Value = Device.Memory.ReadByte(item.Offset);
+            foreach (var item in TimerRegisterView.Items.Cast<RegisterItem>())
+                item.Value = Device.Memory.ReadByte(item.Offset);
         }
 
         private void IOWindowOnClosing(object sender, CancelEventArgs e)

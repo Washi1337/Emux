@@ -39,12 +39,13 @@ namespace Emux.GameBoy.Memory
 
         public void Reset()
         {
-
+            SwitchRamBank(1);
+            DmaController.Reset();
         }
 
         public void Shutdown()
         {
-
+            DmaController.Shutdown();
         }
 
         public byte ReadByte(ushort address)

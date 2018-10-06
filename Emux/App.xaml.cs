@@ -1,6 +1,6 @@
 ﻿using System.Windows;
-using System.Windows.Navigation;
-using Emux.Gui;
+using Emux.Expressions;
+using Emux.GameBoy.Cpu;
 using Emux.Properties;
 
 namespace Emux
