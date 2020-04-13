@@ -4,13 +4,8 @@
         <Title>Emux.GameBoy</Title>
         <Version>0.1.0.0</Version>
         <Description>GameBoy emulator engine</Description>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
       <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
-    <ItemGroup>
-      <Folder Include="Properties\" />
-    </ItemGroup>
     <ItemGroup>
       <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.3.0" />
     </ItemGroup>
