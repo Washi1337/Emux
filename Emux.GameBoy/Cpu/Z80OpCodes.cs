@@ -265,7 +265,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("ret nc",               0xD0, 0x00, 0, 20, 8, (d, i) => d.Cpu.RetFlag(i.OpCode, !d.Cpu.Registers.GetFlags(C))),
             new Z80OpCode("pop de",               0xD1, 0x00, 0, 12, (d, i) => d.Cpu.Registers.DE = d.Cpu.Pop()),
             new Z80OpCode("jp nc, {0:x4}",        0xD2, 0x00, 2, 16, 12, (d, i) => d.Cpu.JumpFlag(i.OpCode, i.Operand16, !d.Cpu.Registers.GetFlags(C))),
-            new Z80OpCode("0xD3",                 0xD3, 0x00, 0, 16, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xD3",                 0xD3, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("call nc, {0:x4}",      0xD4, 0x00, 2, 24, 12, (d, i) => d.Cpu.CallFlag(i.OpCode, i.Operand16, !d.Cpu.Registers.GetFlags(C))),
             new Z80OpCode("push de",              0xD5, 0x00, 0, 16, (d, i) => d.Cpu.Push(d.Cpu.Registers.DE)),
             new Z80OpCode("sub {0:x2}",           0xD6, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Sub(d.Cpu.Registers.A, i.Operand8, Z | H | C, N)),
@@ -279,7 +279,7 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("jp c, {0:x4}",         0xDA, 0x00, 2, 16, 12, (d, i) => d.Cpu.JumpFlag(i.OpCode, i.Operand16, d.Cpu.Registers.GetFlags(C))),
             new Z80OpCode("0xDB",                 0xDB, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("call c, {0:x4}",       0xDC, 0x00, 2, 24, 12, (d, i) => d.Cpu.CallFlag(i.OpCode, i.Operand16, d.Cpu.Registers.GetFlags(C))),
-            new Z80OpCode("0xDD",                 0xDD, 0x00, 0, 24, Z80OpCode.NotSupported),
+            new Z80OpCode("0xDD",                 0xDD, 0x00, 0, 0, Z80OpCode.NotSupported),
             new Z80OpCode("sbc a, {0:x2}",        0xDE, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Sbc(d.Cpu.Registers.A, i.Operand8, Z | H | C, N)),
             new Z80OpCode("rst 18",               0xD7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x18)),
             
@@ -287,8 +287,8 @@ namespace Emux.GameBoy.Cpu
             new Z80OpCode("ldh ({0:x2}), a",      0xE0, 0x00, 1, 12, (d, i) => d.Memory.WriteByte((ushort)(0xFF00 + i.Operand8), d.Cpu.Registers.A)),
             new Z80OpCode("pop hl",               0xE1, 0x00, 0, 12, (d, i) => d.Cpu.Registers.HL = d.Cpu.Pop()),
             new Z80OpCode("ldh (c), a",           0xE2, 0x00, 0, 8, (d, i) => d.Memory.WriteByte((ushort)(0xFF00 + d.Cpu.Registers.C), d.Cpu.Registers.A)),
-            new Z80OpCode("0xE3",                 0xE3, 0x00, 0, 4, Z80OpCode.InvalidOpcode),
-            new Z80OpCode("0xE4",                 0xE4, 0x00, 0, 12, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xE3",                 0xE3, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xE4",                 0xE4, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("push hl",              0xE5, 0x00, 0, 16, (d, i) => d.Cpu.Push(d.Cpu.Registers.HL)),
             new Z80OpCode("and {0:x2}",           0xE6, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.And(i.Operand8)),
             new Z80OpCode("rst 20",               0xE7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x20)),
@@ -298,9 +298,9 @@ namespace Emux.GameBoy.Cpu
             }),
             new Z80OpCode("jp (hl)",              0xE9, 0x00, 0, 4, (d, i) => d.Cpu.Jump(d.Cpu.Registers.HL)),
             new Z80OpCode("ld ({0:x4}), a",       0xEA, 0x00, 2, 16, (d, i) => d.Memory.WriteByte(i.Operand16, d.Cpu.Registers.A)),
-            new Z80OpCode("0xEB",                 0xEB, 0x00, 0, 4, Z80OpCode.InvalidOpcode),
-            new Z80OpCode("0xEC",                 0xEC, 0x00, 0, 12, Z80OpCode.InvalidOpcode),
-            new Z80OpCode("0xED",                 0xED, 0x00, 0, 4, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xEB",                 0xEB, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xEC",                 0xEC, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xED",                 0xED, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("xor {0:x2}",           0xEE, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Xor(i.Operand8)),
             new Z80OpCode("rst 28",               0xE7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x28)),
 
@@ -313,7 +313,7 @@ namespace Emux.GameBoy.Cpu
                 d.Cpu.Registers.IME = false;
                 d.Cpu.Registers.IMESet = true;
             }),
-            new Z80OpCode("0xF4",                 0xF4, 0x00, 0, 4, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xF4",                 0xF4, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("push af",              0xF5, 0x00, 0, 16, (d, i) => d.Cpu.Push(d.Cpu.Registers.AF)),
             new Z80OpCode("or {0:x2}",            0xF6, 0x00, 1, 8, (d, i) => d.Cpu.Registers.A = d.Cpu.Alu.Or(i.Operand8)),
             new Z80OpCode("rst 30",               0xF7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x30)),
@@ -326,7 +326,7 @@ namespace Emux.GameBoy.Cpu
                 d.Cpu.Registers.IMESet = true;
             }),
             new Z80OpCode("0xFC",                 0xFC, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
-            new Z80OpCode("0xFD",                 0xFD, 0x00, 0, 4, Z80OpCode.InvalidOpcode),
+            new Z80OpCode("0xFD",                 0xFD, 0x00, 0, 0, Z80OpCode.InvalidOpcode),
             new Z80OpCode("cp {0:x2}",            0xFE, 0x00, 1, 8, (d, i) => d.Cpu.Alu.Cp(i.Operand8)),
             new Z80OpCode("rst 38",               0xF7, 0x00, 0, 16, (d, i) => d.Cpu.Rst(0x38)),
         };
