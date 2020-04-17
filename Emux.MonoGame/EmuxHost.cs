@@ -57,7 +57,7 @@ namespace Emux.MonoGame
             
             _video = new Texture2D(GraphicsDevice, 160, 144);
             _font = Content.Load<SpriteFont>("Calibri");
-            GameBoy.Cpu.Run();
+            GameBoy.Run();
         }
 
         protected override void Update(GameTime gameTime)
@@ -139,7 +139,7 @@ namespace Emux.MonoGame
         private void DrawDebugInformation(GameTime time)
         {
             _fps.Add(1 / time.ElapsedGameTime.TotalSeconds);
-            _gbfps.Add(GameBoy.Cpu.FramesPerSecond);
+            _gbfps.Add(GameBoy.FramesPerSecond);
             
             var difference = time.TotalGameTime - _last;
             if (difference.TotalSeconds > 1)

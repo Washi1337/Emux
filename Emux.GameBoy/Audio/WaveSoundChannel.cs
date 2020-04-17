@@ -127,7 +127,7 @@ namespace Emux.GameBoy.Audio
 
         public void ChannelStep(int cycles)
         {
-            double cpuSpeedFactor = Spu.Device.Cpu.SpeedFactor;
+            double cpuSpeedFactor = Spu.Device.SpeedFactor;
             if (!Active 
                 || !SoundEnabled
                 || double.IsNaN(cpuSpeedFactor) 

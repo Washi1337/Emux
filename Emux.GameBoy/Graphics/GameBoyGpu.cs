@@ -15,8 +15,8 @@ namespace Emux.GameBoy.Graphics
         public const int ScanLineOamCycles = 80;
         public const int ScanLineVramCycles = 172;
         public const int HBlankCycles = 204;
-        public const int OneLineCycles = 456;
-        public const int VBlankCycles = 456 * 10;
+        public const int OneLineCycles = ScanLineOamCycles + ScanLineVramCycles + HBlankCycles;
+        public const int VBlankCycles = OneLineCycles * 10;
         public const int FullFrameCycles = 70224;
 
         public event EventHandler HBlankStarted;
@@ -389,7 +389,6 @@ namespace Emux.GameBoy.Graphics
         
         public void Initialize()
         {
-            _device.Cpu.PerformedStep += CpuOnPerformedStep;
         }
 
         public void Reset()
@@ -416,19 +415,14 @@ namespace Emux.GameBoy.Graphics
 
         public void Shutdown()
         {
-            _device.Cpu.PerformedStep -= CpuOnPerformedStep;
         }
 
-        private void CpuOnPerformedStep(object sender, StepEventArgs args)
-        {
-            GpuStep(args.Cycles);
-        }
 
         /// <summary>
         /// Advances the execution of the graphical processor unit.
         /// </summary>
         /// <param name="cycles">The cycles the central processor unit has executed since last step.</param>
-        private void GpuStep(int cycles)
+        public void Step(int cycles)
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
@@ -468,8 +462,8 @@ namespace Emux.GameBoy.Graphics
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 OnVBlankStarted();
-                                VideoOutput.RenderFrame(_frameBuffer);
-                                _device.Cpu.Registers.IF |= InterruptFlags.VBlank;
+								VideoOutput.RenderFrame(_frameBuffer);
+								_device.Cpu.Registers.IF |= InterruptFlags.VBlank;
                                 if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
                             }
@@ -699,14 +693,14 @@ namespace Emux.GameBoy.Graphics
         private static Color GetGbcColor(byte[] paletteMemory, int paletteIndex, int colorIndex)
         {
             ushort rawValue = (ushort)(paletteMemory[paletteIndex * 8 + colorIndex * 2] | (paletteMemory[paletteIndex * 8 + colorIndex * 2 + 1] << 8));
-            return new Color(
-                (byte)((rawValue & 0x1F) * (0xFF / 0x1F)),
-                (byte)(((rawValue >> 5) & 0x1F) * (0xFF / 0x1F)),
-                (byte)(((rawValue >> 10) & 0x1F) * (0xFF / 0x1F)));
+			return new Color(
+				(byte)((rawValue & 0x1F) * (0xFF / 0x1F)),
+				(byte)(((rawValue >> 5) & 0x1F) * (0xFF / 0x1F)),
+				(byte)(((rawValue >> 10) & 0x1F) * (0xFF / 0x1F)));
+		}
 
-        }
-        
-        private static int GetGreyshadeIndex(byte palette, int paletteIndex)
+
+		private static int GetGreyshadeIndex(byte palette, int paletteIndex)
         {
             return (palette >> (paletteIndex * 2)) & 3;
         }
@@ -730,10 +724,6 @@ namespace Emux.GameBoy.Graphics
                 if ((flags & SpriteDataFlags.XFlip) != 0)
                     actualX = 7 - actualX;
                 
-                if (LY == 0)
-                {
-
-                }
                 int paletteIndex = (int)(flags & SpriteDataFlags.PaletteNumberMask);
                 int colorIndex = GetPixelColorIndex(actualX, currentTileData);
                 RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
