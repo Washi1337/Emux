@@ -17,7 +17,7 @@ namespace Emux
         public event EventHandler DeviceChanged;
 
         private GameBoy.GameBoy _currentDevice;
-        private StreamedExternalMemory _currentExternalMemory;
+        private IExternalMemory _currentExternalMemory;
 
         public DeviceManager()
         {
@@ -80,7 +80,8 @@ namespace Emux
         public void LoadDevice(string romFilePath, string ramFilePath)
         {
             UnloadDevice();
-            _currentExternalMemory = new StreamedExternalMemory(File.Open(ramFilePath, FileMode.OpenOrCreate));
+
+            _currentExternalMemory = new BufferedExternalMemory(ramFilePath);
             var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
             _currentExternalMemory.SetBufferSize(cartridge.ExternalRamSize);
             CurrentDevice = new GameBoy.GameBoy(cartridge, new WinMmTimer(60), !Properties.Settings.Default.ForceOriginalGameBoy);

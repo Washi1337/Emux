@@ -18,23 +18,23 @@ namespace Emux.MonoGame
             (string romFile, string saveFile) = ParseArguments(args);
             var settings = ReadSettings();
 
-            using (var host = new EmuxHost(settings))
-            using (var saveFs = File.Open(saveFile, FileMode.OpenOrCreate))
-            {
-                var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), new StreamedExternalMemory(saveFs));
-                var device = new GameBoy.GameBoy(cartridge, host, true);
-                host.GameBoy = device;
-                
-                device.Gpu.VideoOutput = host;
-                
-                var mixer = new GameBoyNAudioMixer();
-                mixer.Connect(device.Spu);
-                var player = new DirectSoundOut();
-                player.Init(mixer);
-                player.Play();
-                
-                host.Run();
-            }
+			using (var host = new EmuxHost(settings))
+			using (var mbc = new BufferedExternalMemory(saveFile))
+			{
+				var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), mbc);
+				var device = new GameBoy.GameBoy(cartridge, host, true);
+				host.GameBoy = device;
+
+				device.Gpu.VideoOutput = host;
+
+				var mixer = new GameBoyNAudioMixer();
+				mixer.Connect(device.Spu);
+				var player = new DirectSoundOut();
+				player.Init(mixer);
+				player.Play();
+
+				host.Run();
+			}
         }
 
         private static void PrintAbout()

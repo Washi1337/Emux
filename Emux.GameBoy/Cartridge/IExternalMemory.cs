@@ -1,7 +1,8 @@
-﻿namespace Emux.GameBoy.Cartridge
+﻿using System;
+
+namespace Emux.GameBoy.Cartridge
 {
-    public interface IExternalMemory
-    {
+    public interface IExternalMemory : IDisposable {
         bool IsActive
         {
             get;
