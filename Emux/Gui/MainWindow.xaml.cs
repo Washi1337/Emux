@@ -215,10 +215,11 @@ namespace Emux.Gui
                 ;
             DisassemblyView.Items.Clear();
             var disassembler = new Z80Disassembler(_currentDevice.Memory);
-            disassembler.Position = _currentDevice.Cpu.Registers.PC;
-            for (int i = 0; i < 30 && disassembler.Position < 0xFFFF; i ++)
+            var position = _currentDevice.Cpu.Registers.PC;
+            for (int i = 0; i < 30 && position < 0xFFFF; i ++)
             {
-                var instruction = disassembler.ReadNextInstruction();
+                var instruction = new Z80Instruction(0, Z80OpCodes.SingleByteOpCodes[0], new byte[0]);
+                disassembler.ReadInstruction(ref position, instruction);
                 DisassemblyView.Items.Add(new InstructionItem(_currentDevice, instruction));
             }
             

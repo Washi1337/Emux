@@ -27,6 +27,7 @@ namespace Emux.GameBoy.Cpu
 		private ulong _ticks;
         public bool IsBroken = true;
         public bool Halted = false;
+        private readonly Z80Instruction _readInstruction = new Z80Instruction(0, Z80OpCodes.SingleByteOpCodes[0], new byte[0]);
 
         public GameBoyCpu(GameBoy device, IClock clock)
         {
@@ -176,10 +177,8 @@ namespace Emux.GameBoy.Cpu
 
         private Z80Instruction ReadNextInstruction()
         {
-            _disassembler.Position = Registers.PC;
-            var instruction = _disassembler.ReadNextInstruction();
-            Registers.PC = _disassembler.Position;
-            return instruction;
+            _disassembler.ReadInstruction(ref Registers.PC, _readInstruction);
+            return _readInstruction;
         }
 
         internal void Push(ushort value)

@@ -8,7 +8,6 @@ namespace Emux.GameBoy.Cpu
     public class Z80Disassembler 
     {
         private readonly GameBoyMemory _memory;
-        private readonly Z80Instruction _readInstruction = new Z80Instruction(0, Z80OpCodes.SingleByteOpCodes[0], new byte[0]);
 
         public Z80Disassembler(GameBoyMemory memory)
         {
@@ -16,28 +15,22 @@ namespace Emux.GameBoy.Cpu
         }
 
 		/// <summary>
-		/// Gets or sets the position of the disassembler to read the next instruction from.
-		/// </summary>
-		public ushort Position { get; set; }
-
-		/// <summary>
 		/// Reads the next instruction from memory.
 		/// </summary>
 		/// <returns>The disassembled instruction.</returns>
-		public Z80Instruction ReadNextInstruction()
+		public void ReadInstruction(ref ushort location, Z80Instruction outInstruction)
         {
-            ushort offset = Position;
-            byte code = _memory.ReadByte(Position++);
+            ushort offset = location;
+            byte code = _memory.ReadByte(location++);
 
             var opcode = code != Z80OpCodes.ExtendedTableOpcode
                 ? Z80OpCodes.SingleByteOpCodes[code]
-                : Z80OpCodes.PrefixedOpCodes[_memory.ReadByte(Position++)];
+                : Z80OpCodes.PrefixedOpCodes[_memory.ReadByte(location++)];
 
-            var operands = _memory.ReadBytes(Position, opcode.OperandLength);
-            Position += (ushort)operands.Length;
+            var operands = _memory.ReadBytes(location, opcode.OperandLength);
+            location += (ushort)operands.Length;
 
-            _readInstruction.Set(offset, opcode, operands);
-            return _readInstruction;
+            outInstruction.Set(offset, opcode, operands);
         }
     }
 }
