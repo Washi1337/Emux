@@ -16,6 +16,8 @@ namespace Emux.GameBoy
     /// </summary>
     public class GameBoy
     {
+		public const float OfficialFrameRate = 59.7f;
+
 		private readonly ManualResetEvent _continueSignal = new ManualResetEvent(false);
 		private readonly ManualResetEvent _terminateSignal = new ManualResetEvent(false);
 		private readonly ManualResetEvent _frameStartSignal = new ManualResetEvent(false);

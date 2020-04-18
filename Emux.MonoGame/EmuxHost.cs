@@ -177,7 +177,7 @@ namespace Emux.MonoGame
                 _averageFps = _fps.Average();
                 _maxFps = _fps.Max();
                 
-                _speedFactor = _averageGbFps / 60f;
+                _speedFactor = _averageGbFps / Emux.GameBoy.GameBoy.OfficialFrameRate;
                 
                 _last = time.TotalGameTime;
                 _gbfps.Clear();
