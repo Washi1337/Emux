@@ -57,7 +57,12 @@ namespace Emux.MonoGame
             
             _video = new Texture2D(GraphicsDevice, 160, 144);
             _font = Content.Load<SpriteFont>("Calibri");
-            GameBoy.Run();
+
+			_graphics.SynchronizeWithVerticalRetrace = GameBoy.EnableFrameLimit;
+			_graphics.ApplyChanges();
+			IsFixedTimeStep = GameBoy.EnableFrameLimit;
+
+			GameBoy.Run();
         }
 
         protected override void Update(GameTime gameTime)
