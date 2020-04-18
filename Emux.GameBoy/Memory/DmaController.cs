@@ -1,10 +1,14 @@
 ﻿using System;
 using Emux.GameBoy.Graphics;
+using static Emux.GameBoy.Memory.GameBoyMemory;
 
 namespace Emux.GameBoy.Memory
 {
     public class DmaController : IGameBoyComponent
     {
+        private const byte EnableMask = 0b10000000; // 0x80
+        private const byte LengthMask = 0b01111111; // 0x7F
+
         private readonly GameBoy _device;
         private bool _isTransferring;
         private int _currentBlockIndex;
@@ -13,7 +17,7 @@ namespace Emux.GameBoy.Memory
         private byte _destinationHigh;
         private byte _destinationLow;
         private byte _dmaLengthMode;
-        private readonly byte[] _block = new byte[0x10];
+        private readonly byte[] _block = new byte[OAMDMABlockSize];
 
         public DmaController(GameBoy device)
         {
@@ -22,20 +26,13 @@ namespace Emux.GameBoy.Memory
             _device = device;
         }
 
-        public ushort SourceAddress
-        {
-            get { return (ushort)((_sourceHigh << 8) | _sourceLow & 0xF0); }
-        }
+        public ushort SourceAddress => (ushort)((_sourceHigh << 8) | _sourceLow & 0xF0);
 
-        public ushort DestinationAddress
-        {
-            get { return (ushort)(0x8000 | ((_destinationHigh & 0x1F) << 8) | _destinationLow & 0xF0); }
-        }
+        public ushort DestinationAddress => (ushort)(0x8000 | (((_destinationHigh << 8) | (_destinationLow & 0xF0)) & 0b0001111111110000));
 
-        public int Length
-        {
-            get { return ((_dmaLengthMode & 0x7F) + 1) * 0x10; }
-        }
+        public bool DMAEnabled => (_dmaLengthMode & EnableMask) > 0;
+
+        public int Length => ((_dmaLengthMode & LengthMask) + 1) * 0x10;
 
         public void Initialize()
         {
@@ -99,7 +96,7 @@ namespace Emux.GameBoy.Memory
                     _destinationLow = value;
                     break;
                 case 0xFF55:
-                    if (_isTransferring && (value & 0x80) == 0)
+                    if (_isTransferring && (value & EnableMask) == 0)
                     {
                         StopVramDmaTransfer();
                     }
@@ -116,31 +113,31 @@ namespace Emux.GameBoy.Memory
 
         private void StopVramDmaTransfer()
         {
-            _dmaLengthMode |= 0x80;
+            _dmaLengthMode |= EnableMask;
             _currentBlockIndex = 0;
             _isTransferring = false;
         }
 
         private void StartVramDmaTransfer()
         {
-            if ((_dmaLengthMode & 0x80) == 0)
+            if (!DMAEnabled)
             {
                 byte[] vram = new byte[Length];
                 _device.Memory.ReadBlock(SourceAddress, vram, 0, vram.Length);
-                _device.Gpu.WriteVRam((ushort) (DestinationAddress - 0x8000), vram, 0, vram.Length);
+                _device.Gpu.WriteVRam((ushort) (DestinationAddress - VRAMStartAddress), vram, 0, vram.Length);
             }
             else
             {
                 _currentBlockIndex = 0;
                 _isTransferring = true;
-                _dmaLengthMode &= 0x7F;
+                _dmaLengthMode &= LengthMask;
             }
         }
 
         private void PerformOamDmaTransfer(byte dma)
         {
-            byte[] oamData = new byte[0xA0];
-            _device.Memory.ReadBlock((ushort) (dma * 0x100), oamData, 0, oamData.Length);
+            byte[] oamData = new byte[OAMSize];
+            _device.Memory.ReadBlock((ushort) (dma * 0x100), oamData, 0, OAMSize);
             _device.Gpu.ImportOam(oamData);
         }
 
@@ -152,14 +149,14 @@ namespace Emux.GameBoy.Memory
 
         private void HDmaStep()
         {
-            int currentOffset = _currentBlockIndex * 0x10;
+            int currentOffset = _currentBlockIndex * OAMDMABlockSize;
 
-            _device.Memory.ReadBlock((ushort) (SourceAddress + currentOffset), _block, 0, _block.Length);
-            _device.Gpu.WriteVRam((ushort)(DestinationAddress - 0x8000 + currentOffset), _block, 0, _block.Length);
+            _device.Memory.ReadBlock((ushort)(SourceAddress + currentOffset), _block, 0, _block.Length);
+            _device.Gpu.WriteVRam((ushort)(DestinationAddress - VRAMStartAddress + currentOffset), _block, 0, _block.Length);
 
             _currentBlockIndex++;
-            int next = (_dmaLengthMode & 0x7F) - 1;
-            _dmaLengthMode = (byte) ((_dmaLengthMode & 0x80) | next);
+            int next = (_dmaLengthMode & LengthMask) - 1;
+            _dmaLengthMode = (byte) ((_dmaLengthMode & EnableMask) | next);
 
             if (next <= 0)
             {

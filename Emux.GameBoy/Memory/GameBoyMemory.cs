@@ -8,6 +8,13 @@ namespace Emux.GameBoy.Memory
     /// </summary>
     public class GameBoyMemory : IGameBoyComponent
     {
+        public static readonly ushort
+            VRAMStartAddress = 0x8000,
+            OAMDMABlockSize = 16,
+            SpriteSize = 4,
+            NumSprites = 40,
+            OAMSize = (ushort)(SpriteSize * NumSprites);
+
         private readonly GameBoy _device;
 
         private readonly byte[] _internalRam = new byte[0x1000];
