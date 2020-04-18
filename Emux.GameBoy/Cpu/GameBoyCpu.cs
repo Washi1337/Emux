@@ -10,6 +10,7 @@ namespace Emux.GameBoy.Cpu
     /// </summary>
     public class GameBoyCpu : IGameBoyComponent
     {
+		public const int InterruptStartAddr = 0x40;
         public const int VerticalBlankIsr = 0x0040;
         public const int LcdStatusIsr = 0x0048;
         public const int TimerOverflowIsr = 0x0050;
@@ -132,21 +133,24 @@ namespace Emux.GameBoy.Cpu
                 && Registers.IF != (InterruptFlags) 0xE0)
             {
                 byte firedAndEnabled = (byte) (Registers.IE & Registers.IF);
+				var vector = InterruptVector.VBlank;
                 for (int i = 0; i < 5 && !interrupted; i++)
                 {
-                    if ((firedAndEnabled & (1 << i)) == (1 << i))
+					var bit = 1 << i;
+                    if ((firedAndEnabled & bit) == bit)
                     {
                         if (Registers.IME && !Registers.IMESet)
                         {
-                            Registers.IF &= (InterruptFlags) ~(1u << i);
+                            Registers.IF &= (InterruptFlags)~bit;
                             Registers.IME = false;
                             interrupted = true;
-                            Rst((byte) (0x40 + (i << 3)));
-                            cycles += 12;
+                            cycles += Rst(vector);
                         }
 
                         Halted = false;
                     }
+
+					vector += 0x08;
                 }
             }
 
@@ -237,9 +241,10 @@ namespace Emux.GameBoy.Cpu
             return opcode.ClockCyclesAlt;
         }
 
-        internal void Rst(byte isr)
+        internal int Rst(InterruptVector isr)
         {
-            Call(isr);
+            Call((ushort)isr);
+			return 12;
         }
 
         internal void Halt()
