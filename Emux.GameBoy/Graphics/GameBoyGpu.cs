@@ -267,7 +267,16 @@ namespace Emux.GameBoy.Graphics
 
         public void WriteVRam(ushort address, byte[] buffer, int offset, int length)
         {
-            Buffer.BlockCopy(buffer, offset, _vram, address + GetVRamOffset(), length);
+            var vramStartAddr = address + GetVRamOffset();
+#if DEBUG
+                if (offset + length > buffer.Length)
+                    Console.WriteLine($"Buffer is too small. Expected {offset + length} elements but got {buffer.Length}.");
+                if (vramStartAddr + length > _vram.Length)
+                    Console.WriteLine($"Writing to out of range of VRAM. End address is {vramStartAddr + length} but end is at {_vram.Length}.");
+#endif
+            if (vramStartAddr + length > _vram.Length)
+                length = _vram.Length - vramStartAddr;
+            Buffer.BlockCopy(buffer, offset, _vram, vramStartAddr, length);
         }
 
         /// <summary>
