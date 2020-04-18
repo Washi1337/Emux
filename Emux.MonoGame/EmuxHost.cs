@@ -17,7 +17,7 @@ namespace Emux.MonoGame
     {
         public new event EventHandler Tick;
 
-		public const int FrameScaler = 3;
+		public const int FrameScaler = 2;
 		private const bool FitVideo = false;
         private readonly Settings _settings;
         private readonly GraphicsDeviceManager _graphics;
@@ -25,12 +25,11 @@ namespace Emux.MonoGame
         private Texture2D _video;
         private bool _clockEnabled = false;
         private SpriteFont _font;
-        
-        private TimeSpan _last;
-        private readonly IList<double> _fps = new List<double>();
-        private double _averageFps, _minFps, _maxFps;
-        private readonly IList<double> _gbfps = new List<double>();
-        private double _averageGbFps, _minGbFps, _maxGbFps;
+
+		private int _fpsIndex;
+		private const float _averageTimeSeconds = 5;
+		private int _numDeltaSamples;
+		private double[] _deltas;
         
         private double _speedFactor;
 
@@ -42,7 +41,7 @@ namespace Emux.MonoGame
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
-        }
+	}
 
         public GameBoy.GameBoy GameBoy
         {
@@ -55,11 +54,15 @@ namespace Emux.MonoGame
             base.Initialize();
         }
 
+		Texture2D white1x1;
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             
             _video = new Texture2D(GraphicsDevice, GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight);
+			white1x1 = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
+			var dataColors = new Color[1] { Color.White };
+			white1x1.SetData(dataColors);
             _font = Content.Load<SpriteFont>("Calibri");
 
 			_graphics.PreferredBackBufferWidth = GameBoyGpu.FrameWidth * FrameScaler;
@@ -68,6 +71,9 @@ namespace Emux.MonoGame
 			_graphics.SynchronizeWithVerticalRetrace = GameBoy.EnableFrameLimit;
 			_graphics.ApplyChanges();
 			IsFixedTimeStep = GameBoy.EnableFrameLimit;
+
+			_numDeltaSamples = (int)((_averageTimeSeconds * 1000f) / (1000f / Emux.GameBoy.GameBoy.OfficialFrameRate));
+			_deltas = Enumerable.Repeat(1000d / Emux.GameBoy.GameBoy.OfficialFrameRate, _numDeltaSamples).ToArray();
 
 			GameBoy.Run();
         }
@@ -163,38 +169,100 @@ namespace Emux.MonoGame
 
         private void DrawDebugInformation(GameTime time)
         {
-            _fps.Add(1 / time.ElapsedGameTime.TotalSeconds);
-            _gbfps.Add(GameBoy.FramesPerSecond);
+			var deltaMs = GameBoy.FrameDelta.TotalMilliseconds;
+			if (deltaMs == 0)
+				return;
+
+
+			_fpsIndex = (_fpsIndex + 1) % _deltas.Length;
+			_deltas[_fpsIndex] = deltaMs;
+
+			var rawAverage = _deltas.Average();
+			var average = 1000f / rawAverage;
+			var min = 1000f / _deltas.Min();
+			var max = 1000f / _deltas.Max();
             
-            var difference = time.TotalGameTime - _last;
-            if (difference.TotalSeconds > 1)
-            {
-                _minGbFps = _gbfps.Min();
-                _averageGbFps = _gbfps.Average();
-                _maxGbFps = _gbfps.Max();
-
-                _minFps = _fps.Min();
-                _averageFps = _fps.Average();
-                _maxFps = _fps.Max();
+            _speedFactor = average / Emux.GameBoy.GameBoy.OfficialFrameRate;
                 
-                _speedFactor = _averageGbFps / Emux.GameBoy.GameBoy.OfficialFrameRate;
-                
-                _last = time.TotalGameTime;
-                _gbfps.Clear();
-                _fps.Clear();
-            }
 
-            string info = $"GameBoy FPS: {_averageGbFps:0.00} (Min: {_minGbFps:0.00}, Max: {_maxGbFps:0.00})\n" +
-                          $"Clock FPS: {_averageFps:0.00} (Min: {_minFps:0.00}, Max: {_maxFps:0.00})\n" +
+            string info = $"GameBoy FPS: {average:0.00} (Min: {min:0.00}, Max: {max:0.00})\n" +
                           $"Speed Factor: {_speedFactor:0.00}\n" +
                           $"GBC Mode: {(GameBoy.Cpu.DoubleSpeed ? "Double speed" : "Normal speed")}\n" +
                           $"LY: {GameBoy.Gpu.LY}\n" +
                           $"LYC: {GameBoy.Gpu.LYC}\n";
-                        
             _spriteBatch.DrawString(_font, info, Vector2.Zero, Color.Cyan);
-        }
-        
-        public void Start()
+
+			drawGraph(rawAverage);
+		}
+
+		private void drawGraph(double average)
+		{
+			// Chart
+			const double max = 100; // ms
+			float chartTop = _graphics.PreferredBackBufferHeight - (_graphics.PreferredBackBufferHeight * 0.1f);
+			float chartBottom = _graphics.PreferredBackBufferHeight ;
+			float sampleWidth = (float)_graphics.PreferredBackBufferWidth / _numDeltaSamples;
+
+			var y = (float)map(_deltas[0], 0, max, chartBottom, chartTop);
+			Vector2 endPoint = new Vector2(0, y);
+			for (var i = 1; i < _deltas.Length; i++)
+			{
+				var delta = _deltas[i];
+				y = (float)map(delta, 0, max, chartBottom, chartTop);
+
+				var startPoint = new Vector2(i * sampleWidth, y);
+				DrawLine(
+					startPoint,
+					endPoint,
+					Color.White
+				);
+
+				endPoint = startPoint;
+			}
+
+			// Current Frame indicator
+			DrawLine(
+				new Vector2(_fpsIndex * sampleWidth, chartTop),
+				new Vector2(_fpsIndex * sampleWidth, chartBottom),
+				Color.Red
+			);
+			// Average
+			DrawLine(
+				new Vector2(0, (float)map(average, 0, max, chartBottom, chartTop)),
+				new Vector2(_graphics.PreferredBackBufferWidth, (float)map(average, 0, max, chartBottom, chartTop)),
+				Color.Green
+			);
+
+		}
+		double map(double x, double in_min, double in_max, double out_min, double out_max) 
+			=> ((x - in_min) * (out_max - out_min) / (in_max - in_min)) + out_min;
+
+		void DrawLine(Vector2 start, Vector2 end, Color color)
+		{
+			Vector2 edge = end - start;
+			// calculate angle to rotate line
+			float angle =
+				(float)Math.Atan2(edge.Y, edge.X);
+
+
+			_spriteBatch.Draw(white1x1,
+				new Rectangle(
+					(int)start.X,
+					(int)start.Y,
+					(int)edge.Length(),
+					1
+				),
+				null,
+				color,
+				angle,     
+				Vector2.Zero,
+				SpriteEffects.None,
+				0
+			);
+
+		}
+
+		public void Start()
         {
             _clockEnabled = true;
         }
