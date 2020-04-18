@@ -13,6 +13,7 @@ namespace Emux.GameBoy.Memory
         private byte _destinationHigh;
         private byte _destinationLow;
         private byte _dmaLengthMode;
+        private readonly byte[] _block = new byte[0x10];
 
         public DmaController(GameBoy device)
         {
@@ -153,9 +154,8 @@ namespace Emux.GameBoy.Memory
         {
             int currentOffset = _currentBlockIndex * 0x10;
 
-            byte[] block = new byte[0x10];
-            _device.Memory.ReadBlock((ushort) (SourceAddress + currentOffset), block, 0, block.Length);
-            _device.Gpu.WriteVRam((ushort)(DestinationAddress - 0x8000 + currentOffset), block, 0, block.Length);
+            _device.Memory.ReadBlock((ushort) (SourceAddress + currentOffset), _block, 0, _block.Length);
+            _device.Gpu.WriteVRam((ushort)(DestinationAddress - 0x8000 + currentOffset), _block, 0, _block.Length);
 
             _currentBlockIndex++;
             int next = (_dmaLengthMode & 0x7F) - 1;
