@@ -16,7 +16,9 @@ namespace Emux.MonoGame
     public class EmuxHost : Game, IClock, IVideoOutput
     {
         public new event EventHandler Tick;
-        
+
+		public const int FrameScaler = 3;
+		private const bool FitVideo = false;
         private readonly Settings _settings;
         private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -59,6 +61,9 @@ namespace Emux.MonoGame
             
             _video = new Texture2D(GraphicsDevice, GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight);
             _font = Content.Load<SpriteFont>("Calibri");
+
+			_graphics.PreferredBackBufferWidth = GameBoyGpu.FrameWidth * FrameScaler;
+			_graphics.PreferredBackBufferHeight = GameBoyGpu.FrameHeight * FrameScaler;
 
 			_graphics.SynchronizeWithVerticalRetrace = GameBoy.EnableFrameLimit;
 			_graphics.ApplyChanges();
@@ -103,9 +108,9 @@ namespace Emux.MonoGame
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.Black);
+			GraphicsDevice.Clear(Color.Black);
 
-            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+			_spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             DrawFrame();
             
             #if DEBUG
@@ -119,30 +124,43 @@ namespace Emux.MonoGame
 
         private void DrawFrame()
         {
-            float aspectRatio = (float)GameBoyGpu.FrameWidth / (float)GameBoyGpu.FrameHeight;
 
             int screenHeight = _graphics.PreferredBackBufferHeight;
             int screenWidth = _graphics.PreferredBackBufferWidth;
 
-            int frameWidth;
-            int frameHeight;
-            if (screenHeight > screenWidth)
-            {
-                frameWidth = screenWidth;
-                frameHeight = (int) (frameWidth / aspectRatio);
-            }
-            else
-            {
-                frameHeight = screenHeight;
-                frameWidth = (int) (frameHeight / aspectRatio);
-            }
+			if (FitVideo)
+			{
+				float aspectRatio = (float)GameBoyGpu.FrameWidth / (float)GameBoyGpu.FrameHeight;
+				int frameWidth;
+				int frameHeight;
+				if (screenHeight > screenWidth)
+				{
+					frameWidth = screenWidth;
+					frameHeight = (int)(frameWidth / aspectRatio);
+				}
+				else
+				{
+					frameHeight = screenHeight;
+					frameWidth = (int)(frameHeight / aspectRatio);
+				}
 
-            _spriteBatch.Draw(_video,
-                new Rectangle((screenWidth - frameWidth) / 2, (screenHeight - frameHeight) / 2, frameWidth, frameHeight),
-                Color.White);
+
+				_spriteBatch.Draw(
+					_video,
+					new Rectangle((screenWidth - frameWidth) / 2, (screenHeight - frameHeight) / 2, frameWidth, frameHeight),
+					Color.White
+				);
+			}
+			else
+			{
+				_spriteBatch.Draw(
+					_video,
+					new Rectangle((screenWidth - screenWidth) / 2, (screenHeight - screenHeight) / 2, screenWidth, screenHeight),
+					Color.White
+				);
+			}
         }
 
-#if DEBUG
         private void DrawDebugInformation(GameTime time)
         {
             _fps.Add(1 / time.ElapsedGameTime.TotalSeconds);
@@ -173,10 +191,8 @@ namespace Emux.MonoGame
                           $"LY: {GameBoy.Gpu.LY}\n" +
                           $"LYC: {GameBoy.Gpu.LYC}\n";
                         
-            _spriteBatch.DrawString(_font, info, new Vector2(1, 1), Color.Black);
-            _spriteBatch.DrawString(_font, info, new Vector2(0, 0), Color.Cyan);
+            _spriteBatch.DrawString(_font, info, Vector2.Zero, Color.Cyan);
         }
-#endif
         
         public void Start()
         {
