@@ -33,14 +33,14 @@ namespace Emux.GameBoy.Cpu
             ushort offset = _position;
             byte code = _memory.ReadByte(_position++);
 
-            var opcode = code != 0xCB
+            var opcode = code != Z80OpCodes.ExtendedTableOpcode
                 ? Z80OpCodes.SingleByteOpCodes[code]
                 : Z80OpCodes.PrefixedOpCodes[_memory.ReadByte(_position++)];
 
-            byte[] operand = _memory.ReadBytes(_position, opcode.OperandLength);
-            _position += (ushort) operand.Length;
+            var operands = _memory.ReadBytes(_position, opcode.OperandLength);
+            _position += (ushort)operands.Length;
 
-            var instruction = new Z80Instruction(offset, opcode, operand);
+            var instruction = new Z80Instruction(offset, opcode, operands);
             return instruction;
         }
     }

@@ -14,7 +14,10 @@ namespace Emux.GameBoy.Memory
         private readonly byte[] _internalSwitchableRam;
         private int _internalRamBankIndex = 1;
         private readonly byte[] _highInternalRam = new byte[0x7F];
-        
+        // Most instructions are 1 or 2 oprands, reuse these buffers if so
+        byte[] _singleOprandBuffer = new byte[1];
+        byte[] _doubleOprandBuffer = new byte[2];
+
         // TODO: to be removed:
         private readonly byte[] _io = new byte[4];
 
@@ -147,9 +150,17 @@ namespace Emux.GameBoy.Memory
 
         public byte[] ReadBytes(ushort address, int length)
         {
-            var result = new byte[length];
-            for (int i = 0; i < length; i++)
-                result[i] = ReadByte((ushort) (address + i));
+            byte[] result;
+            if (length == 1)
+                result = _singleOprandBuffer;
+            else if (length == 2)
+                result = _doubleOprandBuffer;
+            else
+                result = new byte[length];
+
+            for (var i = 0; i < length; i++)
+                result[i] = ReadByte((ushort)(address + i));
+
             return result;
         }
 
