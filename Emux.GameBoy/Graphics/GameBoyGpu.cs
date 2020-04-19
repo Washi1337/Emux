@@ -641,12 +641,16 @@ namespace Emux.GameBoy.Graphics
                                 : 0x0000;
                             byte[] currentTileData = new byte[2];
                             Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (data.TileDataIndex << 4) + rowIndex * 2), currentTileData, 0, 2);
-                            
-                            // Render sprite.
-                            for (int x = 0; x < 8; x++)
-                            {
-                                int absoluteX = data.X - 8;
 
+                            var absoluteX = data.X - 8;
+                            var spriteStartPixel = Math.Max(0, absoluteX);
+                            var spriteStartIndex = spriteStartPixel - absoluteX;
+                            var spriteEndPixel = Math.Max(0, FrameWidth - spriteStartPixel + 8);
+                            var spriteEndIndex = Math.Min(8, spriteEndPixel);
+                            // Render sprite.
+                            for (int x = spriteStartIndex; x < spriteEndIndex; x++)
+                            {
+                                absoluteX = data.X - 8;
                                 // Flip sprite horizontally if specified.
                                 absoluteX += (data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? x : 7 - x;
 
