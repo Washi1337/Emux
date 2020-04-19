@@ -58,6 +58,9 @@ namespace Emux.GameBoy.Cartridge
 
 		public void ReadBytes(int address, byte[] buffer, int offset, int length)
 		{
+			if (memoryStream == null)
+				return;
+
 			memoryStream.Position = address;
 			memoryStream.Read(buffer, offset, length);
 		}
