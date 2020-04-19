@@ -130,10 +130,9 @@ namespace Emux.GameBoy.Cpu
             // Check for interrupts.
             bool interrupted = false;
             
-            if (Registers.IE != InterruptFlags.None
-                && Registers.IF != (InterruptFlags) 0xE0)
+            var firedAndEnabled = (byte)(Registers.IE & Registers.IF);
+            if (firedAndEnabled != 0)
             {
-                byte firedAndEnabled = (byte) (Registers.IE & Registers.IF);
 				var vector = InterruptVector.VBlank;
                 for (int i = 0; i < 5 && !interrupted; i++)
                 {

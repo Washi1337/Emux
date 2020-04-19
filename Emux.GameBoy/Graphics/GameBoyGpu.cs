@@ -471,7 +471,7 @@ namespace Emux.GameBoy.Graphics
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 OnVBlankStarted();
-								VideoOutput.RenderFrame(_frameBuffer);
+                                VideoOutput.RenderFrame(_frameBuffer);
 								_device.Cpu.Registers.IF |= InterruptFlags.VBlank;
                                 if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
@@ -501,7 +501,7 @@ namespace Emux.GameBoy.Graphics
 
                 stat &= (LcdStatusFlags) ~0b111;
                 stat |= currentMode;
-                if (LY == LYC)
+                if (_ly == _lyc)
                     stat |= LcdStatusFlags.Coincidence;
                 Stat = stat;
             }
