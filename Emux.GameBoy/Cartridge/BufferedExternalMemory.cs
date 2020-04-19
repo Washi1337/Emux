@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace Emux.GameBoy.Cartridge {
-	public class BufferedExternalMemory : IExternalMemory {
+namespace Emux.GameBoy.Cartridge 
+{
+	public class BufferedExternalMemory : IExternalMemory 
+	{
 		private Stream memoryStream, fileStream;
 
 		public BufferedExternalMemory(string filePath) : this(File.Open(filePath, FileMode.OpenOrCreate))
 		{ }
 
-		public BufferedExternalMemory(Stream filestream)
+		public BufferedExternalMemory(Stream fileStream)
 		{
-			fileStream = filestream;
+			this.fileStream = fileStream;
 
 			memoryStream = new MemoryStream();
 
-			fileStream.CopyTo(memoryStream);
+			this.fileStream.CopyTo(memoryStream);
 		}
 
 		public bool IsActive
@@ -74,6 +76,9 @@ namespace Emux.GameBoy.Cartridge {
 
 		public void Dispose()
 		{
+			if (memoryStream == null || fileStream == null) // Already disposed
+				return;
+
 			var ms = memoryStream;
 			var fs = fileStream;
 
@@ -82,13 +87,13 @@ namespace Emux.GameBoy.Cartridge {
 
 			ms.Position = 0;
 			fs.Position = 0;
-			ms?.Flush();
-			ms?.CopyTo(fs);
-			ms?.Close();
-			ms?.Dispose();
-			fs?.Flush();
-			fs?.Close();
-			fs?.Dispose();
+			ms.Flush();
+			ms.CopyTo(fs);
+			ms.Close();
+			ms.Dispose();
+			fs.Flush();
+			fs.Close();
+			fs.Dispose();
 		}
 	}
 }
