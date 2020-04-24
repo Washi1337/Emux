@@ -207,6 +207,10 @@ namespace Emux.GameBoy.Audio
 
         public void SpuStep(int cycles)
         {
+            var speedFactor = Device.SpeedFactor;
+            if (double.IsNaN(speedFactor) || double.IsInfinity(speedFactor) || speedFactor < 0.5 || speedFactor > 1.5)
+                return;
+
             if ((NR52 & (1 << 7)) != 0)
             {
                 foreach (var channel in Channels)
