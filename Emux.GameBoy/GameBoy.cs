@@ -183,9 +183,9 @@ namespace Emux.GameBoy
 			var delta = time - _frameStartTime;
 			if (delta.TotalSeconds > 1)
 			{
-				FramesPerSecond = framesCount / FrameDelta.TotalSeconds;
+				FramesPerSecond = framesCount / delta.TotalSeconds;
 				framesCount = 0;
-				Cpu.SecondElapsed(FrameDelta);
+				Cpu.SecondElapsed(delta);
 
 				_frameStartTime = time;
 			}
