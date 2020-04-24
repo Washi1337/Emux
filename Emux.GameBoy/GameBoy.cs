@@ -47,7 +47,7 @@ namespace Emux.GameBoy
 		private int framesCount;
 
 		public double FramesPerSecond;
-		public bool EnableFrameLimit;
+		public bool EnableFrameLimit = true;
 		public TimeSpan FrameDelta;
 		private DateTime lastFrame;
 
