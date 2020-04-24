@@ -65,6 +65,7 @@ namespace Emux.NAudio
             AddSamples(_newSampleData, 0, length * sizeof(float));
         }
 
+        // Taken and modified from System.BitConverter
         [System.Security.SecuritySafeCritical]
         public unsafe static void GetBytes(float value, byte[] bytes) => GetBytes(*(int*)&value, bytes);
         [System.Security.SecuritySafeCritical]
