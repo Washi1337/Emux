@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Audio
@@ -144,31 +145,34 @@ namespace Emux.GameBoy.Audio
             // Allocate buffer.
             int sampleRate = ChannelOutput.SampleRate;
             int sampleCount = (int) (timeDelta * sampleRate) * 2;
-            float[] buffer = new float[sampleCount];
-            
-            if (!UseSoundLength || _length >= 0)
+            using (var malloc = MemoryPool<float>.Shared.Rent(sampleCount))
             {
-                double period = 1 / Frequency;
-                int periodSampleCount = (int) (period * sampleRate) * 2;
-                
-                for (int i = 0; i < buffer.Length; i += 2)
-                {
-                    float sample = amplitude * (_lfsr.CurrentValue ? 1f : 0f);
-                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-                    
-                    _clock += 2;
-                    if (_clock >= periodSampleCount)
-                    {
-                        _lfsr.PerformShift();
-                        _clock -= periodSampleCount;
-                    }
-                }         
-             
-                if (UseSoundLength)
-                    _length -= timeDelta;
-            }
+                var buffer = malloc.Memory.Span;
 
-            ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
+                if (!UseSoundLength || _length >= 0)
+                {
+                    double period = 1 / Frequency;
+                    int periodSampleCount = (int)(period * sampleRate) * 2;
+
+                    for (int i = 0; i < sampleCount; i += 2)
+                    {
+                        float sample = amplitude * (_lfsr.CurrentValue ? 1f : 0f);
+                        Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+
+                        _clock += 2;
+                        if (_clock >= periodSampleCount)
+                        {
+                            _lfsr.PerformShift();
+                            _clock -= periodSampleCount;
+                        }
+                    }
+
+                    if (UseSoundLength)
+                        _length -= timeDelta;
+                }
+
+                ChannelOutput.BufferSoundSamples(buffer, 0, sampleCount);
+            }
         }
     }
 }

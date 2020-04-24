@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Audio
@@ -140,36 +141,38 @@ namespace Emux.GameBoy.Audio
             int sampleRate = ChannelOutput.SampleRate;
             double timeDelta = (cycles / GameBoyCpu.OfficialClockFrequency) / cpuSpeedFactor;
             int sampleCount = (int) (timeDelta * sampleRate) * 2;
-            float[] buffer = new float[sampleCount];
-
-            double interval = 1.0 / Frequency;
-            int intervalSampleCount = (int) (interval * sampleRate);
-
-            if (intervalSampleCount > 0)
+            using (var malloc = MemoryPool<float>.Shared.Rent(sampleCount))
             {
-                for (int i = 0; i < buffer.Length; i += 2)
+                var buffer = malloc.Memory.Span;
+
+                double interval = 1.0 / Frequency;
+                int intervalSampleCount = (int)(interval * sampleRate);
+
+                if (intervalSampleCount > 0)
                 {
-                    _coordinate++;
-                    if (_coordinate >= intervalSampleCount)
+                    for (int i = 0; i < sampleCount; i += 2)
                     {
-                        _top = !_top;
-                        _coordinate = 0;
+                        _coordinate++;
+                        if (_coordinate >= intervalSampleCount)
+                        {
+                            _top = !_top;
+                            _coordinate = 0;
+                        }
+
+                        int waveRamCoordinate = (int)(_coordinate / (double)intervalSampleCount * _waveRam.Length);
+
+                        int waveDataSample = _top
+                            ? (_waveRam[waveRamCoordinate] & 0xF)
+                            : ((_waveRam[waveRamCoordinate] >> 4) & 0xF);
+
+                        float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
+
+                        Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
                     }
-
-                    int waveRamCoordinate = (int) (_coordinate / (double) intervalSampleCount * _waveRam.Length);
-
-                    int waveDataSample = _top
-                        ? (_waveRam[waveRamCoordinate] & 0xF)
-                        : ((_waveRam[waveRamCoordinate] >> 4) & 0xF);
-
-                    float sample = ChannelVolume * OutputLevel * (waveDataSample - 7) / 15f;
-
-                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
                 }
+
+                ChannelOutput.BufferSoundSamples(buffer, 0, sampleCount);
             }
-
-            ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
-
         }
     }
 }

@@ -232,7 +232,7 @@ namespace Emux.GameBoy.Audio
             }
         }
 
-        internal void WriteToSoundBuffer(int channel, float[] totalBuffer, int index, float sample)
+        internal void WriteToSoundBuffer(int channel, Span<float> totalBuffer, int index, float sample)
         {
             sample *= SO1Volume / 7f;
             if (((int)NR51 & (1 << (channel - 1))) != 0)

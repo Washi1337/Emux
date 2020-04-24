@@ -1,4 +1,6 @@
-﻿namespace Emux.GameBoy.Audio
+﻿using System;
+
+namespace Emux.GameBoy.Audio
 {
     public interface IAudioChannelOutput
     {
@@ -7,6 +9,6 @@
             get;
         }
 
-        void BufferSoundSamples(float[] sampleData, int offset, int length);
+        void BufferSoundSamples(Span<float> sampleData, int offset, int length);
     }
 }
