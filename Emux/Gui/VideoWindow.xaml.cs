@@ -53,7 +53,7 @@ namespace Emux.Gui
             {
                 lock (this)
                 {
-                    Dispatcher.Invoke(() => Title = string.Format("Video Output ({0:0.00} %)",
+                    Dispatcher.Invoke(() => Title = string.Format("Video Output ({0:0.00}x)",
                         _device.SpeedFactor));
                 }
             }
