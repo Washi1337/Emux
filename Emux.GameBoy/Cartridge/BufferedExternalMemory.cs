@@ -7,18 +7,20 @@ namespace Emux.GameBoy.Cartridge
 {
 	public class BufferedExternalMemory : IExternalMemory 
 	{
-		private Stream memoryStream, fileStream;
+		private byte[] _externalMemory;
+		private FileStream _fileStream;
 
 		public BufferedExternalMemory(string filePath) : this(File.Open(filePath, FileMode.OpenOrCreate))
 		{ }
 
-		public BufferedExternalMemory(Stream fileStream)
+		public BufferedExternalMemory(FileStream fileStream)
 		{
-			this.fileStream = fileStream;
+			_fileStream = fileStream;
 
-			memoryStream = new MemoryStream();
+			SetBufferSize((int)_fileStream.Length);
+			_externalMemory = new byte[_fileStream.Length];
 
-			this.fileStream.CopyTo(memoryStream);
+			_fileStream.Read(_externalMemory, 0, _externalMemory.Length);
 		}
 
 		public bool IsActive
@@ -34,66 +36,52 @@ namespace Emux.GameBoy.Cartridge
 
 		public void Deactivate()
 		{
-			memoryStream?.Flush();
 			IsActive = false;
 		}
 
 		public void SetBufferSize(int length)
 		{
-			memoryStream?.SetLength(length);
+			if (_externalMemory != null)
+			{
+				var backup = _externalMemory;
+				_externalMemory = new byte[length];
+				Array.Copy(backup, _externalMemory, length);
+			} 
+			else
+			{
+				_externalMemory = new byte[length];
+			}
 		}
 
 		public byte ReadByte(int address)
 		{
-			if (memoryStream == null)
-				return 0;
-
-			if (IsActive)
-			{
-				memoryStream.Position = address;
-				return (byte)memoryStream.ReadByte();
-			}
-			return 0;
+			return IsActive ? _externalMemory[address] : (byte)0;
 		}
 
 		public void ReadBytes(int address, byte[] buffer, int offset, int length)
 		{
-			if (memoryStream == null)
-				return;
-
-			memoryStream.Position = address;
-			memoryStream.Read(buffer, offset, length);
+			Array.Copy(_externalMemory, address, buffer, 0, length);
 		}
 
 		public void WriteByte(int address, byte value)
 		{
-			if (memoryStream == null)
-				return;
-
 			if (IsActive)
-			{
-				memoryStream.Position = address;
-				memoryStream.WriteByte(value);
-			}
+				_externalMemory[address] = value;
 		}
 
 		public void Dispose()
 		{
-			if (memoryStream == null || fileStream == null) // Already disposed
+			if (_externalMemory == null || _fileStream == null) // Already disposed
 				return;
 
-			var ms = memoryStream;
-			var fs = fileStream;
+			var em = _externalMemory;
+			var fs = _fileStream;
 
-			memoryStream = null;
-			fileStream = null;
+			_externalMemory = null;
+			_fileStream = null;
 
-			ms.Position = 0;
 			fs.Position = 0;
-			ms.Flush();
-			ms.CopyTo(fs);
-			ms.Close();
-			ms.Dispose();
+			fs.Write(em, 0, em.Length);
 			fs.Flush();
 			fs.Close();
 			fs.Dispose();
