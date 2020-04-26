@@ -45,7 +45,7 @@ namespace Emux.GameBoy.Cartridge
 			{
 				var backup = _externalMemory;
 				_externalMemory = new byte[length];
-				Array.Copy(backup, _externalMemory, length);
+				Array.Copy(backup, _externalMemory, Math.Min(backup.Length, length));
 			} 
 			else
 			{
