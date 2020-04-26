@@ -55,17 +55,21 @@ namespace Emux.GameBoy.Cartridge
 
 		public byte ReadByte(int address)
 		{
-			return IsActive ? _externalMemory[address] : (byte)0;
+			if (_externalMemory != null && IsActive)
+				return _externalMemory[address];
+
+			return 0;
 		}
 
 		public void ReadBytes(int address, byte[] buffer, int offset, int length)
 		{
-			Array.Copy(_externalMemory, address, buffer, 0, length);
+			if (_externalMemory != null)
+				Array.Copy(_externalMemory, address, buffer, 0, length);
 		}
 
 		public void WriteByte(int address, byte value)
 		{
-			if (IsActive)
+			if (_externalMemory != null && IsActive)
 				_externalMemory[address] = value;
 		}
 
