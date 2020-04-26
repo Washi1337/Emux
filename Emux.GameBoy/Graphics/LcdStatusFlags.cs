@@ -11,17 +11,17 @@ namespace Emux.GameBoy.Graphics
         /// <summary>
         /// Specifies the GPU is finishing up a horizontal blank and moving to the next scan line.
         /// </summary>
-        HBlankMode = 0b00,
+        HBlankMode = 0,
         
         /// <summary>
         /// Specifies the GPU is in VBlank mode.
         /// </summary>
-        VBlankMode = 0b01,
+        VBlankMode = 1,
 
         /// <summary>
         /// Specifies the GPU is scanning the Object Attribute Memory (OAM).
         /// </summary>
-        ScanLineOamMode = 0b10,
+        ScanLineOamMode = (1 << 1),
         
         /// <summary>
         /// Specifies the GPU is scanning the Video Memory.

@@ -408,9 +408,9 @@ namespace Emux.GameBoy.Graphics
             LY = 0;
             ScY = 0;
             ScX = 0;
-            Stat = (LcdStatusFlags)0x85;
+            Stat = LcdStatusFlags.Coincidence | LcdStatusFlags.VBlankMode | (LcdStatusFlags)0b10000000;
 
-            Lcdc = (LcdControlFlags) 0x91;
+            Lcdc = LcdControlFlags.EnableBackground | LcdControlFlags.BgWindowTileDataSelect | LcdControlFlags.EnableLcd;
             ScY = 0;
             ScX = 0;
             _lyc = 0;
@@ -420,8 +420,8 @@ namespace Emux.GameBoy.Graphics
             WY = 0;
             WX = 0;
             
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
-            Utilities.Memset(_vram, 0, _vram.Length);
+            _bgPaletteMemory.AsSpan().Fill(0xff);
+            _vram.AsSpan().Clear();
         }
 
         public void Shutdown()
@@ -440,7 +440,7 @@ namespace Emux.GameBoy.Graphics
 
             unchecked
             {
-                LcdStatusFlags stat = Stat;
+                var stat = Stat;
                 var currentMode = stat & LcdStatusFlags.ModeMask;
                 _modeClock += cycles;
 
@@ -501,7 +501,7 @@ namespace Emux.GameBoy.Graphics
                         break;
                 }
 
-                stat &= (LcdStatusFlags) ~0b111;
+                stat &= ~(LcdStatusFlags.ModeMask | LcdStatusFlags.Coincidence);
                 stat |= currentMode;
                 if (_ly == _lyc)
                     stat |= LcdStatusFlags.Coincidence;
