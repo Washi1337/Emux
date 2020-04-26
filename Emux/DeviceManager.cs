@@ -7,6 +7,7 @@ using Emux.GameBoy.Graphics;
 using Emux.NAudio;
 using Emux.Gui;
 using NAudio.Wave;
+using Emux.Common;
 
 namespace Emux
 {
@@ -82,7 +83,7 @@ namespace Emux
             UnloadDevice();
 
             _currentExternalMemory = new BufferedExternalMemory(ramFilePath);
-            var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFilePath), _currentExternalMemory);
+            var cartridge = new EmulatedCartridge(Path.GetFileName(romFilePath), File.ReadAllBytes(romFilePath), _currentExternalMemory);
             _currentExternalMemory.SetBufferSize(cartridge.ExternalRamSize);
             CurrentDevice = new GameBoy.GameBoy(cartridge, new WinMmTimer(60), !Properties.Settings.Default.ForceOriginalGameBoy);
             ApplyColorPalettes();

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Timers;
 using System.Windows;
@@ -22,7 +24,7 @@ namespace Emux.Gui
         private readonly DispatcherTimer _frameRateTimer;
 
         private GameBoy.GameBoy _device;
-        
+
         public VideoWindow()
         {
             InitializeComponent();
@@ -106,6 +108,11 @@ namespace Emux.Gui
                 e.Cancel = Device != null;
                 Hide();
             }
+        }
+
+        public void Blit()
+        {
+           
         }
     }
 }

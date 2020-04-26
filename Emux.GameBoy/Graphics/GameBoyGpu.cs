@@ -87,8 +87,7 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((value & LcdControlFlags.EnableLcd) == 0)
                 {
-                    Utilities.Memset(_frameBuffer, 255, _frameBuffer.Length);
-                    Array.Clear(_frameIndices, 0, _frameIndices.Length);
+                    clearBuffer();
                     VideoOutput.RenderFrame(_frameBuffer);
                     LY = 0;
                     SwitchMode(LcdStatusFlags.HBlankMode);
@@ -420,6 +419,11 @@ namespace Emux.GameBoy.Graphics
             WY = 0;
             WX = 0;
             
+            
+        }
+
+        private void clearBuffer()
+        {
             _bgPaletteMemory.AsSpan().Fill(0xff);
             _vram.AsSpan().Clear();
         }
@@ -473,7 +477,6 @@ namespace Emux.GameBoy.Graphics
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 OnVBlankStarted();
-                                VideoOutput.RenderFrame(_frameBuffer);
 								_device.Cpu.Registers.IF |= InterruptFlags.VBlank;
                                 if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
@@ -492,6 +495,8 @@ namespace Emux.GameBoy.Graphics
 
                             if (LY > FrameHeight + 9)
                             {
+                                VideoOutput.RenderFrame(_frameBuffer);
+
                                 currentMode = LcdStatusFlags.ScanLineOamMode;
                                 LY = 0;
                                 if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)

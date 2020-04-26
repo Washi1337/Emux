@@ -107,7 +107,6 @@
     <Compile Include="Gui\VideoWindow.xaml.cs">
       <DependentUpon>VideoWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WinMmTimer.cs" />
     <Compile Include="SettingsBinding.cs" />
     <Page Include="Gui\AboutDialog.xaml">
       <SubType>Designer</SubType>
@@ -197,6 +196,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{1bdd1418-b4bb-4a72-ad21-de77dc95b00e}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Emux.GameBoy\Emux.GameBoy.csproj">
       <Project>{BC59C22A-6BA1-45E8-9E39-B995B748B8DE}</Project>
       <Name>Emux.GameBoy</Name>

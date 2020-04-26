@@ -1,4 +1,6 @@
-﻿namespace Emux.GameBoy.Graphics
+﻿using System;
+
+namespace Emux.GameBoy.Graphics
 {
     /// <summary>
     /// Represents a video output device.
@@ -10,6 +12,7 @@
         /// </summary>
         /// <param name="pixelData">The 24bit RGB pixel data that represents the 160x144 bitmap to render.</param>
         void RenderFrame(byte[] pixelData);
+        void Blit();
     }
 
     /// <summary>
@@ -17,8 +20,14 @@
     /// </summary>
     public sealed class EmptyVideoOutput : IVideoOutput
     {
+        public void Blit()
+        {
+            
+        }
+
         public void RenderFrame(byte[] pixelData)
         {
+
         }
     }
 }

@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using Emux.GameBoy.Cpu;
+using Emux.GameBoy.Graphics;
 using Microsoft.Win32;
 
 namespace Emux.Gui

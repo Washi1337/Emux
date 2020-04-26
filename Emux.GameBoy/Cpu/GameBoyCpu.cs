@@ -29,6 +29,8 @@ namespace Emux.GameBoy.Cpu
         public bool Halted = false;
         private readonly Z80Instruction _readInstruction = new Z80Instruction(0, Z80OpCodes.SingleByteOpCodes[0], new byte[0]);
 
+        public Z80Instruction LastInstruction { get; private set; }
+
         public GameBoyCpu(GameBoy device, IClock clock)
         {
             _device = device ?? throw new ArgumentNullException(nameof(device));
@@ -111,7 +113,7 @@ namespace Emux.GameBoy.Cpu
         }
 
 
-        public int PerformNextInstruction()
+        internal int PerformNextInstruction()
         {
             Registers.IMESet = false;
 
@@ -125,6 +127,7 @@ namespace Emux.GameBoy.Cpu
                 // Execute the next instruction.
                 var nextInstruction = ReadNextInstruction();
                 cycles = nextInstruction.Execute(_device);
+                LastInstruction = nextInstruction;
             }
 
             // Check for interrupts.
