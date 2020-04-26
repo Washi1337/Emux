@@ -3,7 +3,7 @@ using System.IO;
 
 namespace Emux.GameBoy.Cartridge
 {
-    public class StreamedExternalMemory : IExternalMemory, IDisposable
+    public class StreamedExternalMemory : IExternalMemory
     {
         public StreamedExternalMemory(Stream baseStream)
         {
@@ -68,6 +68,8 @@ namespace Emux.GameBoy.Cartridge
 
         public void Dispose()
         {
+			BaseStream.Flush();
+			BaseStream.Close();
             BaseStream.Dispose();
         }
     }
