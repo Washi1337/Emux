@@ -125,7 +125,11 @@ namespace Emux.GameBoy.Cpu
             else
             {
                 // Execute the next instruction.
-                var nextInstruction = ReadNextInstruction();
+                Z80Instruction nextInstruction = null;
+                do
+                {
+                    nextInstruction = ReadNextInstruction();
+                } while (nextInstruction == null || nextInstruction.OpCode.ClockCycles == 0);
                 cycles = nextInstruction.Execute(_device);
                 LastInstruction = nextInstruction;
             }
