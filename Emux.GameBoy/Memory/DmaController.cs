@@ -6,33 +6,30 @@ namespace Emux.GameBoy.Memory
 {
     public class DmaController : IGameBoyComponent
     {
-        private const byte EnableMask = 0b10000000; // 0x80
+        private const byte TransferingMask = 0b10000000; // 0x80
+        private const byte VBlankMask = TransferingMask; // 0x80
         private const byte LengthMask = 0b01111111; // 0x7F
 
         private readonly GameBoy _device;
-        private bool _isTransferring;
         private int _currentBlockIndex;
         private byte _sourceHigh;
         private byte _sourceLow;
         private byte _destinationHigh;
         private byte _destinationLow;
         private byte _dmaLengthMode;
+        private bool _HBlankDMAactive;
         private readonly byte[] HDmaBlockCopy = new byte[OAMDMABlockSize];
         private readonly byte[] _OamBlockCopy = new byte[OAMSize];
         private readonly byte[] _vramBlockCopy = new byte[((LengthMask & LengthMask) + 1) * 0x10]; // Largest possible size
 
         public DmaController(GameBoy device)
         {
-            if (device == null)
-                throw new ArgumentNullException(nameof(device));
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
         }
 
         public ushort SourceAddress => (ushort)((_sourceHigh << 8) | _sourceLow & 0xF0);
 
         public ushort DestinationAddress => (ushort)(0x8000 | (((_destinationHigh << 8) | (_destinationLow & 0xF0)) & 0b0001111111110000));
-
-        public bool DMAEnabled => (_dmaLengthMode & EnableMask) > 0;
 
         public int Length => ((_dmaLengthMode & LengthMask) + 1) * 0x10;
 
@@ -43,7 +40,7 @@ namespace Emux.GameBoy.Memory
 
         public void Reset()
         {
-            _isTransferring = false;
+            _HBlankDMAactive = false;
             _currentBlockIndex = 0;
             _sourceHigh = 0;
             _sourceLow = 0;
@@ -83,6 +80,9 @@ namespace Emux.GameBoy.Memory
             switch (address)
             {
                 case 0xFF46:
+                    // Writing to this register launches a DMA transfer from ROM or RAM to OAM memory (sprite attribute table).
+                    // The written value specifies the transfer source address divided by 0x100
+                    // The transfer takes 160 machine cycles
                     PerformOamDmaTransfer(value);
                     break;
                 case 0xFF51:
@@ -98,14 +98,15 @@ namespace Emux.GameBoy.Memory
                     _destinationLow = value;
                     break;
                 case 0xFF55:
-                    if (_isTransferring && (value & EnableMask) == 0)
+                    var isHblank = (value >> 7) == 1;
+                    if (_HBlankDMAactive && (value & TransferingMask) == 0)
                     {
                         StopVramDmaTransfer();
                     }
                     else
                     {
                         _dmaLengthMode = value;
-                        StartVramDmaTransfer();
+                        StartVramDmaTransfer(isHblank);
                     }
                     break;
                 default:
@@ -115,23 +116,26 @@ namespace Emux.GameBoy.Memory
 
         private void StopVramDmaTransfer()
         {
-            _dmaLengthMode |= EnableMask;
+            // Once 0xFF is written to, bit 7 set indicates that it is not active
+            _dmaLengthMode |= TransferingMask;
             _currentBlockIndex = 0;
-            _isTransferring = false;
+            _HBlankDMAactive = false;
         }
 
-        private void StartVramDmaTransfer()
+        private void StartVramDmaTransfer(bool isHBlank)
         {
-            if (!DMAEnabled)
+            // Once 0xFF is written to, bit 7 set indicates that it is not active
+            _dmaLengthMode &= LengthMask;
+
+            if (!isHBlank)
             {
                 _device.Memory.ReadBlock(SourceAddress, _vramBlockCopy, 0, Length);
                 _device.Gpu.WriteVRam((ushort)(DestinationAddress - VRAMStartAddress), _vramBlockCopy, 0, Length);
             }
             else
             {
+                _HBlankDMAactive = true;
                 _currentBlockIndex = 0;
-                _isTransferring = true;
-                _dmaLengthMode &= LengthMask;
             }
         }
 
@@ -143,7 +147,7 @@ namespace Emux.GameBoy.Memory
 
         private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)
         {
-            if (_isTransferring && _device.Gpu.LY < GameBoyGpu.FrameHeight)
+            if (_HBlankDMAactive && _device.Gpu.LY < GameBoyGpu.FrameHeight)
                 HDmaStep();
         }
 
@@ -156,12 +160,12 @@ namespace Emux.GameBoy.Memory
 
             _currentBlockIndex++;
             var next = (_dmaLengthMode & LengthMask) - 1;
-            _dmaLengthMode = (byte) ((_dmaLengthMode & EnableMask) | next);
+            _dmaLengthMode = (byte) ((_dmaLengthMode & TransferingMask) | next);
 
             if (next <= 0)
             {
                 _dmaLengthMode = 0xFF;
-                _isTransferring = false;
+                _HBlankDMAactive = false;
             }
         }
     }
