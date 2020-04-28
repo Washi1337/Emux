@@ -9,15 +9,16 @@ namespace Emux.GameBoy.Graphics
     /// </summary>
     public unsafe class GameBoyGpu : IGameBoyComponent
     {
-        public const int FrameWidth = 160;
-        public const int FrameHeight = 144;
-        
-        public const int ScanLineOamCycles = 80;
-        public const int ScanLineVramCycles = 172;
-        public const int HBlankCycles = 204;
-        public const int OneLineCycles = ScanLineOamCycles + ScanLineVramCycles + HBlankCycles;
-        public const int VBlankCycles = OneLineCycles * 10;
-        public const int FullFrameCycles = 70224;
+        public const int FrameWidth = 160,
+            FrameHeight = 144,
+            ScanLineOamSearchCycles = 80,
+            ScanLineMode3MinCycles = 168,
+            ScanLineMode3MaxCycles = 291,
+            ScanLineMode0MinCycles = 85,
+            ScanLineMode0MaxCycles = 208,
+            OneLineCycles = ScanLineOamSearchCycles + ScanLineMode3MinCycles + ScanLineMode0MaxCycles,
+            VBlankCycles = OneLineCycles * 10,
+            FullFrameCycles = 70224;
 
         public event EventHandler HBlankStarted;
         public event EventHandler VBlankStarted;
@@ -451,16 +452,15 @@ namespace Emux.GameBoy.Graphics
                 switch (currentMode)
                 {
                     case LcdStatusFlags.ScanLineOamMode:
-                        if (_modeClock >= ScanLineOamCycles)
+                        if (_modeClock >= ScanLineOamSearchCycles)
                         {
-                            _modeClock -= ScanLineOamCycles;
+                            _modeClock -= ScanLineOamSearchCycles;
                             currentMode = LcdStatusFlags.ScanLineVRamMode;
                         }
                         break;
                     case LcdStatusFlags.ScanLineVRamMode:
-                        if (_modeClock >= ScanLineVramCycles)
+                        if (_modeClock >= ScanLineMode3MinCycles)
                         {
-                            _modeClock -= ScanLineVramCycles;
                             currentMode = LcdStatusFlags.HBlankMode;
                             if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
                                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
@@ -469,9 +469,10 @@ namespace Emux.GameBoy.Graphics
                         }
                         break;
                     case LcdStatusFlags.HBlankMode:
-                        if (_modeClock >= HBlankCycles)
+                        var Mode3And0Cycles = ScanLineMode3MinCycles + ScanLineMode0MaxCycles;
+                        if (_modeClock >= Mode3And0Cycles) // Assume a perfect frame for now
                         {
-                            _modeClock -= HBlankCycles;
+                            _modeClock -= Mode3And0Cycles;
                             LY++;
                             if (LY == FrameHeight )
                             {
