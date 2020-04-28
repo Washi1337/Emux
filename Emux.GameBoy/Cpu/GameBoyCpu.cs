@@ -161,9 +161,6 @@ namespace Emux.GameBoy.Cpu
                 }
             }
 
-            // Update cycle dependent components.
-            OnPerformedStep(cycles / SpeedMultiplier);
-
             _ticks = (_ticks + (ulong) cycles) & long.MaxValue;
 
 			return cycles;
@@ -173,12 +170,6 @@ namespace Emux.GameBoy.Cpu
 		{
 			CyclesPerSecond = (_ticks - _frameStartTickCount) / delta.TotalSeconds;
 			_ticks = 0;
-		}
-
-        protected virtual void OnPerformedStep(int cycles)
-        {
-			_device.Gpu.Step(cycles);
-			_device.Timer.Step(cycles);
 		}
 
         private Z80Instruction ReadNextInstruction()

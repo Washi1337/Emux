@@ -76,6 +76,7 @@ namespace Emux.GameBoy
 
             Reset();
             IsPoweredOn = true;
+			Run();
 
 			Clock.Tick += nextFrame;
 			new Thread(CpuLoop)
@@ -232,7 +233,11 @@ namespace Emux.GameBoy
 					int cycles = 0;
 					do
 					{
-						cycles += Cpu.PerformNextInstruction();
+						var elapsedCycles = Cpu.PerformNextInstruction();
+
+						onPerformedStep(elapsedCycles / Cpu.SpeedMultiplier);
+
+						cycles += elapsedCycles;
 						if (cycles >= GameBoyGpu.FullFrameCycles * Cpu.SpeedMultiplier)
 						{
 							Spu.SpuStep(cycles / Cpu.SpeedMultiplier);
@@ -255,6 +260,15 @@ namespace Emux.GameBoy
 				}
 			}
 			OnTerminated();
+		}
+
+		private void onPerformedStep(int cycles)
+		{
+			do
+			{
+				Gpu.Step(1);
+				Timer.Step(1);
+			} while (--cycles > 0);
 		}
 
 		protected virtual void OnResumed()
