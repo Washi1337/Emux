@@ -52,7 +52,7 @@ namespace Emux.GameBoy.Graphics
                 throw new ArgumentNullException(nameof(device));
             _device = device;
             VideoOutput = new EmptyVideoOutput();
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            _bgPaletteMemory.AsSpan().Fill(0xFF);
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
         }
 
@@ -87,8 +87,8 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((value & LcdControlFlags.EnableLcd) == 0)
                 {
-                    Utilities.Memset(_frameBuffer, 255, _frameBuffer.Length);
-                    Array.Clear(_frameIndices, 0, _frameIndices.Length);
+                    _frameBuffer.AsSpan().Fill(0xFF);
+                    _frameIndices.AsSpan().Clear();
                     VideoOutput.RenderFrame(_frameBuffer);
                     LY = 0;
                     SwitchMode(LcdStatusFlags.HBlankMode);
@@ -419,9 +419,9 @@ namespace Emux.GameBoy.Graphics
             ObjP1 = 0xFF;
             WY = 0;
             WX = 0;
-            
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
-            Utilities.Memset(_vram, 0, _vram.Length);
+
+            _frameBuffer.AsSpan().Fill(0xFF);
+            _frameIndices.AsSpan().Clear();
         }
 
         public void Shutdown()
