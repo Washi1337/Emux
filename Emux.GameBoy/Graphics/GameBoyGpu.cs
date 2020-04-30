@@ -105,6 +105,9 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
+        public LcdStatusFlags LCDMode => Stat & LcdStatusFlags.ModeMask;
+
+
         public LcdStatusFlags Stat
         {
             get;
