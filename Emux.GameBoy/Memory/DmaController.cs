@@ -61,15 +61,15 @@ namespace Emux.GameBoy.Memory
                 case 0xFF46:
                     return 0;
                 case 0xFF51:
-                    return _sourceHigh;
+                    return (_device.GbcMode) ? _sourceHigh : (byte)0xFF;
                 case 0xFF52:
-                    return _sourceLow;
+                    return (_device.GbcMode) ? _sourceLow : (byte)0xFF;
                 case 0xFF53:
-                    return _destinationHigh;
+                    return (_device.GbcMode) ? _destinationHigh : (byte)0xFF;
                 case 0xFF54:
-                    return _destinationLow;
+                    return (_device.GbcMode) ? _destinationLow : (byte)0xFF;
                 case 0xFF55:
-                    return _dmaLengthMode;
+                    return (_device.GbcMode) ? _dmaLengthMode : (byte)0xFF;
             }
 
             throw new ArgumentOutOfRangeException(nameof(address));
@@ -77,14 +77,20 @@ namespace Emux.GameBoy.Memory
 
         public void WriteRegister(ushort address, byte value)
         {
+            if (address == 0xFF46)
+            {
+                // Writing to this register launches a DMA transfer from ROM or RAM to OAM memory (sprite attribute table).
+                // The written value specifies the transfer source address divided by 0x100
+                // The transfer takes 160 machine cycles
+                PerformOamDmaTransfer(value);
+                return;
+            }
+
+            // GBC registers
+            if (!_device.GbcMode)
+                return;
             switch (address)
             {
-                case 0xFF46:
-                    // Writing to this register launches a DMA transfer from ROM or RAM to OAM memory (sprite attribute table).
-                    // The written value specifies the transfer source address divided by 0x100
-                    // The transfer takes 160 machine cycles
-                    PerformOamDmaTransfer(value);
-                    break;
                 case 0xFF51:
                     _sourceHigh = value;
                     break;
