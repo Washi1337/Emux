@@ -76,7 +76,6 @@ namespace Emux.GameBoy
 
             Reset();
             IsPoweredOn = true;
-			Run();
 
 			Clock.Tick += nextFrame;
 			new Thread(CpuLoop)

@@ -283,5 +283,10 @@ namespace Emux.MonoGame
             
             _video.SetData(framePixels);
         }
-    }
+
+		public void Blit()
+		{
+			throw new NotImplementedException();
+		}
+	}
 }
