@@ -231,6 +231,8 @@ namespace Emux.GameBoy.Graphics
             set;
         }
 
+        public bool IsMode(LcdStatusFlags mode) => (LCDMode & LcdStatusFlags.ModeMask) == mode;
+
         /// <summary>
         /// Writes a byte to the Object Attribute Memory (OAM).
         /// </summary>
@@ -343,13 +345,16 @@ namespace Emux.GameBoy.Graphics
                     BgpI = value;
                     return;
                 case 0x69:
-                    BgpD = value;
+                    if (!IsMode(LcdStatusFlags.ScanLineVRamMode))
+                        BgpD = value;
                     return;
                 case 0x6A:
-                    ObpI = value;
+                    if (!IsMode(LcdStatusFlags.ScanLineVRamMode))
+                        ObpI = value;
                     return;
                 case 0x6B:
-                    ObpD = value;
+                    if (!IsMode(LcdStatusFlags.ScanLineVRamMode))
+                        ObpD = value;
                     return;
             }
 
@@ -391,11 +396,11 @@ namespace Emux.GameBoy.Graphics
                 case 0x68:
                     return BgpI;
                 case 0x69:
-                    return BgpD;
+                    return IsMode(LcdStatusFlags.ScanLineVRamMode) ? (byte)0xFF : BgpD;
                 case 0x6A:
-                    return ObpI;
+                    return IsMode(LcdStatusFlags.ScanLineVRamMode) ? (byte)0xFF : ObpI;
                 case 0x6B:
-                    return ObpD;
+                    return IsMode(LcdStatusFlags.ScanLineVRamMode) ? (byte)0xFF : ObpD;
             }
 
             throw new ArgumentOutOfRangeException(nameof(address));
