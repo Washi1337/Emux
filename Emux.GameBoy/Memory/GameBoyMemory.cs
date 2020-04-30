@@ -74,8 +74,9 @@ namespace Emux.GameBoy.Memory
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
+                    if ((_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ScanLineVRamMode) == Graphics.LcdStatusFlags.ScanLineVRamMode)
+                        return 0xFF;
                     return _device.Gpu.ReadVRam(address - 0x8000);
-
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
                     return _device.Cartridge.ReadByte(address);
@@ -197,7 +198,8 @@ namespace Emux.GameBoy.Memory
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
-                    _device.Gpu.WriteVRam((ushort) (address - 0x8000), value);
+                    if ((_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ScanLineVRamMode) != Graphics.LcdStatusFlags.ScanLineVRamMode)
+                        _device.Gpu.WriteVRam((ushort) (address - 0x8000), value);
                     break;
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
