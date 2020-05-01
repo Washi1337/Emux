@@ -7,15 +7,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emux.GameBoy", "Emux.GameBo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux", "Emux\Emux.csproj", "{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.GameBoy.Tests", "Emux.GameBoy.Tests\Emux.GameBoy.Tests.csproj", "{365C6CF7-99E3-4861-B63B-E9D352E386AF}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.MonoGame", "Emux.MonoGame\Emux.MonoGame.csproj", "{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emux.MonoGame", "Emux.MonoGame\Emux.MonoGame.csproj", "{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Emux.NAudio", "Emux.NAudio\Emux.NAudio.csproj", "{D22215C8-3A0F-49DE-A663-D8FF12349215}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automation", "Automation\Automation.csproj", "{D32ED225-D1DF-470D-90BC-FB15A2302D0D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{1BDD1418-B4BB-4A72-AD21-DE77DC95B00E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Emux.GameBoy.Tests", "Emux.GameBoy.Tests\Emux.GameBoy.Tests.csproj", "{2B3E541C-8B71-485D-B41B-233DFF3B7F87}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +31,6 @@ Global
 		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D23BA7C-0EB8-4C73-BF04-0EDFC0542F17}.Release|Any CPU.Build.0 = Release|Any CPU
-		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{365C6CF7-99E3-4861-B63B-E9D352E386AF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A8CDE19D-11F0-47AB-8391-EFF20F3532FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -51,6 +47,10 @@ Global
 		{1BDD1418-B4BB-4A72-AD21-DE77DC95B00E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1BDD1418-B4BB-4A72-AD21-DE77DC95B00E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1BDD1418-B4BB-4A72-AD21-DE77DC95B00E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B3E541C-8B71-485D-B41B-233DFF3B7F87}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B3E541C-8B71-485D-B41B-233DFF3B7F87}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B3E541C-8B71-485D-B41B-233DFF3B7F87}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B3E541C-8B71-485D-B41B-233DFF3B7F87}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
