@@ -473,7 +473,7 @@ namespace Emux.GameBoy.Graphics
                             if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
                                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
                             OnHBlankStarted();
-                            RenderScan();
+                            _modeClock -= RenderScan();
                         }
                         break;
                     case LcdStatusFlags.HBlankMode:
@@ -529,14 +529,17 @@ namespace Emux.GameBoy.Graphics
                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
         }
         
-        private void RenderScan()
+        private int RenderScan()
         {
+            var delayedCycles = ScX % 8; // PPU discards some pixels so stalls
             if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
                 RenderBackgroundScan();
             if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
                 RenderWindowScan();
             if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
-                RenderSpritesScan();
+                RenderSpritesScan(ref delayedCycles);            
+
+            return delayedCycles;
         }
 
         private void RenderBackgroundScan()
@@ -621,7 +624,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void RenderSpritesScan()
+        private void RenderSpritesScan(ref int delayedCycles)
         {
             int spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
             fixed (byte* ptr = _oam)
@@ -642,6 +645,8 @@ namespace Emux.GameBoy.Graphics
                         // Check if actually on the screen.
                         if (data.X > 0 && data.X < FrameWidth + 8)
                         {
+                            delayedCycles += 11 - Math.Min(5, (data.X + ScX) % 8); // Simulate a PPU stall
+
                             // Read tile data.
                             int rowIndex = LY - absoluteY;
 
