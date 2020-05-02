@@ -42,23 +42,23 @@ namespace Emux.GameBoy
 
 		private readonly IDictionary<ushort, Breakpoint> _breakpoints = new Dictionary<ushort, Breakpoint>();
 
-		private IClock Clock;
+		private readonly IClock _clock;
 
-		private int framesCount;
-
-		public double FramesPerSecond;
-		public bool EnableFrameLimit = true;
-		public TimeSpan FrameDelta;
-		private DateTime lastFrame;
-
+		private int _framesCount;
 		private TimeSpan _frameStartTime;
+		private DateTime _lastFrameTime;
+
+		public double FramesPerSecond { get; private set; }
+		public bool EnableFrameLimit { get; set; } = true;
+		public TimeSpan FrameDelta { get; private set; }
+
 
 
 		public GameBoy(ICartridge cartridge, IClock clock, bool preferGbcMode)
         {
             GbcMode = preferGbcMode && (cartridge.GameBoyColorFlag & GameBoyColorFlag.SupportsColor) != 0;
 
-			Clock = clock;
+			_clock = clock;
 
             Components = new List<IGameBoyComponent>
             {
@@ -77,7 +77,7 @@ namespace Emux.GameBoy
             Reset();
             IsPoweredOn = true;
 
-			Clock.Tick += nextFrame;
+			_clock.Tick += nextFrame;
 			new Thread(CpuLoop)
 			{
 				Name = "Z80CPULOOP",
@@ -85,13 +85,13 @@ namespace Emux.GameBoy
 			}.Start();
 
 
-			lastFrame = DateTime.Now;
+			_lastFrameTime = DateTime.Now;
 			Gpu.VBlankStarted += (_, __) =>
 			{
-				framesCount++;
+				_framesCount++;
 
-				FrameDelta = DateTime.Now - lastFrame;
-				lastFrame = DateTime.Now;
+				FrameDelta = DateTime.Now - _lastFrameTime;
+				_lastFrameTime = DateTime.Now;
 			};
 		}
 
@@ -183,8 +183,8 @@ namespace Emux.GameBoy
 			var delta = time - _frameStartTime;
 			if (delta.TotalSeconds > 1)
 			{
-				FramesPerSecond = framesCount / delta.TotalSeconds;
-				framesCount = 0;
+				FramesPerSecond = _framesCount / delta.TotalSeconds;
+				_framesCount = 0;
 				Cpu.SecondElapsed(delta);
 
 				_frameStartTime = time;
@@ -193,7 +193,7 @@ namespace Emux.GameBoy
 
 		public void Step()
 		{
-			Clock.Stop();
+			_clock.Stop();
 			Cpu.IsBroken = true;
 			_continueSignal.Set();
 		}
@@ -201,7 +201,7 @@ namespace Emux.GameBoy
 		public void Run()
 		{
 			_frameStartTime = DateTime.Now.TimeOfDay;
-			Clock.Start();
+			_clock.Start();
 			Cpu.IsBroken = false;
 			_continueSignal.Set();
 		}
@@ -209,7 +209,7 @@ namespace Emux.GameBoy
 		public void Break()
 		{
 			_breakSignal.Set();
-			Clock.Stop();
+			_clock.Stop();
 			_continueSignal.Reset();
 			Cpu.IsBroken = true;
 		}
@@ -323,7 +323,7 @@ namespace Emux.GameBoy
         /// </summary>
         public void Terminate()
         {
-			Clock.Stop();
+			_clock.Stop();
 
             foreach (var component in Components)
                 component.Shutdown();

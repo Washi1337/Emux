@@ -11,6 +11,7 @@ namespace Emux.GameBoy.Cpu
         {
             Set(offset, opCode, operand);
         }
+
         public void Set(ushort offset, Z80OpCode opCode, byte[] operand)
         {
             Offset = offset;

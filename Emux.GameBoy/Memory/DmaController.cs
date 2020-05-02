@@ -17,8 +17,8 @@ namespace Emux.GameBoy.Memory
         private byte _destinationHigh;
         private byte _destinationLow;
         private byte _dmaLengthMode;
-        private readonly byte[] HDmaBlockCopy = new byte[OAMDMABlockSize];
-        private readonly byte[] _OamBlockCopy = new byte[OAMSize];
+        private readonly byte[] _hdmaBlockCopy = new byte[OAMDMABlockSize];
+        private readonly byte[] _oamBlockCopy = new byte[OAMSize];
         private readonly byte[] _vramBlockCopy = new byte[((LengthMask & LengthMask) + 1) * 0x10]; // Largest possible size
 
         public DmaController(GameBoy device)
@@ -137,8 +137,8 @@ namespace Emux.GameBoy.Memory
 
         private void PerformOamDmaTransfer(byte dma)
         {
-            _device.Memory.ReadBlock((ushort)(dma * 0x100), _OamBlockCopy, 0, OAMSize);
-            _device.Gpu.ImportOam(_OamBlockCopy);
+            _device.Memory.ReadBlock((ushort)(dma * 0x100), _oamBlockCopy, 0, OAMSize);
+            _device.Gpu.ImportOam(_oamBlockCopy);
         }
 
         private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)
@@ -151,8 +151,8 @@ namespace Emux.GameBoy.Memory
         {
             var currentOffset = _currentBlockIndex * OAMDMABlockSize;
 
-            _device.Memory.ReadBlock((ushort)(SourceAddress + currentOffset), HDmaBlockCopy, 0, OAMDMABlockSize);
-            _device.Gpu.WriteVRam((ushort)(DestinationAddress - VRAMStartAddress + currentOffset), HDmaBlockCopy, 0, OAMDMABlockSize);
+            _device.Memory.ReadBlock((ushort)(SourceAddress + currentOffset), _hdmaBlockCopy, 0, OAMDMABlockSize);
+            _device.Gpu.WriteVRam((ushort)(DestinationAddress - VRAMStartAddress + currentOffset), _hdmaBlockCopy, 0, OAMDMABlockSize);
 
             _currentBlockIndex++;
             var next = (_dmaLengthMode & LengthMask) - 1;

@@ -17,8 +17,6 @@ namespace Emux.MonoGame
     {
         public new event EventHandler Tick;
 
-		public const int FrameScaler = 2;
-		private const bool FitVideo = false;
         private readonly Settings _settings;
         private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -33,7 +31,8 @@ namespace Emux.MonoGame
         
         private double _speedFactor;
 
-		byte[] framePixels = new byte[GameBoyGpu.FrameWidth * GameBoyGpu.FrameHeight * sizeof(int)];
+		private Texture2D _white1x1;
+		private readonly byte[] _framePixels = new byte[GameBoyGpu.FrameWidth * GameBoyGpu.FrameHeight * sizeof(int)];
 
 		public EmuxHost(Settings settings)
         {
@@ -54,19 +53,18 @@ namespace Emux.MonoGame
             base.Initialize();
         }
 
-		Texture2D white1x1;
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             
             _video = new Texture2D(GraphicsDevice, GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight);
-			white1x1 = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
+			_white1x1 = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
 			var dataColors = new Color[1] { Color.White };
-			white1x1.SetData(dataColors);
+			_white1x1.SetData(dataColors);
             _font = Content.Load<SpriteFont>("Calibri");
 
-			_graphics.PreferredBackBufferWidth = GameBoyGpu.FrameWidth * FrameScaler;
-			_graphics.PreferredBackBufferHeight = GameBoyGpu.FrameHeight * FrameScaler;
+			_graphics.PreferredBackBufferWidth = GameBoyGpu.FrameWidth * Settings.FrameScaler;
+			_graphics.PreferredBackBufferHeight = GameBoyGpu.FrameHeight * Settings.FrameScaler;
 
 			_graphics.SynchronizeWithVerticalRetrace = GameBoy.EnableFrameLimit;
 			_graphics.ApplyChanges();
@@ -134,7 +132,7 @@ namespace Emux.MonoGame
             int screenHeight = _graphics.PreferredBackBufferHeight;
             int screenWidth = _graphics.PreferredBackBufferWidth;
 
-			if (FitVideo)
+			if (Settings.FitVideo)
 			{
 				float aspectRatio = (float)GameBoyGpu.FrameWidth / (float)GameBoyGpu.FrameHeight;
 				int frameWidth;
@@ -245,7 +243,7 @@ namespace Emux.MonoGame
 				(float)Math.Atan2(edge.Y, edge.X);
 
 
-			_spriteBatch.Draw(white1x1,
+			_spriteBatch.Draw(_white1x1,
 				new Rectangle(
 					(int)start.X,
 					(int)start.Y,
@@ -276,12 +274,12 @@ namespace Emux.MonoGame
         {
             for (int i = 0, j = 0; j < pixelData.Length; i++)
             {
-                framePixels[i++] = pixelData[j++];
-                framePixels[i++] = pixelData[j++];
-                framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
             }
             
-            _video.SetData(framePixels);
+            _video.SetData(_framePixels);
         }
     }
 }

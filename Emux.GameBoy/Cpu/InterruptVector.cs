@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Emux.GameBoy.Cpu {
+namespace Emux.GameBoy.Cpu 
+{
 	public enum InterruptVector : ushort 
 	{
 		Custom1=	0x08,
