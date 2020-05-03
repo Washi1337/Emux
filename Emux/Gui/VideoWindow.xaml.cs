@@ -20,7 +20,7 @@ namespace Emux.Gui
     /// </summary>
     public partial class VideoWindow : IVideoOutput
     {
-        private readonly WriteableBitmap _bitmap = new WriteableBitmap(GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight, 96, 96, PixelFormats.Rgb24, null);
+        private WriteableBitmap _bitmap;
         private readonly DispatcherTimer _frameRateTimer;
 
         private GameBoy.GameBoy _device;
@@ -32,6 +32,13 @@ namespace Emux.Gui
             _frameRateTimer.Tick += FrameRateTimerOnTick;
             _frameRateTimer.Interval = new TimeSpan(0, 0, 1);
             _frameRateTimer.Start();
+        }
+
+        public void SetSize(int width, int height)
+        {
+            _bitmap = new WriteableBitmap(width, height, 96, 96, PixelFormats.Rgb24, null);
+            Width = width * 2;
+            Height = height * 2;
         }
 
         private bool GetBindedButton(Key key, out GameBoyPadButton button)
@@ -78,7 +85,7 @@ namespace Emux.Gui
         {
             Dispatcher.Invoke(() =>
             {
-                _bitmap.WritePixels(new Int32Rect(0, 0, 160, 144), pixelData, _bitmap.BackBufferStride, 0);
+                _bitmap.WritePixels(new Int32Rect(0, 0, _bitmap.PixelWidth, _bitmap.PixelHeight), pixelData, _bitmap.BackBufferStride, 0);
                 VideoImage.Source = _bitmap;
             });
         }

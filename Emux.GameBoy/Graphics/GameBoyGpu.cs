@@ -20,21 +20,22 @@ namespace Emux.GameBoy.Graphics
             VBlankCycles = OneLineCycles * 10,
             FullFrameCycles = 70224;
 
+        protected const byte _pixelSizeBytes = 3;
+
         public event EventHandler HBlankStarted;
         public event EventHandler VBlankStarted;
 
-        private readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
-        private readonly byte[] _frameBuffer = new byte[3 * FrameWidth * FrameHeight];
-        private readonly GameBoy _device;
+        protected readonly GameBoy _device;
 
-        private readonly byte[] _vram;
-        private readonly byte[] _oam = new byte[0xA0];
-        private readonly byte[] _bgPaletteMemory = new byte[0x40];
-        private readonly byte[] _spritePaletteMemory = new byte[0x40];
+        protected readonly byte[] _vram;
+        protected readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
+        protected readonly byte[] _frameBuffer;
+        protected readonly byte[] _oam = new byte[0xA0];
+        protected readonly byte[] _bgPaletteMemory = new byte[0x40];
+        protected readonly byte[] _spritePaletteMemory = new byte[0x40];
+        protected readonly byte[] _currentTileData = new byte[2]; // Scratch buffer
 
-        private readonly byte[] _currentTileData = new byte[2]; // Scratch buffer
-
-        private readonly Color[] _greyshades =
+        protected readonly Color[] _greyshades =
         {
             new Color(224, 248, 208),
             new Color(136, 192, 112),
@@ -42,20 +43,24 @@ namespace Emux.GameBoy.Graphics
             new Color(8, 24, 32),
         };
 
-        private int _modeClock;
-        private LcdControlFlags _lcdc;
-        private byte _ly;
-        private byte _lyc;
+        protected int _modeClock;
+        protected LcdControlFlags _lcdc;
+        protected byte _ly;
+        protected byte _lyc;
         
         public GameBoyGpu(GameBoy device)
         {
-            if (device == null)
-                throw new ArgumentNullException(nameof(device));
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
             VideoOutput = new EmptyVideoOutput();
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            _bgPaletteMemory.AsSpan().Fill(0xFF);
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
+
+            var (width, height) = getFrameBufferSize();
+            _frameBuffer = new byte[width * height * _pixelSizeBytes];
         }
+
+        protected virtual (int width, int height) getFrameBufferSize() => (FrameWidth, FrameHeight);
+
 
         public Color Color0
         {
@@ -221,14 +226,20 @@ namespace Emux.GameBoy.Graphics
             get;
             set;
         }
-        
+
         /// <summary>
         /// Gets or sets the output device the graphics processor should render frames to.
         /// </summary>
+        private IVideoOutput _videoOutput;
         public IVideoOutput VideoOutput
         {
-            get;
-            set;
+            get => _videoOutput;
+            set
+            {
+                _videoOutput = value;
+                var (width, height) = getFrameBufferSize();
+                _videoOutput.SetSize(width, height);
+            }
         }
 
         public bool IsMode(LcdStatusFlags mode) => (LCDMode & LcdStatusFlags.ModeMask) == mode;
@@ -460,6 +471,7 @@ namespace Emux.GameBoy.Graphics
                 switch (currentMode)
                 {
                     case LcdStatusFlags.ScanLineOamMode:
+                        onScanlineOAMSearchTick();
                         if (_modeClock >= ScanLineOamSearchCycles)
                         {
                             _modeClock -= ScanLineOamSearchCycles;
@@ -467,6 +479,7 @@ namespace Emux.GameBoy.Graphics
                         }
                         break;
                     case LcdStatusFlags.ScanLineVRamMode:
+                        onScanlinePixelTransferTick();
                         if (_modeClock >= ScanLineMode3MinCycles)
                         {
                             currentMode = LcdStatusFlags.HBlankMode;
@@ -477,12 +490,13 @@ namespace Emux.GameBoy.Graphics
                         }
                         break;
                     case LcdStatusFlags.HBlankMode:
+                        onScanlineHBlankTick();
                         var Mode3And0Cycles = ScanLineMode3MinCycles + ScanLineMode0MaxCycles;
                         if (_modeClock >= Mode3And0Cycles) // Assume a perfect frame for now
                         {
                             _modeClock -= Mode3And0Cycles;
                             LY++;
-                            if (LY == FrameHeight )
+                            if (_ly == FrameHeight)
                             {
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 OnVBlankStarted();
@@ -497,12 +511,13 @@ namespace Emux.GameBoy.Graphics
                         }
                         break;
                     case LcdStatusFlags.VBlankMode:
+                        onScanlineVBlankTick();
                         if (_modeClock >= OneLineCycles)
                         {
                             _modeClock -= OneLineCycles;
-                            LY++;
+                            _ly++;
 
-                            if (LY > FrameHeight + 9)
+                            if (_ly > FrameHeight + 9)
                             {
                                 VideoOutput.RenderFrame(_frameBuffer);
 
@@ -522,14 +537,35 @@ namespace Emux.GameBoy.Graphics
                 Stat = stat;
             }
         }
+
+        protected virtual void onScanlineOAMSearchTick()
+        {
+            
+        }
+
+        protected virtual void onScanlinePixelTransferTick()
+        {
+            
+        }
+
+        protected virtual void onScanlineHBlankTick()
+        {
+            
+        }
+
+        protected virtual void onScanlineVBlankTick()
+        {
+            
+        }
         
+
         private void CheckCoincidenceInterrupt()
         {
-            if (LY == LYC && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
+            if (_ly == _lyc && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
         }
         
-        private int RenderScan()
+        protected virtual int RenderScan()
         {
             var delayedCycles = ScX % 8; // PPU discards some pixels so stalls
             if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
@@ -537,12 +573,12 @@ namespace Emux.GameBoy.Graphics
             if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
                 RenderWindowScan();
             if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
-                RenderSpritesScan(ref delayedCycles);            
+                RenderSpritesScan(ref delayedCycles);
 
             return delayedCycles;
         }
 
-        private void RenderBackgroundScan()
+        protected void RenderBackgroundScan()
         {
             // Move to correct tile map address.
             int tileMapAddress = (_lcdc & LcdControlFlags.BgTileMapSelect) == LcdControlFlags.BgTileMapSelect
@@ -582,7 +618,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void RenderWindowScan()
+        protected void RenderWindowScan()
         {
             if (LY >= WY)
             {
@@ -624,7 +660,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void RenderSpritesScan(ref int delayedCycles)
+        protected void RenderSpritesScan(ref int delayedCycles)
         {
             int spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
             fixed (byte* ptr = _oam)
@@ -703,7 +739,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer, SpriteDataFlags flags)
+        protected void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer, SpriteDataFlags flags)
         {
             byte dataIndex = _vram[(ushort)(tileMapAddress + tileIndex)];
             if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) !=
@@ -715,13 +751,13 @@ namespace Emux.GameBoy.Graphics
             int bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
             Buffer.BlockCopy(_vram, bankOffset + tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
-        
-        private SpriteDataFlags GetTileDataFlags(int tileMapAddress, int tileIndex)
+
+        protected SpriteDataFlags GetTileDataFlags(int tileMapAddress, int tileIndex)
         {
            return (SpriteDataFlags) _vram[(ushort)(0x2000 + tileMapAddress + tileIndex)];
         }
 
-        private static Color GetGbcColor(byte[] paletteMemory, int paletteIndex, int colorIndex)
+        protected static Color GetGbcColor(byte[] paletteMemory, int paletteIndex, int colorIndex)
         {
             ushort rawValue = (ushort)(paletteMemory[paletteIndex * 8 + colorIndex * 2] | (paletteMemory[paletteIndex * 8 + colorIndex * 2 + 1] << 8));
 			return new Color(
@@ -730,21 +766,20 @@ namespace Emux.GameBoy.Graphics
 				(byte)(((rawValue >> 10) & 0x1F) * (0xFF / 0x1F)));
 		}
 
-
-		private static int GetGreyshadeIndex(byte palette, int paletteIndex)
+        protected static int GetGreyshadeIndex(byte palette, int paletteIndex)
         {
             return (palette >> (paletteIndex * 2)) & 3;
         }
 
-        private static int GetPixelColorIndex(int x, byte[] tileRowData)
+        protected static int GetPixelColorIndex(int x, byte[] tileRowData)
         {
             int bitIndex = 7 - (x & 7);
             int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
                                (((tileRowData[1] >> bitIndex) & 1) << 1);
             return paletteIndex;
         }
-        
-        private void RenderTileDataPixel(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
+
+        protected void RenderTileDataPixel(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
         {
             if (_device.GbcMode)
             {
@@ -767,7 +802,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void RenderPixel(int x, int y, int colorIndex, Color color)
+        protected virtual void RenderPixel(int x, int y, int colorIndex, Color color)
         {
             _frameIndices[y * FrameWidth + x] = (byte)colorIndex;
             fixed (byte* frameBuffer = _frameBuffer)
@@ -776,17 +811,17 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private int GetRenderedColorIndex(int x, int y)
+        protected int GetRenderedColorIndex(int x, int y)
         {
             return _frameIndices[y * FrameWidth + x];
         }
-        
-        private void SwitchMode(LcdStatusFlags mode)
+
+        protected void SwitchMode(LcdStatusFlags mode)
         {
             Stat = (Stat & ~LcdStatusFlags.ModeMask) | mode;
         }
 
-        private int GetVRamOffset()
+        protected int GetVRamOffset()
         {
             return _device.GbcMode ? 0x2000 * Vbk : 0;
         }

@@ -23,6 +23,7 @@ namespace Emux.MonoGame
 			{
 				var cartridge = new EmulatedCartridge(Path.GetFileName(romFile), File.ReadAllBytes(romFile), mbc);
 				var device = new GameBoy.GameBoy(cartridge, host, true);
+                device.Break();
 				host.GameBoy = device;
 
 				device.Gpu.VideoOutput = host;

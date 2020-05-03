@@ -7,6 +7,7 @@ namespace Emux.GameBoy.Graphics
     /// </summary>
     public interface IVideoOutput
     {
+        void SetSize(int width, int height);
         /// <summary>
         /// Renders a frame to the output device.
         /// </summary>
@@ -20,6 +21,11 @@ namespace Emux.GameBoy.Graphics
     /// </summary>
     public sealed class EmptyVideoOutput : IVideoOutput
     {
+        public void SetSize(int width, int height)
+        {
+            
+        }
+
         public void Blit()
         {
             

@@ -9,6 +9,11 @@ namespace Automation
         private byte[] _pixelData;
         private string _outputPath;
 
+        public void SetSize(int width, int height)
+        {
+
+        }
+
         public FileVideoOutput(string outputPath)
         {
             _outputPath = outputPath;

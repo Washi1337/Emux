@@ -25,6 +25,7 @@ namespace Emux.MonoGame
         private Texture2D _video;
         private bool _clockEnabled = false;
         private SpriteFont _font;
+		private int _width, _height;
 
 		private int _fpsIndex;
 		private const float _averageTimeSeconds = 5;
@@ -33,7 +34,7 @@ namespace Emux.MonoGame
         
         private double _speedFactor;
 
-		byte[] framePixels = new byte[GameBoyGpu.FrameWidth * GameBoyGpu.FrameHeight * sizeof(int)];
+		private byte[] _framePixels;
 
 		public EmuxHost(Settings settings)
         {
@@ -54,19 +55,25 @@ namespace Emux.MonoGame
             base.Initialize();
         }
 
+		public void SetSize(int width, int height)
+		{
+			_width = width;
+			_height = height;
+		}
+
 		Texture2D white1x1;
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            
-            _video = new Texture2D(GraphicsDevice, GameBoyGpu.FrameWidth, GameBoyGpu.FrameHeight);
+
+			_framePixels = new byte[_width * _height * sizeof(int)];
+			_video = new Texture2D(GraphicsDevice, _width, _height);
+			_graphics.PreferredBackBufferWidth = _width * FrameScaler;
+			_graphics.PreferredBackBufferHeight = _height * FrameScaler;
 			white1x1 = new Texture2D(GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
 			var dataColors = new Color[1] { Color.White };
 			white1x1.SetData(dataColors);
             _font = Content.Load<SpriteFont>("Calibri");
-
-			_graphics.PreferredBackBufferWidth = GameBoyGpu.FrameWidth * FrameScaler;
-			_graphics.PreferredBackBufferHeight = GameBoyGpu.FrameHeight * FrameScaler;
 
 			_graphics.SynchronizeWithVerticalRetrace = GameBoy.EnableFrameLimit;
 			_graphics.ApplyChanges();
@@ -276,12 +283,12 @@ namespace Emux.MonoGame
         {
             for (int i = 0, j = 0; j < pixelData.Length; i++)
             {
-                framePixels[i++] = pixelData[j++];
-                framePixels[i++] = pixelData[j++];
-                framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
+                _framePixels[i++] = pixelData[j++];
             }
             
-            _video.SetData(framePixels);
+            _video.SetData(_framePixels);
         }
 
 		public void Blit()

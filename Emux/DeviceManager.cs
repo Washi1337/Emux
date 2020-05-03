@@ -88,6 +88,7 @@ namespace Emux
             CurrentDevice = new GameBoy.GameBoy(cartridge, new WinMmTimer(60), !Properties.Settings.Default.ForceOriginalGameBoy);
             ApplyColorPalettes();
             OnDeviceLoaded(new DeviceEventArgs(CurrentDevice));
+            CurrentDevice.Run();
         }
 
         protected virtual void OnDeviceChanged()
