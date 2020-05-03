@@ -60,9 +60,9 @@ namespace Emux.GameBoy.Graphics
             {
                 var colorBuffer = (Color*)frameBuffer;
                 for (var x = FrameWidth; x < FrameWidth + delayedCycles; x++)
-                    colorBuffer[_ly * OneLineCycles + x + ScanLineOamSearchCycles] = pixelTransferColor;
+                    colorBuffer[LY * OneLineCycles + x + ScanLineOamSearchCycles] = pixelTransferColor;
                 for (var x = FrameWidth + delayedCycles; x < OneLineCycles - ScanLineOamSearchCycles; x++)
-                    colorBuffer[_ly * OneLineCycles + x + ScanLineOamSearchCycles] = hBlankColor;
+                    colorBuffer[LY * OneLineCycles + x + ScanLineOamSearchCycles] = hBlankColor;
             }
         }
         private unsafe void drawOAMdebugOverlay()
@@ -74,7 +74,7 @@ namespace Emux.GameBoy.Graphics
             {
                 var colorBuffer = (Color*)frameBuffer;
                 for (var x = 0; x < ScanLineOamSearchCycles; x++)
-                    colorBuffer[_ly * OneLineCycles + x] = oamSearchColor;
+                    colorBuffer[LY * OneLineCycles + x] = oamSearchColor;
             }
         }
 
@@ -88,7 +88,7 @@ namespace Emux.GameBoy.Graphics
             {
                 var colorBuffer = (Color*)frameBuffer;
                 for (var x = 0; x < OneLineCycles; x++)
-                    colorBuffer[_ly * OneLineCycles + x] = vBlankColor;
+                    colorBuffer[LY * OneLineCycles + x] = vBlankColor;
             }
         }
 

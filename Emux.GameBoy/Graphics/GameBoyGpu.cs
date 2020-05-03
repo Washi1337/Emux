@@ -45,7 +45,6 @@ namespace Emux.GameBoy.Graphics
 
         protected int _modeClock, _frameClock = 4;
         protected LcdControlFlags _lcdc;
-        protected byte _ly;
         protected byte _lyc;
         
         public GameBoyGpu(GameBoy device)
@@ -95,8 +94,8 @@ namespace Emux.GameBoy.Graphics
                 {
                     clearBuffer();
                     VideoOutput.RenderFrame(_frameBuffer);
-                    LY = 0;
                     SwitchMode(LcdStatusFlags.HBlankMode);
+                    _frameClock = 0;
                     _modeClock = 0;
                 }
                 else if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
@@ -131,18 +130,7 @@ namespace Emux.GameBoy.Graphics
             set;
         }
 
-        public byte LY
-        {
-            get { return _ly; }
-            set
-            {
-                if (_ly != value)
-                {
-                    _ly = value;
-                    CheckCoincidenceInterrupt();
-                }
-            }
-        }
+        public byte LY => (byte)(_frameClock / OneLineCycles);
 
         public byte LYC
         {
@@ -152,7 +140,7 @@ namespace Emux.GameBoy.Graphics
                 if (_lyc != value)
                 {
                     _lyc = value;
-                    CheckCoincidenceInterrupt();
+                    checkCoincidenceInterrupt();
                 }
             }
         }
@@ -423,7 +411,6 @@ namespace Emux.GameBoy.Graphics
         public void Reset()
         {
             _modeClock = 0;
-            LY = 0;
             ScY = 0;
             ScX = 0;
             Stat = LcdStatusFlags.Coincidence | LcdStatusFlags.VBlankMode | (LcdStatusFlags)0b10000000;
@@ -467,8 +454,8 @@ namespace Emux.GameBoy.Graphics
             byte scanline = (byte)(_frameClock / OneLineCycles);
             var pixel = _frameClock % OneLineCycles;
 
-            if (pixel == 0)
-                LY++;
+            if (pixel <= 4) // Temp hack. Not stepping one cycle at a time yet so could be out. 
+                checkCoincidenceInterrupt();
 
             if (scanline < FrameHeight)
             {
@@ -488,10 +475,13 @@ namespace Emux.GameBoy.Graphics
                     onScanlinePixelTransferTick();
                     if (pixel >= ScanLineOamSearchCycles + ScanLineMode3MinCycles)
                     {
+                        OnHBlankStarted();
+
                         currentMode = LcdStatusFlags.HBlankMode;
+
                         if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
                             _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-                        OnHBlankStarted();
+
                         _frameClock -= RenderScan();
                     }
                 } 
@@ -508,7 +498,6 @@ namespace Emux.GameBoy.Graphics
                     {
                         VideoOutput.RenderFrame(_frameBuffer);
 
-                        LY = 0;
                         _frameClock = 0;
 
                         if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
@@ -527,7 +516,7 @@ namespace Emux.GameBoy.Graphics
 
             stat &= ~(LcdStatusFlags.ModeMask | LcdStatusFlags.Coincidence);
             stat |= currentMode;
-            if (_ly == _lyc)
+            if (LY == _lyc)
                 stat |= LcdStatusFlags.Coincidence;
             Stat = stat;
         }
@@ -553,9 +542,9 @@ namespace Emux.GameBoy.Graphics
         }
         
 
-        private void CheckCoincidenceInterrupt()
+        private void checkCoincidenceInterrupt()
         {
-            if (_ly == _lyc && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
+            if (LY == _lyc && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
                 _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
         }
         
@@ -579,7 +568,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x1C00
                 : 0x1800;
 
-            int tileMapLine = ((_ly + ScY) & 0xFF) >> 3;
+            int tileMapLine = ((LY + ScY) & 0xFF) >> 3;
             tileMapAddress += tileMapLine * 0x20;
 
             // Move to correct tile data address.
@@ -588,7 +577,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x0000
                 : 0x0800;
 
-            int tileDataOffset = ((_ly + ScY) & 7) * 2;
+            int tileDataOffset = ((LY + ScY) & 7) * 2;
             int flippedTileDataOffset = 14 - tileDataOffset;
 
             int x = ScX;

@@ -47,7 +47,7 @@ namespace Emux.GameBoy
 		private int _framesCount;
 
 		public double FramesPerSecond;
-		public bool EnableFrameLimit = true;
+		public bool EnableFrameLimit = false;
 		public TimeSpan FrameDelta;
 		private DateTime lastFrame;
 
@@ -65,7 +65,7 @@ namespace Emux.GameBoy
                 (Cartridge = cartridge),
                 (Memory = new GameBoyMemory(this)),
                 (Cpu = new GameBoyCpu(this, clock)),
-                (Gpu = new GameBoyGpu(this)),
+                (Gpu = new DebugGameBoyGpu(this)),
                 (Spu = new GameBoySpu(this)),
                 (KeyPad = new GameBoyPad(this)),
                 (Timer = new GameBoyTimer(this))
