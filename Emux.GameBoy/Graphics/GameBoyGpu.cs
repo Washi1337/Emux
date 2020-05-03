@@ -43,7 +43,7 @@ namespace Emux.GameBoy.Graphics
             new Color(8, 24, 32),
         };
 
-        protected int _modeClock, _frameClock = 4;
+        protected int _frameClock = 4;
         protected LcdControlFlags _lcdc;
         protected byte _lyc;
         
@@ -96,11 +96,9 @@ namespace Emux.GameBoy.Graphics
                     VideoOutput.RenderFrame(_frameBuffer);
                     SwitchMode(LcdStatusFlags.HBlankMode);
                     _frameClock = 0;
-                    _modeClock = 0;
                 }
                 else if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 {
-                    _modeClock = 0;
                     if (LY == LYC)
                         Stat |= LcdStatusFlags.Coincidence;
                 }
@@ -410,7 +408,6 @@ namespace Emux.GameBoy.Graphics
 
         public void Reset()
         {
-            _modeClock = 0;
             ScY = 0;
             ScX = 0;
             Stat = LcdStatusFlags.Coincidence | LcdStatusFlags.VBlankMode | (LcdStatusFlags)0b10000000;
@@ -449,7 +446,6 @@ namespace Emux.GameBoy.Graphics
             var stat = Stat;
             var currentMode = stat & LcdStatusFlags.ModeMask;
             _frameClock += cycles;
-            _modeClock += cycles;
 
             byte scanline = (byte)(_frameClock / OneLineCycles);
             var pixel = _frameClock % OneLineCycles;
