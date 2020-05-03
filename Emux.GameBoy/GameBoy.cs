@@ -44,10 +44,10 @@ namespace Emux.GameBoy
 
 		private IClock Clock;
 
-		private int framesCount;
+		private int _framesCount;
 
 		public double FramesPerSecond;
-		public bool EnableFrameLimit = false;
+		public bool EnableFrameLimit = true;
 		public TimeSpan FrameDelta;
 		private DateTime lastFrame;
 
@@ -65,7 +65,7 @@ namespace Emux.GameBoy
                 (Cartridge = cartridge),
                 (Memory = new GameBoyMemory(this)),
                 (Cpu = new GameBoyCpu(this, clock)),
-                (Gpu = new DebugGameBoyGpu(this)),
+                (Gpu = new GameBoyGpu(this)),
                 (Spu = new GameBoySpu(this)),
                 (KeyPad = new GameBoyPad(this)),
                 (Timer = new GameBoyTimer(this))
@@ -88,7 +88,7 @@ namespace Emux.GameBoy
 			lastFrame = DateTime.Now;
 			Gpu.VBlankStarted += (_, __) =>
 			{
-				framesCount++;
+				_framesCount++;
 
 				FrameDelta = DateTime.Now - lastFrame;
 				lastFrame = DateTime.Now;
@@ -183,8 +183,8 @@ namespace Emux.GameBoy
 			var delta = time - _frameStartTime;
 			if (delta.TotalSeconds > 1)
 			{
-				FramesPerSecond = framesCount / delta.TotalSeconds;
-				framesCount = 0;
+				FramesPerSecond = _framesCount / delta.TotalSeconds;
+				_framesCount = 0;
 				Cpu.SecondElapsed(delta);
 
 				_frameStartTime = time;
