@@ -43,7 +43,7 @@ namespace Emux.GameBoy.Graphics
             new Color(8, 24, 32),
         };
 
-        protected int _modeClock;
+        protected int _modeClock, _frameClock = 4;
         protected LcdControlFlags _lcdc;
         protected byte _ly;
         protected byte _lyc;
@@ -231,6 +231,7 @@ namespace Emux.GameBoy.Graphics
         /// Gets or sets the output device the graphics processor should render frames to.
         /// </summary>
         private IVideoOutput _videoOutput;
+
         public IVideoOutput VideoOutput
         {
             get => _videoOutput;
@@ -432,14 +433,12 @@ namespace Emux.GameBoy.Graphics
             Lcdc = LcdControlFlags.EnableBackground | LcdControlFlags.BgWindowTileDataSelect | LcdControlFlags.EnableLcd;
             ScY = 0;
             ScX = 0;
-            _lyc = 0;
+            LYC = 0;
             Bgp = 0xFC;
             ObjP0 = 0xFF;
             ObjP1 = 0xFF;
             WY = 0;
             WX = 0;
-            
-            
         }
 
         private void clearBuffer()
@@ -462,80 +461,77 @@ namespace Emux.GameBoy.Graphics
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
 
-            unchecked
+            var stat = Stat;
+            var currentMode = stat & LcdStatusFlags.ModeMask;
+            _frameClock += cycles;
+            _modeClock += cycles;
+
+            byte scanline = (byte)(_frameClock / OneLineCycles);
+            var pixel = _frameClock % OneLineCycles;
+
+            if (pixel == 0)
+                LY++;
+
+            if (scanline < FrameHeight)
             {
-                var stat = Stat;
-                var currentMode = stat & LcdStatusFlags.ModeMask;
-                _modeClock += cycles;
-
-                switch (currentMode)
+                if (pixel < ScanLineOamSearchCycles) // OAM Search
                 {
-                    case LcdStatusFlags.ScanLineOamMode:
-                        onScanlineOAMSearchTick();
-                        if (_modeClock >= ScanLineOamSearchCycles)
-                        {
-                            _modeClock -= ScanLineOamSearchCycles;
-                            currentMode = LcdStatusFlags.ScanLineVRamMode;
-                        }
-                        break;
-                    case LcdStatusFlags.ScanLineVRamMode:
-                        onScanlinePixelTransferTick();
-                        if (_modeClock >= ScanLineMode3MinCycles)
-                        {
-                            currentMode = LcdStatusFlags.HBlankMode;
-                            if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
-                                _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-                            OnHBlankStarted();
-                            _modeClock -= RenderScan();
-                        }
-                        break;
-                    case LcdStatusFlags.HBlankMode:
-                        onScanlineHBlankTick();
-                        var Mode3And0Cycles = ScanLineMode3MinCycles + ScanLineMode0MaxCycles;
-                        if (_modeClock >= Mode3And0Cycles) // Assume a perfect frame for now
-                        {
-                            _modeClock -= Mode3And0Cycles;
-                            LY++;
-                            if (_ly == FrameHeight)
-                            {
-                                currentMode = LcdStatusFlags.VBlankMode;
-                                OnVBlankStarted();
-								_device.Cpu.Registers.IF |= InterruptFlags.VBlank;
-                                if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
-                                    _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-                            }
-                            else
-                            {
-                                currentMode = LcdStatusFlags.ScanLineOamMode;
-                            }
-                        }
-                        break;
-                    case LcdStatusFlags.VBlankMode:
-                        onScanlineVBlankTick();
-                        if (_modeClock >= OneLineCycles)
-                        {
-                            _modeClock -= OneLineCycles;
-                            _ly++;
-
-                            if (_ly > FrameHeight + 9)
-                            {
-                                VideoOutput.RenderFrame(_frameBuffer);
-
-                                currentMode = LcdStatusFlags.ScanLineOamMode;
-                                LY = 0;
-                                if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
-                                    _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-                            }
-                        }
-                        break;
+                    currentMode = LcdStatusFlags.ScanLineOamMode;
+                    onScanlineOAMSearchTick();
                 }
+                else if (currentMode == LcdStatusFlags.HBlankMode)
+                {
+                    onScanlineHBlankTick();
+                }
+                else // Pixel transfer
+                {
+                    currentMode = LcdStatusFlags.ScanLineVRamMode;
 
-                stat &= ~(LcdStatusFlags.ModeMask | LcdStatusFlags.Coincidence);
-                stat |= currentMode;
-                if (_ly == _lyc)
-                    stat |= LcdStatusFlags.Coincidence;
-                Stat = stat;
+                    onScanlinePixelTransferTick();
+                    if (pixel >= ScanLineOamSearchCycles + ScanLineMode3MinCycles)
+                    {
+                        currentMode = LcdStatusFlags.HBlankMode;
+                        if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
+                            _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
+                        OnHBlankStarted();
+                        _frameClock -= RenderScan();
+                    }
+                } 
             }
+            else if (scanline >= FrameHeight) // In V-Blank
+            {
+                currentMode = LcdStatusFlags.VBlankMode;
+
+                onScanlineVBlankTick();
+
+                if (pixel == 0)
+                {
+                    if (scanline > FrameHeight + 9)
+                    {
+                        VideoOutput.RenderFrame(_frameBuffer);
+
+                        LY = 0;
+                        _frameClock = 0;
+
+                        if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
+                            _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
+                    } 
+                    else if (scanline == FrameHeight)
+                    {
+                        OnVBlankStarted();
+
+                        _device.Cpu.Registers.IF |= InterruptFlags.VBlank;
+                        if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
+                            _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
+                    }
+                }
+            }
+
+            stat &= ~(LcdStatusFlags.ModeMask | LcdStatusFlags.Coincidence);
+            stat |= currentMode;
+            if (_ly == _lyc)
+                stat |= LcdStatusFlags.Coincidence;
+            Stat = stat;
         }
 
         protected virtual void onScanlineOAMSearchTick()
@@ -585,7 +581,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x1C00
                 : 0x1800;
 
-            int tileMapLine = ((LY + ScY) & 0xFF) >> 3;
+            int tileMapLine = ((_ly + ScY) & 0xFF) >> 3;
             tileMapAddress += tileMapLine * 0x20;
 
             // Move to correct tile data address.
@@ -594,11 +590,11 @@ namespace Emux.GameBoy.Graphics
                 ? 0x0000
                 : 0x0800;
 
-            int tileDataOffset = ((LY + ScY) & 7) * 2;
+            int tileDataOffset = ((_ly + ScY) & 7) * 2;
             int flippedTileDataOffset = 14 - tileDataOffset;
 
             int x = ScX;
-            
+
             // Read first tile data to render.
             var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F) : 0;
             CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
