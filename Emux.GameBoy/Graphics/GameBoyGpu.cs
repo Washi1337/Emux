@@ -329,9 +329,7 @@ namespace Emux.GameBoy.Graphics
                 case 0x43:
                     ScX = value;
                     return;
-                case 0x44:
-                    LY = value;
-                    return;
+                // Cannot write to 0xFF44
                 case 0x45:
                     LYC = value;
                     return;
