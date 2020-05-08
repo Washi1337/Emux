@@ -230,9 +230,11 @@ namespace Emux.GameBoy.Memory
 
                         case 0xFE00:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
+                            {
                                 if ((_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ScanLineOamMode) != 0)
                                     return;
                                 _device.Gpu.WriteOam((byte)(address & 0xFF), value);
+                            }
                             break;
                         case 0xFF00: // IO (0xFF00 -> 0xFFFF)
                             switch (address & 0xFF)
