@@ -332,6 +332,7 @@ namespace Emux.GameBoy
         /// </summary>
         public void Terminate()
         {
+			Break();
 			Clock.Stop();
 
             foreach (var component in Components)
