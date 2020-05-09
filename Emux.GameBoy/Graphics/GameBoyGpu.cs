@@ -513,7 +513,7 @@ namespace Emux.GameBoy.Graphics
                         }
                         else
                         {
-                            RenderPixel(_currentPixel++);
+                            RenderPixel(scanline, _currentPixel++);
                         }
                     }
                 }
@@ -555,6 +555,7 @@ namespace Emux.GameBoy.Graphics
 
         protected virtual void OAMSearch()
         {
+            var scanline = LY;
             fixed (byte* ptr = _oam)
             {
                 var spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
@@ -562,7 +563,7 @@ namespace Emux.GameBoy.Graphics
                 var spritesOnLine = Enumerable.
                     Range(0, 40)
                     .Select(i => (index: (byte)i, sprite: sprites[i]))
-                    .Where(data => data.sprite.Y - 16 <= LY && LY < data.sprite.Y - 16 + spriteHeight && data.sprite.X > 0 && data.sprite.X <= FrameWidth + 8)
+                    .Where(data => data.sprite.Y - 16 <= scanline && scanline < data.sprite.Y - 16 + spriteHeight && data.sprite.X > 0 && data.sprite.X <= FrameWidth + 8)
                     .OrderBy(data => data.index) // If two sprites are at the same X, the one earliest in OAM wins
                     .ThenBy(data => data.sprite.X)
                     .Take(10);
@@ -580,26 +581,26 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        protected virtual void RenderPixel(int pixel)
+        protected virtual void RenderPixel(int scanline, int pixel)
         {
             if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
-                RenderBackground(pixel);
+                RenderBackground(scanline, pixel);
             else
-                RenderPixel(pixel, LY, 0, BGOffColor);
+                RenderPixel(pixel, scanline, 0, BGOffColor);
             if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
-                RenderWindow(pixel);
+                RenderWindow(scanline, pixel);
             if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
-                RenderSprite(pixel);
+                RenderSprite(scanline, pixel);
         }
 
-        protected void RenderBackground(int pixel)
+        protected void RenderBackground(int scanline, int pixel)
         {
             // Move to correct tile map address.
             var tileMapAddress = (_lcdc & LcdControlFlags.BgTileMapSelect) == LcdControlFlags.BgTileMapSelect
                 ? 0x1C00
                 : 0x1800;
 
-            var tileMapLine = ((LY + ScY) & 0xFF) >> 3;
+            var tileMapLine = ((scanline + ScY) & 0xFF) >> 3;
             tileMapAddress += tileMapLine * 0x20;
 
             // Move to correct tile data address.
@@ -608,7 +609,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x0000
                 : 0x0800;
 
-            var tileDataOffset = ((LY + ScY) & 7) * 2;
+            var tileDataOffset = ((scanline + ScY) & 7) * 2;
             var flippedTileDataOffset = 14 - tileDataOffset;
 
             var startPixel = pixel;
@@ -628,10 +629,10 @@ namespace Emux.GameBoy.Graphics
             );
 
             var outputX = startPixel;
-            RenderTileDataPixel(tileData, flags, outputX, x);
+            RenderTileDataPixel(tileData, flags, scanline, outputX, x);
         }
         
-        protected void RenderSprite(int currentPixel)
+        protected void RenderSprite(int scanline, int currentPixel)
         {
             var currentSpriteIndex = _spriteIndexes[currentPixel];
             if (currentSpriteIndex == 0xFF)
@@ -649,12 +650,12 @@ namespace Emux.GameBoy.Graphics
             var startX = currentPixel - (currentSprite.X - 8);
 
             var spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
-            RenderSprite(spriteHeight, currentSprite, startX);
+            RenderSprite(scanline, spriteHeight, currentSprite, startX);
         }
         
-        protected void RenderWindow(int currentPixel)
+        protected void RenderWindow(int scanline, int currentPixel)
         {
-            if (LY < WY)
+            if (scanline < WY)
                 return;
             var actualX = WX - 7;
             if (actualX > 166)
@@ -672,7 +673,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x1C00
                 : 0x1800;
 
-            var tileMapLine = ((LY - WY) & 0xFF) >> 3;
+            var tileMapLine = ((scanline - WY) & 0xFF) >> 3;
             tileMapAddress += tileMapLine * 0x20;
 
             // Move to correct tile data address.
@@ -681,7 +682,7 @@ namespace Emux.GameBoy.Graphics
                 ? 0x0000
                 : 0x0800;
 
-            var tileDataOffset = ((LY - WY) & 7) * 2;
+            var tileDataOffset = ((scanline - WY) & 7) * 2;
             var flippedTileDataOffset = 14 - tileDataOffset;
 
             var x = currentPixel - actualX;
@@ -696,13 +697,13 @@ namespace Emux.GameBoy.Graphics
                 flags
             );
 
-            RenderTileDataPixel(tileData, flags, currentPixel, x);
+            RenderTileDataPixel(tileData, flags, scanline, currentPixel, x);
         }
 
-        private void RenderSprite(int spriteHeight, SpriteData sprite, int spriteColumn)
+        private void RenderSprite(int scanline, int spriteHeight, SpriteData sprite, int spriteColumn)
         {
             var absoluteY = sprite.Y - 16;
-            var rowIndex = LY - absoluteY;
+            var rowIndex = scanline - absoluteY;
 
             // Flip sprite vertically if specified.
             if ((sprite.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
@@ -718,7 +719,7 @@ namespace Emux.GameBoy.Graphics
             var screenX = sprite.X - 8 + spriteColumn;
 
             // Check if is above or below background.
-            if ((sprite.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(screenX, LY) == 0)
+            if ((sprite.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(screenX, scanline) == 0)
             {
                 // Flip sprite horizontally if specified.
                 var colorIndex = GetPixelColorIndex(
@@ -733,7 +734,7 @@ namespace Emux.GameBoy.Graphics
                 if (_device.GbcMode)
                 {
                     var paletteIndex = (int)(sprite.Flags & SpriteDataFlags.PaletteNumberMask);
-                    RenderPixel(screenX, LY, colorIndex, GetGbcColor(_spritePaletteMemory, paletteIndex, colorIndex));
+                    RenderPixel(screenX, scanline, colorIndex, GetGbcColor(_spritePaletteMemory, paletteIndex, colorIndex));
                 }
                 else
                 {
@@ -741,7 +742,7 @@ namespace Emux.GameBoy.Graphics
                         ? ObjP1
                         : ObjP0;
                     var greyshadeIndex = GetGreyshadeIndex(palette, colorIndex);
-                    RenderPixel(screenX, LY, colorIndex, _greyshades[greyshadeIndex]);
+                    RenderPixel(screenX, scanline, colorIndex, _greyshades[greyshadeIndex]);
                 }
             }
         }
@@ -803,7 +804,7 @@ namespace Emux.GameBoy.Graphics
             return paletteIndex;
         }
 
-        protected void RenderTileDataPixel(Span<byte> currentTileData, SpriteDataFlags flags, int outputX, int localX)
+        protected void RenderTileDataPixel(Span<byte> currentTileData, SpriteDataFlags flags, int scanline, int outputX, int localX)
         {
             if (_device.GbcMode)
             {
@@ -816,13 +817,13 @@ namespace Emux.GameBoy.Graphics
                 
                 int paletteIndex = (int)(flags & SpriteDataFlags.PaletteNumberMask);
                 int colorIndex = GetPixelColorIndex(actualX, currentTileData);
-                RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
+                RenderPixel(outputX, scanline, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));
             }
             else
             {
                 int colorIndex = GetPixelColorIndex(localX & 7, currentTileData);
                 int greyshadeIndex = GetGreyshadeIndex(Bgp, colorIndex);
-                RenderPixel(outputX, LY, colorIndex, _greyshades[greyshadeIndex]);
+                RenderPixel(outputX, scanline, colorIndex, _greyshades[greyshadeIndex]);
             }
         }
 
