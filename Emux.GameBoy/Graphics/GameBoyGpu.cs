@@ -35,7 +35,6 @@ namespace Emux.GameBoy.Graphics
         protected readonly byte[] _oam = new byte[0xA0];
         protected readonly byte[] _bgPaletteMemory = new byte[0x40];
         protected readonly byte[] _spritePaletteMemory = new byte[0x40];
-        protected readonly byte[] _currentTileData = new byte[2]; // Scratch buffer
         private readonly byte[] _spriteIndexes;
 
         protected readonly Color[] _greyshades =
@@ -617,27 +616,19 @@ namespace Emux.GameBoy.Graphics
 
             // Read first tile data to render.
             var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x / 8 & 31) : 0;
-            CopyTileData(
-                tileMapAddress,
-                x / 8 & 31,
-                tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
-                _currentTileData,
-                flags
-            );
             
             // Read next tile data to render.
             if (_device.GbcMode)
                 flags = GetTileDataFlags(tileMapAddress, x / 8 & 31);
-            CopyTileData(
+            var tileData = GetTileData(
                 tileMapAddress,
                 x / 8 & 31,
                 tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
-                _currentTileData,
                 flags
             );
 
             var outputX = startPixel;
-            RenderTileDataPixel(_currentTileData, flags, outputX, x);
+            RenderTileDataPixel(tileData, flags, outputX, x);
         }
         
         protected void RenderSprite(int currentPixel)
@@ -698,15 +689,14 @@ namespace Emux.GameBoy.Graphics
             // Read next tile data to render.
             if (_device.GbcMode)
                 flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-            CopyTileData(
+            var tileData = GetTileData(
                 tileMapAddress, 
                 x >> 3 & 0x1F,
                 tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
-                _currentTileData,
                 flags
             );
 
-            RenderTileDataPixel(_currentTileData, flags, currentPixel, x);
+            RenderTileDataPixel(tileData, flags, currentPixel, x);
         }
 
         private void RenderSprite(int spriteHeight, SpriteData sprite, int spriteColumn)
@@ -722,7 +712,7 @@ namespace Emux.GameBoy.Graphics
             var vramBankOffset = _device.GbcMode && (sprite.Flags & SpriteDataFlags.TileVramBank) != 0
                 ? 0x2000
                 : 0x0000;
-            Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (sprite.TileDataIndex << 4) + rowIndex * 2), _currentTileData, 0, 2);
+            var currentTileData = _vram.AsSpan((ushort)(vramBankOffset + (sprite.TileDataIndex << 4) + rowIndex * 2));
 
             // Render sprite.
             var screenX = sprite.X - 8 + spriteColumn;
@@ -733,7 +723,7 @@ namespace Emux.GameBoy.Graphics
                 // Flip sprite horizontally if specified.
                 var colorIndex = GetPixelColorIndex(
                     (sprite.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? spriteColumn : 7 - spriteColumn,
-                    _currentTileData
+                    currentTileData
                 );
 
                 // Check if not transparent.
@@ -767,6 +757,17 @@ namespace Emux.GameBoy.Graphics
             var bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
             Buffer.BlockCopy(_vram, bankOffset + tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
+        protected Span<byte> GetTileData(int tileMapAddress, int tileIndex, int tileDataAddress, SpriteDataFlags flags)
+        {
+            var dataIndex = _vram[tileMapAddress + tileIndex];
+            if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) != LcdControlFlags.BgWindowTileDataSelect)
+            {
+                // Index is signed number in [-128..127] => compensate for it.
+                dataIndex = unchecked((byte)((sbyte)dataIndex + 0x80));
+            }
+            var bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
+            return _vram.AsSpan(bankOffset + tileDataAddress + (dataIndex << 4));
+        }
 
         protected SpriteDataFlags GetTileDataFlags(int tileMapAddress, int tileIndex)
         {
@@ -794,8 +795,15 @@ namespace Emux.GameBoy.Graphics
                                (((tileRowData[1] >> bitIndex) & 1) << 1);
             return paletteIndex;
         }
+        protected static int GetPixelColorIndex(int x, Span<byte> tileRowData)
+        {
+            int bitIndex = 7 - (x & 7);
+            int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
+                               (((tileRowData[1] >> bitIndex) & 1) << 1);
+            return paletteIndex;
+        }
 
-        protected void RenderTileDataPixel(byte[] currentTileData, SpriteDataFlags flags, int outputX, int localX)
+        protected void RenderTileDataPixel(Span<byte> currentTileData, SpriteDataFlags flags, int outputX, int localX)
         {
             if (_device.GbcMode)
             {
