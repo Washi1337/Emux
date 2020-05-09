@@ -747,17 +747,6 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        protected void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer, SpriteDataFlags flags)
-        {
-            var dataIndex = _vram[tileMapAddress + tileIndex];
-            if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) != LcdControlFlags.BgWindowTileDataSelect)
-            {
-                // Index is signed number in [-128..127] => compensate for it.
-                dataIndex = unchecked((byte)((sbyte)dataIndex + 0x80));
-            }
-            var bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
-            Buffer.BlockCopy(_vram, bankOffset + tileDataAddress + (dataIndex << 4), buffer, 0, 2);
-        }
         protected Span<byte> GetTileData(int tileMapAddress, int tileIndex, int tileDataAddress, SpriteDataFlags flags)
         {
             var dataIndex = _vram[tileMapAddress + tileIndex];
@@ -789,13 +778,6 @@ namespace Emux.GameBoy.Graphics
             return (palette >> (paletteIndex * 2)) & 3;
         }
 
-        protected static int GetPixelColorIndex(int x, byte[] tileRowData)
-        {
-            int bitIndex = 7 - (x & 7);
-            int paletteIndex = ((tileRowData[0] >> bitIndex) & 1) |
-                               (((tileRowData[1] >> bitIndex) & 1) << 1);
-            return paletteIndex;
-        }
         protected static int GetPixelColorIndex(int x, Span<byte> tileRowData)
         {
             int bitIndex = 7 - (x & 7);
