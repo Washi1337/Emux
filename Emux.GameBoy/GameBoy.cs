@@ -241,7 +241,11 @@ namespace Emux.GameBoy
 						{
 							Spu.SpuStep(cycles / Cpu.SpeedMultiplier);
 							cycles -= GameBoyGpu.FullFrameCycles * Cpu.SpeedMultiplier;
-							
+							if (EnableFrameLimit)
+							{
+								WaitHandle.WaitAny(new WaitHandle[] { _breakSignal, _frameStartSignal });
+								_frameStartSignal.Reset();
+							}
 						}
 
 						if (_breakpoints.TryGetValue(Cpu.Registers.PC, out var breakpoint) && breakpoint.Condition(Cpu))
