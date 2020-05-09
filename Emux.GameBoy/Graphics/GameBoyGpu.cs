@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Emux.GameBoy.Cpu;
 
@@ -28,12 +30,13 @@ namespace Emux.GameBoy.Graphics
         protected readonly GameBoy _device;
 
         protected readonly byte[] _vram;
-        protected readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
+        protected readonly byte[] _colorIndices = new byte[FrameWidth * FrameHeight];
         protected readonly byte[] _frameBuffer;
         protected readonly byte[] _oam = new byte[0xA0];
         protected readonly byte[] _bgPaletteMemory = new byte[0x40];
         protected readonly byte[] _spritePaletteMemory = new byte[0x40];
         protected readonly byte[] _currentTileData = new byte[2]; // Scratch buffer
+        private readonly byte[] _spriteIndexes;
 
         protected readonly Color[] _greyshades =
         {
@@ -42,10 +45,13 @@ namespace Emux.GameBoy.Graphics
             new Color(52, 104, 86),
             new Color(8, 24, 32),
         };
+        protected Color BGOffColor = new Color(255, 255, 255);
 
         protected int _frameClock = 4;
+        private int _currentPixel = 0; // Seperate counter for Mode3 because its simpler
         protected LcdControlFlags _lcdc;
         protected byte _lyc;
+        protected int _totalStalledPixels, _currentlyStalledPixels;
         
         public GameBoyGpu(GameBoy device)
         {
@@ -56,6 +62,7 @@ namespace Emux.GameBoy.Graphics
 
             var (width, height) = getFrameBufferSize();
             _frameBuffer = new byte[width * height * _pixelSizeBytes];
+            _spriteIndexes = new byte[FrameWidth];
         }
 
         protected virtual (int width, int height) getFrameBufferSize() => (FrameWidth, FrameHeight);
@@ -92,7 +99,7 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((value & LcdControlFlags.EnableLcd) == 0)
                 {
-                    clearBuffer();
+                    ClearBuffer();
                     VideoOutput.RenderFrame(_frameBuffer);
                     SwitchMode(LcdStatusFlags.HBlankMode);
                     _frameClock = 0;
@@ -138,7 +145,7 @@ namespace Emux.GameBoy.Graphics
                 if (_lyc != value)
                 {
                     _lyc = value;
-                    checkCoincidenceInterrupt();
+                    CheckCoincidenceInterrupt();
                 }
             }
         }
@@ -423,16 +430,16 @@ namespace Emux.GameBoy.Graphics
             WX = 0;
         }
 
-        private void clearBuffer()
+        private void ClearBuffer()
         {
             _bgPaletteMemory.AsSpan().Fill(0xff);
             _vram.AsSpan().Clear();
+            _frameBuffer.AsSpan().Clear();
         }
 
         public void Shutdown()
         {
         }
-
 
         /// <summary>
         /// Advances the execution of the graphical processor unit.
@@ -440,55 +447,85 @@ namespace Emux.GameBoy.Graphics
         /// <param name="cycles">The cycles the central processor unit has executed since last step.</param>
         public void Step(int cycles)
         {
+            for (var i = 0; i < cycles; i++)
+            {
+                Step();
+                _frameClock++;
+            }
+        }
+
+        private void Step()
+        {
+            if (_currentlyStalledPixels < _totalStalledPixels)
+            {
+                _currentlyStalledPixels++;
+                return;
+            }
+
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
 
             var stat = Stat;
             var currentMode = stat & LcdStatusFlags.ModeMask;
-            _frameClock += cycles;
 
-            byte scanline = (byte)(_frameClock / OneLineCycles);
-            var pixel = _frameClock % OneLineCycles;
+            var scanline = LY;
+            var scanlineDot = _frameClock % OneLineCycles;
 
-            if (pixel <= 4) // Temp hack. Not stepping one cycle at a time yet so could be out. 
-                checkCoincidenceInterrupt();
+            if (scanlineDot <= 4) // Temp hack. Not stepping one cycle at a time yet so could be out. 
+                CheckCoincidenceInterrupt();
 
             if (scanline < FrameHeight)
             {
-                if (pixel < ScanLineOamSearchCycles) // OAM Search
+                if (scanlineDot <= ScanLineOamSearchCycles) // OAM Search
                 {
+                    if (scanlineDot == ScanLineOamSearchCycles - 1)
+                        OAMSearch();
                     currentMode = LcdStatusFlags.ScanLineOamMode;
-                    onScanlineOAMSearchTick();
                 }
                 else if (currentMode == LcdStatusFlags.HBlankMode)
                 {
-                    onScanlineHBlankTick();
+                    OnScanlineHBlankTick();
                 }
                 else // Pixel transfer
                 {
-                    currentMode = LcdStatusFlags.ScanLineVRamMode;
-
-                    onScanlinePixelTransferTick();
-                    if (pixel >= ScanLineOamSearchCycles + ScanLineMode3MinCycles)
+                    if (scanlineDot == ScanLineOamSearchCycles + 1)
                     {
-                        OnHBlankStarted();
-
-                        currentMode = LcdStatusFlags.HBlankMode;
-
-                        if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
-                            _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-
-                        _frameClock -= RenderScan();
+                        _totalStalledPixels = 8; // 8 cycle 'stall' to fetch first background tile
+                        _totalStalledPixels += ScX % 8; // PPU discards some pixels so stalls
+                        return;
                     }
-                } 
+                    if (scanlineDot > ScanLineOamSearchCycles + _totalStalledPixels) 
+                    {
+                        currentMode = LcdStatusFlags.ScanLineVRamMode;
+
+                        OnScanlinePixelTransferTick();
+
+                        if (_currentPixel >= FrameWidth)
+                        {
+                            OnHBlankStarted();
+
+                            currentMode = LcdStatusFlags.HBlankMode;
+
+                            _currentlyStalledPixels = 0;
+                            _currentPixel = 0;
+
+                            if ((stat & LcdStatusFlags.HBlankModeInterrupt) == LcdStatusFlags.HBlankModeInterrupt)
+                                _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
+                        }
+                        else
+                        {
+                            RenderPixel(_currentPixel++);
+                        }
+                    }
+                }
             }
-            else if (scanline >= FrameHeight) // In V-Blank
+            else // In V-Blank
             {
                 currentMode = LcdStatusFlags.VBlankMode;
 
-                onScanlineVBlankTick();
+                OnScanlineVBlankTick();
 
-                if (pixel == 0)
+                if (scanlineDot == 0)
                 {
                     if (scanline > FrameHeight + 9)
                     {
@@ -498,7 +535,7 @@ namespace Emux.GameBoy.Graphics
 
                         if ((stat & LcdStatusFlags.OamBlankModeInterrupt) == LcdStatusFlags.OamBlankModeInterrupt)
                             _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-                    } 
+                    }
                     else if (scanline == FrameHeight)
                     {
                         OnVBlankStarted();
@@ -512,222 +549,222 @@ namespace Emux.GameBoy.Graphics
 
             stat &= ~(LcdStatusFlags.ModeMask | LcdStatusFlags.Coincidence);
             stat |= currentMode;
-            if (LY == _lyc)
+            if (scanline == _lyc)
                 stat |= LcdStatusFlags.Coincidence;
             Stat = stat;
         }
 
-        protected virtual void onScanlineOAMSearchTick()
+        protected virtual void OAMSearch()
         {
-            
+            fixed (byte* ptr = _oam)
+            {
+                var spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
+                var sprites = (SpriteData*)ptr;
+                var spritesOnLine = Enumerable.
+                    Range(0, 40)
+                    .Select(i => (index: (byte)i, sprite: sprites[i]))
+                    .Where(data => data.sprite.Y - 16 <= LY && LY < data.sprite.Y - 16 + spriteHeight && data.sprite.X > 0 && data.sprite.X <= FrameWidth + 8)
+                    .OrderBy(data => data.index) // If two sprites are at the same X, the one earliest in OAM wins
+                    .ThenBy(data => data.sprite.X)
+                    .Take(10);
+                var count = spritesOnLine.Count();
+
+                _spriteIndexes.AsSpan().Fill(0xFF);
+                foreach (var spriteData in spritesOnLine)
+                {
+                    for (int x = 0, spriteX = spriteData.sprite.X - 8; x < 8; x++, spriteX++)
+                    {
+                        if (spriteX >= 0 && spriteX < FrameWidth)
+                            _spriteIndexes[spriteX] = spriteData.index;
+                    }
+                }
+            }
         }
 
-        protected virtual void onScanlinePixelTransferTick()
+        protected virtual void RenderPixel(int pixel)
         {
-            
-        }
-
-        protected virtual void onScanlineHBlankTick()
-        {
-            
-        }
-
-        protected virtual void onScanlineVBlankTick()
-        {
-            
-        }
-        
-
-        private void checkCoincidenceInterrupt()
-        {
-            if (LY == _lyc && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
-                _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
-        }
-        
-        protected virtual int RenderScan()
-        {
-            var delayedCycles = ScX % 8; // PPU discards some pixels so stalls
             if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
-                RenderBackgroundScan();
+                RenderBackground(pixel);
+            else
+                RenderPixel(pixel, LY, 0, BGOffColor);
             if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
-                RenderWindowScan();
+                RenderWindow(pixel);
             if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
-                RenderSpritesScan(ref delayedCycles);
-
-            return delayedCycles;
+                RenderSprite(pixel);
         }
 
-        protected void RenderBackgroundScan()
+        protected void RenderBackground(int pixel)
         {
             // Move to correct tile map address.
-            int tileMapAddress = (_lcdc & LcdControlFlags.BgTileMapSelect) == LcdControlFlags.BgTileMapSelect
+            var tileMapAddress = (_lcdc & LcdControlFlags.BgTileMapSelect) == LcdControlFlags.BgTileMapSelect
                 ? 0x1C00
                 : 0x1800;
 
-            int tileMapLine = ((LY + ScY) & 0xFF) >> 3;
+            var tileMapLine = ((LY + ScY) & 0xFF) >> 3;
             tileMapAddress += tileMapLine * 0x20;
 
             // Move to correct tile data address.
-            int tileDataAddress = (_lcdc & LcdControlFlags.BgWindowTileDataSelect) ==
+            var tileDataAddress = (_lcdc & LcdControlFlags.BgWindowTileDataSelect) ==
                                   LcdControlFlags.BgWindowTileDataSelect
                 ? 0x0000
                 : 0x0800;
 
-            int tileDataOffset = ((LY + ScY) & 7) * 2;
-            int flippedTileDataOffset = 14 - tileDataOffset;
+            var tileDataOffset = ((LY + ScY) & 7) * 2;
+            var flippedTileDataOffset = 14 - tileDataOffset;
 
-            int x = ScX;
+            var startPixel = pixel;
+            var x = ScX + startPixel;
 
             // Read first tile data to render.
-            var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F) : 0;
-            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
+            var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x / 8 & 31) : 0;
+            CopyTileData(
+                tileMapAddress,
+                x / 8 & 31,
+                tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
+                _currentTileData,
+                flags
+            );
+            
+            // Read next tile data to render.
+            if (_device.GbcMode)
+                flags = GetTileDataFlags(tileMapAddress, x / 8 & 31);
+            CopyTileData(
+                tileMapAddress,
+                x / 8 & 31,
+                tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
+                _currentTileData,
+                flags
+            );
 
-            // Render scan line.
-            for (int outputX = 0; outputX < FrameWidth; outputX++, x++)
-            {
-                if ((x & 7) == 0)
-                {
-                    // Read next tile data to render.
-                    if (_device.GbcMode)
-                        flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
-                }
-                
-                RenderTileDataPixel(_currentTileData, flags, outputX, x);
-            }
+            var outputX = startPixel;
+            RenderTileDataPixel(_currentTileData, flags, outputX, x);
         }
-
-        protected void RenderWindowScan()
+        
+        protected void RenderSprite(int currentPixel)
         {
-            if (LY >= WY)
-            {
-                // Move to correct tile map address.
-                int tileMapAddress = (_lcdc & LcdControlFlags.WindowTileMapSelect)
-                                     == LcdControlFlags.WindowTileMapSelect
-                    ? 0x1C00
-                    : 0x1800;
-
-                int tileMapLine = ((LY - WY) & 0xFF) >> 3;
-                tileMapAddress += tileMapLine * 0x20;
-
-                // Move to correct tile data address.
-                int tileDataAddress = (_lcdc & LcdControlFlags.BgWindowTileDataSelect) ==
-                                      LcdControlFlags.BgWindowTileDataSelect
-                    ? 0x0000
-                    : 0x0800;
-
-                int tileDataOffset = ((LY - WY) & 7) * 2;
-                int flippedTileDataOffset = 14 - tileDataOffset;
-
-                int x = 0;
-                var flags = SpriteDataFlags.None;
-
-                // Render scan line.
-                for (int outputX = WX - 7; outputX < FrameWidth; outputX++, x++)
-                {
-                    if ((x & 7) == 0)
-                    {
-                        // Read next tile data to render.
-                        if (_device.GbcMode)
-                            flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
-                    }
-
-                    if (outputX >= 0)
-                        RenderTileDataPixel(_currentTileData, flags, outputX, x);
-                }
-            }
-        }
-
-        protected void RenderSpritesScan(ref int delayedCycles)
-        {
-            int spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
+            var currentSpriteIndex = _spriteIndexes[currentPixel];
+            if (currentSpriteIndex == 0xFF)
+                return;
+            SpriteData currentSprite;
             fixed (byte* ptr = _oam)
             {
-                // GameBoy only supports 10 sprites in one scan line.
-                int spritesCount = 0;
-                for (int i = 0; i < 40 && spritesCount < 10; i++)
+                var sprites = (SpriteData*)ptr;
+                currentSprite = sprites[currentSpriteIndex];
+            }
+            // Check if we just started drawing a new sprite
+            if (currentPixel == 0 || _spriteIndexes[currentPixel - 1] != currentSpriteIndex)
+                _totalStalledPixels += 11 - Math.Min(5, (currentSprite.X + ScX) % 8); // Simulate a PPU stall
+
+            var startX = currentPixel - (currentSprite.X - 8);
+
+            var spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
+            RenderSprite(spriteHeight, currentSprite, startX);
+        }
+        
+        protected void RenderWindow(int currentPixel)
+        {
+            if (LY < WY)
+                return;
+            var actualX = WX - 7;
+            if (actualX > 166)
+                return;
+            if (WY >= FrameHeight)
+                return;
+            if (currentPixel < actualX)
+                return;
+            if (currentPixel == WX)
+                _totalStalledPixels += 6; // At least 6 cycles, exact number not known
+
+            // Move to correct tile map address.
+            var tileMapAddress = (_lcdc & LcdControlFlags.WindowTileMapSelect)
+                                    == LcdControlFlags.WindowTileMapSelect
+                ? 0x1C00
+                : 0x1800;
+
+            var tileMapLine = ((LY - WY) & 0xFF) >> 3;
+            tileMapAddress += tileMapLine * 0x20;
+
+            // Move to correct tile data address.
+            var tileDataAddress = (_lcdc & LcdControlFlags.BgWindowTileDataSelect) ==
+                                    LcdControlFlags.BgWindowTileDataSelect
+                ? 0x0000
+                : 0x0800;
+
+            var tileDataOffset = ((LY - WY) & 7) * 2;
+            var flippedTileDataOffset = 14 - tileDataOffset;
+
+            var x = currentPixel - actualX;
+            var flags = SpriteDataFlags.None;
+            // Read next tile data to render.
+            if (_device.GbcMode)
+                flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
+            CopyTileData(
+                tileMapAddress, 
+                x >> 3 & 0x1F,
+                tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset),
+                _currentTileData,
+                flags
+            );
+
+            RenderTileDataPixel(_currentTileData, flags, currentPixel, x);
+        }
+
+        private void RenderSprite(int spriteHeight, SpriteData sprite, int spriteColumn)
+        {
+            var absoluteY = sprite.Y - 16;
+            var rowIndex = LY - absoluteY;
+
+            // Flip sprite vertically if specified.
+            if ((sprite.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
+                rowIndex = (spriteHeight - 1) - rowIndex;
+
+            // Read tile data.
+            var vramBankOffset = _device.GbcMode && (sprite.Flags & SpriteDataFlags.TileVramBank) != 0
+                ? 0x2000
+                : 0x0000;
+            Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (sprite.TileDataIndex << 4) + rowIndex * 2), _currentTileData, 0, 2);
+
+            // Render sprite.
+            var screenX = sprite.X - 8 + spriteColumn;
+
+            // Check if is above or below background.
+            if ((sprite.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(screenX, LY) == 0)
+            {
+                // Flip sprite horizontally if specified.
+                var colorIndex = GetPixelColorIndex(
+                    (sprite.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? spriteColumn : 7 - spriteColumn,
+                    _currentTileData
+                );
+
+                // Check if not transparent.
+                if (colorIndex == 0)
+                    return;
+                    
+                if (_device.GbcMode)
                 {
-                    var data = ((SpriteData*) ptr)[i];
-                    int absoluteY = data.Y - 16;
-
-                    // Check if sprite is on current scan line.
-                    if (absoluteY <= LY && LY < absoluteY + spriteHeight)
-                    {
-                        // TODO: take order into account.
-                        spritesCount++;
-
-                        // Check if actually on the screen.
-                        if (data.X > 0 && data.X < FrameWidth + 8)
-                        {
-                            delayedCycles += 11 - Math.Min(5, (data.X + ScX) % 8); // Simulate a PPU stall
-
-                            // Read tile data.
-                            int rowIndex = LY - absoluteY;
-
-                            // Flip sprite vertically if specified.
-                            if ((data.Flags & SpriteDataFlags.YFlip) == SpriteDataFlags.YFlip)
-                                rowIndex = (spriteHeight - 1) - rowIndex;
-
-                            // Read tile data.
-                            int vramBankOffset = _device.GbcMode && (data.Flags & SpriteDataFlags.TileVramBank) != 0
-                                ? 0x2000
-                                : 0x0000;
-                            Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (data.TileDataIndex << 4) + rowIndex * 2), _currentTileData, 0, 2);
-
-                            var absoluteX = data.X - 8;
-                            var spriteStartPixel = Math.Max(0, absoluteX);
-                            var spriteStartIndex = spriteStartPixel - absoluteX;
-                            var spriteEndPixel = Math.Max(0, FrameWidth - spriteStartPixel + 8);
-                            var spriteEndIndex = Math.Min(8, spriteEndPixel);
-                            // Render sprite.
-                            for (int x = spriteStartIndex; x < spriteEndIndex; x++)
-                            {
-                                absoluteX = data.X - 8;
-                                // Flip sprite horizontally if specified.
-                                absoluteX += (data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? x : 7 - x;
-
-                                // Check if in frame and sprite is above or below background.
-                                if (absoluteX >= 0 && absoluteX < FrameWidth 
-                                    && ((data.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(absoluteX, LY) == 0))
-                                {
-                                    int colorIndex = GetPixelColorIndex(x, _currentTileData);
-
-                                    // Check if not transparent.
-                                    if (colorIndex != 0)
-                                    {
-                                        if (_device.GbcMode)
-                                        {
-                                            int paletteIndex = (int)(data.Flags & SpriteDataFlags.PaletteNumberMask);
-                                            RenderPixel(absoluteX, LY, colorIndex, GetGbcColor(_spritePaletteMemory, paletteIndex, colorIndex));
-                                        }
-                                        else
-                                        {
-                                            byte palette = (data.Flags & SpriteDataFlags.UsePalette1) == SpriteDataFlags.UsePalette1
-                                                ? ObjP1
-                                                : ObjP0;
-                                            int greyshadeIndex = GetGreyshadeIndex(palette, colorIndex);
-                                            RenderPixel(absoluteX, LY, colorIndex, _greyshades[greyshadeIndex]);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    var paletteIndex = (int)(sprite.Flags & SpriteDataFlags.PaletteNumberMask);
+                    RenderPixel(screenX, LY, colorIndex, GetGbcColor(_spritePaletteMemory, paletteIndex, colorIndex));
+                }
+                else
+                {
+                    var palette = (sprite.Flags & SpriteDataFlags.UsePalette1) == SpriteDataFlags.UsePalette1
+                        ? ObjP1
+                        : ObjP0;
+                    var greyshadeIndex = GetGreyshadeIndex(palette, colorIndex);
+                    RenderPixel(screenX, LY, colorIndex, _greyshades[greyshadeIndex]);
                 }
             }
         }
 
         protected void CopyTileData(int tileMapAddress, int tileIndex, int tileDataAddress, byte[] buffer, SpriteDataFlags flags)
         {
-            byte dataIndex = _vram[(ushort)(tileMapAddress + tileIndex)];
-            if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) !=
-                LcdControlFlags.BgWindowTileDataSelect)
+            var dataIndex = _vram[tileMapAddress + tileIndex];
+            if ((_lcdc & LcdControlFlags.BgWindowTileDataSelect) != LcdControlFlags.BgWindowTileDataSelect)
             {
                 // Index is signed number in [-128..127] => compensate for it.
                 dataIndex = unchecked((byte)((sbyte)dataIndex + 0x80));
             }
-            int bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
+            var bankOffset = ((flags & SpriteDataFlags.TileVramBank) != 0) ? 0x2000 : 0x0000;
             Buffer.BlockCopy(_vram, bankOffset + tileDataAddress + (dataIndex << 4), buffer, 0, 2);
         }
 
@@ -783,7 +820,7 @@ namespace Emux.GameBoy.Graphics
 
         protected virtual void RenderPixel(int x, int y, int colorIndex, Color color)
         {
-            _frameIndices[y * FrameWidth + x] = (byte)colorIndex;
+            _colorIndices[y * FrameWidth + x] = (byte)colorIndex;
             fixed (byte* frameBuffer = _frameBuffer)
             {
                 ((Color*)frameBuffer)[y * FrameWidth + x] = color;
@@ -792,7 +829,7 @@ namespace Emux.GameBoy.Graphics
 
         protected int GetRenderedColorIndex(int x, int y)
         {
-            return _frameIndices[y * FrameWidth + x];
+            return _colorIndices[y * FrameWidth + x];
         }
 
         protected void SwitchMode(LcdStatusFlags mode)
@@ -803,6 +840,27 @@ namespace Emux.GameBoy.Graphics
         protected int GetVRamOffset()
         {
             return _device.GbcMode ? 0x2000 * Vbk : 0;
+        }
+
+        protected virtual void OnScanlinePixelTransferTick()
+        {
+
+        }
+
+        protected virtual void OnScanlineHBlankTick()
+        {
+
+        }
+
+        protected virtual void OnScanlineVBlankTick()
+        {
+
+        }
+
+        private void CheckCoincidenceInterrupt()
+        {
+            if (LY == _lyc && (Stat & LcdStatusFlags.CoincidenceInterrupt) != 0)
+                _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
         }
 
         protected virtual void OnHBlankStarted()

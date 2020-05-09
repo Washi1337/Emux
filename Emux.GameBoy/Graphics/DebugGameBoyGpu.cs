@@ -12,57 +12,38 @@ namespace Emux.GameBoy.Graphics
 
         protected override (int width, int height) getFrameBufferSize() => (OneLineCycles, FrameWidth + 10);
 
-        protected override void onScanlineOAMSearchTick()
+        protected override void OAMSearch()
         {
             drawOAMdebugOverlay();
         }
 
-        protected override void onScanlinePixelTransferTick()
+        protected override void OnScanlinePixelTransferTick()
         {
-            base.onScanlinePixelTransferTick();
+            base.OnScanlinePixelTransferTick();
         }
 
         protected override void OnHBlankStarted()
         {
-            
+
+            drawVramModesDebug(_totalStalledPixels);
         }
 
-        protected override void onScanlineVBlankTick()
+        protected override void OnScanlineVBlankTick()
         {
             drawVblankDebugOverlay();
         }
 
-        protected override int RenderScan()
-        {
-            var delayedCycles = ScX % 8; // PPU discards some pixels so stalls
-            if ((_lcdc & LcdControlFlags.EnableBackground) == LcdControlFlags.EnableBackground)
-                RenderBackgroundScan();
-            if ((_lcdc & LcdControlFlags.EnableWindow) == LcdControlFlags.EnableWindow)
-                RenderWindowScan();
-            if ((_lcdc & LcdControlFlags.EnableSprites) == LcdControlFlags.EnableSprites)
-                RenderSpritesScan(ref delayedCycles);
-
-            drawVramModesDebug(delayedCycles);
-
-            return delayedCycles;
-        }
-
         private unsafe void drawVramModesDebug(int delayedCycles)
         {
-            var pixelTransferColor = new Color(169, 194, 132);
             var hBlankColor = new Color(166, 159, 196);
             if (!_device.Cpu.Halted)
-            {
-                pixelTransferColor.Darken(30);
                 hBlankColor.Darken(30);
-            }
+
             fixed (byte* frameBuffer = _frameBuffer)
             {
                 var colorBuffer = (Color*)frameBuffer;
-                for (var x = FrameWidth; x < FrameWidth + delayedCycles; x++)
-                    colorBuffer[LY * OneLineCycles + x + ScanLineOamSearchCycles] = pixelTransferColor;
                 for (var x = FrameWidth + delayedCycles; x < OneLineCycles - ScanLineOamSearchCycles; x++)
-                    colorBuffer[LY * OneLineCycles + x + ScanLineOamSearchCycles] = hBlankColor;
+                    colorBuffer[(LY - 1) * OneLineCycles + x + ScanLineOamSearchCycles] = hBlankColor;
             }
         }
         private unsafe void drawOAMdebugOverlay()
@@ -70,6 +51,7 @@ namespace Emux.GameBoy.Graphics
             var oamSearchColor = new Color(239, 133, 133);
             if (!_device.Cpu.Halted)
                 oamSearchColor.Darken(30);
+
             fixed (byte* frameBuffer = _frameBuffer)
             {
                 var colorBuffer = (Color*)frameBuffer;
@@ -97,7 +79,7 @@ namespace Emux.GameBoy.Graphics
             if (!_device.Cpu.Halted)
                 color.Darken(30);
 
-            _frameIndices[y * FrameWidth + x] = (byte)colorIndex;
+            _colorIndices[y * FrameWidth + x] = (byte)colorIndex;
             fixed (byte* frameBuffer = _frameBuffer)
             {
                 ((Color*)frameBuffer)[y * OneLineCycles + x + ScanLineOamSearchCycles] = color;
