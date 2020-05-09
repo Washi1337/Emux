@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Emux.GameBoy.Graphics
+﻿namespace Emux.GameBoy.Graphics
 {
     public class DebugGameBoyGpu : GameBoyGpu
     {
@@ -12,11 +8,6 @@ namespace Emux.GameBoy.Graphics
 
         protected override (int width, int height) getFrameBufferSize() => (OneLineCycles, FrameWidth + 10);
 
-        protected override void OAMSearch()
-        {
-            drawOAMdebugOverlay();
-        }
-
         protected override void OnScanlinePixelTransferTick()
         {
             base.OnScanlinePixelTransferTick();
@@ -24,8 +15,11 @@ namespace Emux.GameBoy.Graphics
 
         protected override void OnHBlankStarted()
         {
+            base.OnHBlankStarted();
 
-            drawVramModesDebug(_totalStalledPixels);
+            drawOAMdebugOverlay();
+            if (LY > 0 && LY < FrameHeight)
+                drawVramModesDebug(_totalStalledPixels);
         }
 
         protected override void OnScanlineVBlankTick()
@@ -35,15 +29,22 @@ namespace Emux.GameBoy.Graphics
 
         private unsafe void drawVramModesDebug(int delayedCycles)
         {
+            var pixelTransferColor = new Color(169, 194, 132);
             var hBlankColor = new Color(166, 159, 196);
             if (!_device.Cpu.Halted)
+            {
+                pixelTransferColor.Darken(30);
                 hBlankColor.Darken(30);
-
+            }
             fixed (byte* frameBuffer = _frameBuffer)
             {
+                var scanline = LY;
                 var colorBuffer = (Color*)frameBuffer;
-                for (var x = FrameWidth + delayedCycles; x < OneLineCycles - ScanLineOamSearchCycles; x++)
-                    colorBuffer[(LY - 1) * OneLineCycles + x + ScanLineOamSearchCycles] = hBlankColor;
+                var x = 0;
+                for (; x < delayedCycles; x++)
+                    colorBuffer[scanline * OneLineCycles + ScanLineOamSearchCycles + FrameWidth + x] = pixelTransferColor;
+                for (; x < ScanLineMode3MinCycles + ScanLineMode0MaxCycles; x++)
+                    colorBuffer[scanline * OneLineCycles + ScanLineOamSearchCycles + FrameWidth + x] = hBlankColor;
             }
         }
         private unsafe void drawOAMdebugOverlay()
@@ -68,9 +69,10 @@ namespace Emux.GameBoy.Graphics
 
             fixed (byte* frameBuffer = _frameBuffer)
             {
+                var scanline = LY;
                 var colorBuffer = (Color*)frameBuffer;
                 for (var x = 0; x < OneLineCycles; x++)
-                    colorBuffer[LY * OneLineCycles + x] = vBlankColor;
+                    colorBuffer[scanline * OneLineCycles + x] = vBlankColor;
             }
         }
 
