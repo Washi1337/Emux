@@ -25,6 +25,7 @@ namespace Emux.GameBoy.Graphics
         protected const byte _pixelSizeBytes = 3;
 
         public event EventHandler HBlankStarted;
+        public event EventHandler HBlankTick;
         public event EventHandler VBlankStarted;
 
         protected readonly GameBoy _device;
@@ -65,7 +66,6 @@ namespace Emux.GameBoy.Graphics
         }
 
         protected virtual (int width, int height) getFrameBufferSize() => (FrameWidth, FrameHeight);
-
 
         public Color Color0
         {
@@ -114,7 +114,6 @@ namespace Emux.GameBoy.Graphics
         }
 
         public LcdStatusFlags LCDMode => Stat & LcdStatusFlags.ModeMask;
-
 
         public LcdStatusFlags Stat
         {
@@ -245,15 +244,6 @@ namespace Emux.GameBoy.Graphics
         public void WriteOam(byte address, byte value)
         {
             _oam[address] = value;
-        }
-
-        /// <summary>
-        /// Writes the given data to the Object Attribute Memory (OAM).
-        /// </summary>
-        /// <param name="oamData">The data to import.</param>
-        public void ImportOam(byte[] oamData)
-        {
-            Buffer.BlockCopy(oamData, 0, _oam, 0, oamData.Length);
         }
 
         /// <summary>
@@ -453,7 +443,7 @@ namespace Emux.GameBoy.Graphics
             }
         }
 
-        private void Step()
+        protected virtual void Step()
         {
             if (_currentlyStalledPixels < _totalStalledPixels)
             {
@@ -563,19 +553,19 @@ namespace Emux.GameBoy.Graphics
                 var spritesOnLine = Enumerable.
                     Range(0, 40)
                     .Select(i => (index: (byte)i, sprite: sprites[i]))
-                    .Where(data => data.sprite.Y - 16 <= scanline && scanline < data.sprite.Y - 16 + spriteHeight && data.sprite.X > 0 && data.sprite.X <= FrameWidth + 8)
-                    .OrderBy(data => data.index) // If two sprites are at the same X, the one earliest in OAM wins
-                    .ThenBy(data => data.sprite.X)
+                    .Where(data => data.sprite.Y - 16 <= scanline && scanline < data.sprite.Y - 16 + spriteHeight && data.sprite.X > 0 && data.sprite.X < FrameWidth + 8)
+                    .OrderBy(data => data.sprite.X)
+                    .ThenBy(data => data.index) // If two sprites are at the same X, the one earliest in OAM wins
                     .Take(10);
                 var count = spritesOnLine.Count();
 
                 _spriteIndexes.AsSpan().Fill(0xFF);
-                foreach (var spriteData in spritesOnLine)
+                foreach (var (index, sprite) in spritesOnLine)
                 {
-                    for (int x = 0, spriteX = spriteData.sprite.X - 8; x < 8; x++, spriteX++)
+                    for (int x = 0, spriteX = sprite.X - 8; x < 8; x++, spriteX++)
                     {
                         if (spriteX >= 0 && spriteX < FrameWidth)
-                            _spriteIndexes[spriteX] = spriteData.index;
+                            _spriteIndexes[spriteX] = index;
                     }
                 }
             }
@@ -840,7 +830,7 @@ namespace Emux.GameBoy.Graphics
 
         protected virtual void OnScanlineHBlankTick()
         {
-
+            HBlankTick.Invoke(this, EventArgs.Empty);
         }
 
         protected virtual void OnScanlineVBlankTick()
