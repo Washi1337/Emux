@@ -6,6 +6,14 @@ namespace Emux.GameBoy.Memory
 {
     public class DmaController : IGameBoyComponent
     {
+        public enum DMAType
+        {
+            None,
+            OAM,
+            HBlank,
+            General
+        }
+
         private const byte TransferingMask = 0b10000000; // 0x80
         private const byte VBlankMask = TransferingMask; // 0x80
         private const byte LengthMask = 0b01111111; // 0x7F
@@ -18,8 +26,10 @@ namespace Emux.GameBoy.Memory
         private byte _destinationLow;
         private byte _dmaLengthMode;
         private bool _HBlankDMAactive;
+        private DMAType _activeDMA;
+        private byte _OAMDMAIndex;
+        private ushort _OAMDMAAddress;
         private readonly byte[] HDmaBlockCopy = new byte[OAMDMABlockSize];
-        private readonly byte[] _OamBlockCopy = new byte[OAMSize];
         private readonly byte[] _vramBlockCopy = new byte[((LengthMask & LengthMask) + 1) * 0x10]; // Largest possible size
 
         public DmaController(GameBoy device)
@@ -33,6 +43,25 @@ namespace Emux.GameBoy.Memory
 
         public int Length => ((_dmaLengthMode & LengthMask) + 1) * 0x10;
 
+        public DMAType ActiveDMA 
+        {
+            get => _activeDMA;
+            private set 
+            {
+                _activeDMA = value;
+                
+                if (value == DMAType.OAM)
+                    _device.Memory.RAMIsBusy = true;
+                else if (value == DMAType.General)
+                    _device.Memory.ROMIsBusy = true;
+                else if (value == DMAType.None)
+                {
+                    _device.Memory.ROMIsBusy = false;
+                    _device.Memory.RAMIsBusy = false;
+                }
+            }
+        }
+
         public void Initialize()
         {
             _device.Gpu.HBlankStarted += GpuOnHBlankStarted;
@@ -40,6 +69,7 @@ namespace Emux.GameBoy.Memory
 
         public void Reset()
         {
+            _activeDMA = DMAType.None;
             _HBlankDMAactive = false;
             _currentBlockIndex = 0;
             _sourceHigh = 0;
@@ -52,6 +82,22 @@ namespace Emux.GameBoy.Memory
         public void Shutdown()
         {
             _device.Gpu.HBlankStarted -= GpuOnHBlankStarted;
+        }
+
+        internal void Step()
+        {
+            switch (ActiveDMA)
+            {
+                case DMAType.None:
+                    return;
+                case DMAType.OAM:
+                    var value = _device.Memory.ReadByte((ushort)(_OAMDMAAddress + _OAMDMAIndex), false);
+                    _device.Memory.WriteByte((ushort)(0xFE00 + _OAMDMAIndex), value, false);
+                    _OAMDMAIndex++;
+                    if (_OAMDMAIndex == OAMSize)
+                        ActiveDMA = DMAType.None;
+                    break;
+            }
         }
 
         public byte ReadRegister(ushort address)
@@ -82,7 +128,9 @@ namespace Emux.GameBoy.Memory
                 // Writing to this register launches a DMA transfer from ROM or RAM to OAM memory (sprite attribute table).
                 // The written value specifies the transfer source address divided by 0x100
                 // The transfer takes 160 machine cycles
-                PerformOamDmaTransfer(value);
+                ActiveDMA = DMAType.OAM;
+                _OAMDMAAddress = (ushort)(value * 0x100);
+                _OAMDMAIndex = 0;
                 return;
             }
 
@@ -143,12 +191,6 @@ namespace Emux.GameBoy.Memory
                 _HBlankDMAactive = true;
                 _currentBlockIndex = 0;
             }
-        }
-
-        private void PerformOamDmaTransfer(byte dma)
-        {
-            _device.Memory.ReadBlock((ushort)(dma * 0x100), _OamBlockCopy, 0, OAMSize);
-            _device.Gpu.ImportOam(_OamBlockCopy);
         }
 
         private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)

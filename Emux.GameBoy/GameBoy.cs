@@ -65,7 +65,7 @@ namespace Emux.GameBoy
                 (Cartridge = cartridge),
                 (Memory = new GameBoyMemory(this)),
                 (Cpu = new GameBoyCpu(this, clock)),
-                (Gpu = new DebugGameBoyGpu(this)),
+                (Gpu = new GameBoyGpu(this)),
                 (Spu = new GameBoySpu(this)),
                 (KeyPad = new GameBoyPad(this)),
                 (Timer = new GameBoyTimer(this))
@@ -267,6 +267,7 @@ namespace Emux.GameBoy
 			{
 				Gpu.Step(1);
 				Timer.Step(1);
+				Memory.DmaController.Step();
 			} while (--cycles > 0);
 		}
 
