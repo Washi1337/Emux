@@ -118,7 +118,7 @@ namespace Emux.GameBoy.Cpu
             Registers.IMESet = false;
 
             int cycles;
-            if (Halted)
+            if (Halted || _device.Memory.ROMIsBusy)
             {
                 cycles = 4;
             }
