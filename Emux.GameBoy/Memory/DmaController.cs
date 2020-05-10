@@ -28,7 +28,6 @@ namespace Emux.GameBoy.Memory
         private byte _OAMDMAIndex;
         private ushort _DMAIndex;
         private ushort _OAMDMAAddress;
-        private readonly byte[] _vramBlockCopy = new byte[((LengthMask & LengthMask) + 1) * 0x10]; // Largest possible size
 
         public DmaController(GameBoy device)
         {
@@ -113,11 +112,27 @@ namespace Emux.GameBoy.Memory
                 case DMAType.None:
                     return;
                 case DMAType.OAM:
-                    var value = _device.Memory.ReadByte((ushort)(_OAMDMAAddress + _OAMDMAIndex), false);
-                    _device.Memory.WriteByte((ushort)(0xFE00 + _OAMDMAIndex), value, false);
-                    _OAMDMAIndex++;
-                    if (_OAMDMAIndex == OAMSize)
-                        ActiveDMA = DMAType.None;
+                    {
+                        var value = _device.Memory.ReadByte((ushort)(_OAMDMAAddress + _OAMDMAIndex), false);
+                        _device.Memory.WriteByte((ushort)(0xFE00 + _OAMDMAIndex), value, false);
+                        _OAMDMAIndex++;
+                        if (_OAMDMAIndex == OAMSize)
+                            ActiveDMA = DMAType.None;
+                    }
+                    break;
+                case DMAType.General:
+                    {
+                        var value = _device.Memory.ReadByte((ushort)(SourceAddress + _DMAIndex));
+                        _device.Memory.WriteByte((ushort)(DestinationAddress + _DMAIndex), value);
+                        _DMAIndex++;
+                        RemianingDMALength--;
+
+                        if (RemianingDMALength == 0 || DestinationAddress + _DMAIndex > ushort.MaxValue)
+                        {
+                            ActiveDMA = DMAType.None;
+                            _device.Memory.ROMIsBusy = false;
+                        }
+                    }
                     break;
             }
         }
@@ -191,17 +206,17 @@ namespace Emux.GameBoy.Memory
         {
             if (!isHBlank)
             {
-                //ActiveDMA = DMAType.General;
-                _device.Memory.ReadBlock(SourceAddress, _vramBlockCopy, 0, RemianingDMALength);
-                _device.Gpu.WriteVRam((ushort)(DestinationAddress - VRAMStartAddress), _vramBlockCopy, 0, RemianingDMALength);
+                ActiveDMA = DMAType.General;
+                _device.Memory.ROMIsBusy = true;
             }
             else
             {
                 ActiveDMA = DMAType.HBlank;
-                _DMAIndex = 0;
                 currentScanline = _device.Gpu.LY;
                 transferedThisScanline = 0;
             }
+
+            _DMAIndex = 0;
         }
 
 
