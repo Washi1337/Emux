@@ -15,7 +15,15 @@ namespace Emux.GameBoy.Memory
             NumSprites = 40,
             OAMSize = (ushort)(SpriteSize * NumSprites);
         public const int
+            ROMBank0 = 0x0000,
+            ROMBankN = 0x4000,
+            VRAM = 0x8000,
+            ExternalRAM = 0xA000,
+            WorkRAMBank0 = 0xC000,
+            WorkRAMBankN = 0xD000,
+            EchoRAM = 0xC000,
             OAMLocation = 0xFE00,
+            IORegisters = 0xFF80,
             HighRAMLocation = 0xFF80;
 
         private readonly GameBoy _device;
@@ -42,7 +50,10 @@ namespace Emux.GameBoy.Memory
 
         public DmaController DmaController { get; }
 
+        // Another component is actively using RAM so RAM is unavailable (except HRAM)
         public bool RAMIsBusy { get; set; }
+
+        // Another component is actively using ROM so RoM is unavailable. CPU is essentially halted.
         public bool ROMIsBusy { get; set; }
 
         public void Initialize()
