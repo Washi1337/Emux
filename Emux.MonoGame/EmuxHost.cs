@@ -190,10 +190,10 @@ namespace Emux.MonoGame
                           $"LYC: {GameBoy.Gpu.LYC}\n";
             _spriteBatch.DrawString(_font, info, Vector2.Zero, Color.Cyan);
 
-			drawGraph(rawAverage);
+			DrawGraph(rawAverage);
 		}
 
-		private void drawGraph(double average)
+		private void DrawGraph(double average)
 		{
 			// Chart
 			const double max = 100; // ms

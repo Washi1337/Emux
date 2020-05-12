@@ -77,7 +77,7 @@ namespace Emux.GameBoy
             Reset();
             IsPoweredOn = true;
 
-			_clock.Tick += nextFrame;
+			_clock.Tick += NextFrame;
 			new Thread(CpuLoop)
 			{
 				Name = "Z80CPULOOP",
@@ -175,7 +175,7 @@ namespace Emux.GameBoy
 
 		public double SpeedFactor => Cpu.CyclesPerSecond / (GameBoyCpu.OfficialClockFrequency * Cpu.SpeedMultiplier);
 
-		private void nextFrame(object sender, EventArgs e)
+		private void NextFrame(object sender, EventArgs e)
 		{
 			_frameStartSignal.Set();
 
