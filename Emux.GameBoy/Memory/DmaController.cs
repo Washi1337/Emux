@@ -28,6 +28,7 @@ namespace Emux.GameBoy.Memory
         private byte _OAMDMAIndex;
         private ushort _DMAIndex;
         private ushort _OAMDMAAddress;
+        private int currentScanline, transferedThisScanline;
 
         public DmaController(GameBoy device)
         {
@@ -46,7 +47,7 @@ namespace Emux.GameBoy.Memory
         {
             set
             {
-                RemianingDMALength = ((value & LengthMask) + 1) * 0x10;
+                RemianingDMALength = ((value & LengthMask) + 1) * 16;
 
                 var isHblank = (value & TransferingMask) == TransferingMask;
                 if (ActiveDMA == DMAType.HBlank && (value & TransferingMask) == 0)
@@ -61,7 +62,7 @@ namespace Emux.GameBoy.Memory
             get
             {
                 var active = DMAIsActive ? 0 : TransferingMask;
-                var length = RemianingDMALength / 0x10 - 1;
+                var length = RemianingDMALength / 16 - 1;
                 return (byte)(active | length);
             } 
         }
@@ -226,7 +227,6 @@ namespace Emux.GameBoy.Memory
                 NewHDmaStep();
         }
 
-        int currentScanline, transferedThisScanline;
         private void NewHDmaStep() 
         {
             if (transferedThisScanline == 16)
