@@ -120,7 +120,7 @@ namespace Emux.GameBoy.Memory
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            return _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()];
+                            return _internalSwitchableRam[address - 0xF000 + GetSwitchableRamOffset()];
 
                         case OAMLocation:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
@@ -263,7 +263,7 @@ namespace Emux.GameBoy.Memory
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()] = value;
+                            _internalSwitchableRam[address - 0xF000 + GetSwitchableRamOffset()] = value;
                             break;
 
                         case 0xFE00:
@@ -346,11 +346,9 @@ namespace Emux.GameBoy.Memory
         {
             WriteBytes(address, BitConverter.GetBytes(value));
         }
-        
-        private int GetSwitchableRamOffset()
-        {
-            return _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
-        }
+
+        private int GetSwitchableRamOffset() 
+            => _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
 
         private void SwitchRamBank(byte value)
         {
