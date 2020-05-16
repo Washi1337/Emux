@@ -132,8 +132,6 @@ namespace Emux.GameBoy.Memory
                             else // Empty (0xFEA0 -> 0xFEFF)
                                 return 0x0;
                         case 0xFF00: // IO (0xFF00 -> 0xFFFF)
-                            if (address >= 0xFF10 && address < 0xFF40)
-                                return _device.Spu.ReadRegister(address);
                             switch (address & 0xFF)
                             {
                                 case 0x00:
@@ -149,6 +147,30 @@ namespace Emux.GameBoy.Memory
                                     return _device.Timer.ReadRegister((ushort) (address & 0xFF));
                                 case 0x0F:
                                     return (byte) _device.Cpu.Registers.IF;
+                                case 0x10:
+                                case 0x11:
+                                case 0x12:
+                                case 0x13:
+                                case 0x14:
+                                case 0x15:
+                                case 0x16:
+                                case 0x17:
+                                case 0x18:
+                                case 0x19:
+                                case 0x1A:
+                                case 0x1B:
+                                case 0x1C:
+                                case 0x1D:
+                                case 0x1E:
+                                case 0x1F:
+                                case 0x20:
+                                case 0x21:
+                                case 0x22:
+                                case 0x23:
+                                case 0x24:
+                                case 0x25:
+                                case 0x26:
+                                    return _device.Spu.ReadRegister(address);
                                 case 0x40:
                                 case 0x41:
                                 case 0x42:
@@ -258,8 +280,6 @@ namespace Emux.GameBoy.Memory
                     break;
 
                 case 0xF:
-                    if (address >= 0xFF10 && address < 0xFF40)
-                        _device.Spu.WriteRegister(address, value);
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
@@ -289,6 +309,31 @@ namespace Emux.GameBoy.Memory
                                     break;
                                 case 0x0F:
                                     _device.Cpu.Registers.IF = (InterruptFlags) (0xE0 | value);
+                                    break;
+                                case 0x10:
+                                case 0x11:
+                                case 0x12:
+                                case 0x13:
+                                case 0x14:
+                                case 0x15:
+                                case 0x16:
+                                case 0x17:
+                                case 0x18:
+                                case 0x19:
+                                case 0x1A:
+                                case 0x1B:
+                                case 0x1C:
+                                case 0x1D:
+                                case 0x1E:
+                                case 0x1F:
+                                case 0x20:
+                                case 0x21:
+                                case 0x22:
+                                case 0x23:
+                                case 0x24:
+                                case 0x25:
+                                case 0x26:
+                                    _device.Spu.WriteRegister(address, value);
                                     break;
                                 case 0x40:
                                 case 0x41:
