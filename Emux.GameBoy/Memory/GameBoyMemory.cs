@@ -22,8 +22,8 @@ namespace Emux.GameBoy.Memory
             WorkRAMBank0 = 0xC000,
             WorkRAMBankN = 0xD000,
             EchoRAM = 0xC000,
+            IORegisters = 0xFF00,
             OAMLocation = 0xFE00,
-            IORegisters = 0xFF80,
             HighRAMLocation = 0xFF80;
 
         private readonly GameBoy _device;
