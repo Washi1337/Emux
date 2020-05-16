@@ -15,8 +15,8 @@ namespace Emux.GameBoy.Graphics
         public const int ScanLineOamCycles = 80;
         public const int ScanLineVramCycles = 172;
         public const int HBlankCycles = 204;
-        public const int OneLineCycles = 456;
-        public const int VBlankCycles = 456 * 10;
+        public const int OneLineCycles = ScanLineOamCycles + ScanLineVramCycles + HBlankCycles;
+        public const int VBlankCycles = OneLineCycles * 10;
         public const int FullFrameCycles = 70224;
 
         public event EventHandler HBlankStarted;
@@ -30,6 +30,8 @@ namespace Emux.GameBoy.Graphics
         private readonly byte[] _oam = new byte[0xA0];
         private readonly byte[] _bgPaletteMemory = new byte[0x40];
         private readonly byte[] _spritePaletteMemory = new byte[0x40];
+
+        private readonly byte[] _currentTileData = new byte[2]; // Scratch buffer
 
         private readonly Color[] _greyshades =
         {
@@ -50,7 +52,7 @@ namespace Emux.GameBoy.Graphics
                 throw new ArgumentNullException(nameof(device));
             _device = device;
             VideoOutput = new EmptyVideoOutput();
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
+            _bgPaletteMemory.AsSpan().Fill(0xFF);
             _vram = new byte[device.GbcMode ? 0x4000 : 0x2000];
         }
 
@@ -85,8 +87,8 @@ namespace Emux.GameBoy.Graphics
             {
                 if ((value & LcdControlFlags.EnableLcd) == 0)
                 {
-                    Utilities.Memset(_frameBuffer, 255, _frameBuffer.Length);
-                    Array.Clear(_frameIndices, 0, _frameIndices.Length);
+                    _frameBuffer.AsSpan().Fill(0xFF);
+                    _frameIndices.AsSpan().Clear();
                     VideoOutput.RenderFrame(_frameBuffer);
                     LY = 0;
                     SwitchMode(LcdStatusFlags.HBlankMode);
@@ -267,7 +269,16 @@ namespace Emux.GameBoy.Graphics
 
         public void WriteVRam(ushort address, byte[] buffer, int offset, int length)
         {
-            Buffer.BlockCopy(buffer, offset, _vram, address + GetVRamOffset(), length);
+            var vramStartAddr = address + GetVRamOffset();
+#if DEBUG
+                if (offset + length > buffer.Length)
+                    Console.WriteLine($"Buffer is too small. Expected {offset + length} elements but got {buffer.Length}.");
+                if (vramStartAddr + length > _vram.Length)
+                    Console.WriteLine($"Writing to out of range of VRAM. End address is {vramStartAddr + length} but end is at {_vram.Length}.");
+#endif
+            if (vramStartAddr + length > _vram.Length)
+                length = _vram.Length - vramStartAddr;
+            Buffer.BlockCopy(buffer, offset, _vram, vramStartAddr, length);
         }
 
         /// <summary>
@@ -389,7 +400,6 @@ namespace Emux.GameBoy.Graphics
         
         public void Initialize()
         {
-            _device.Cpu.PerformedStep += CpuOnPerformedStep;
         }
 
         public void Reset()
@@ -409,26 +419,21 @@ namespace Emux.GameBoy.Graphics
             ObjP1 = 0xFF;
             WY = 0;
             WX = 0;
-            
-            Utilities.Memset(_bgPaletteMemory, 0xFF, _bgPaletteMemory.Length);
-            Utilities.Memset(_vram, 0, _vram.Length);
+
+            _frameBuffer.AsSpan().Fill(0xFF);
+            _frameIndices.AsSpan().Clear();
         }
 
         public void Shutdown()
         {
-            _device.Cpu.PerformedStep -= CpuOnPerformedStep;
         }
 
-        private void CpuOnPerformedStep(object sender, StepEventArgs args)
-        {
-            GpuStep(args.Cycles);
-        }
 
         /// <summary>
         /// Advances the execution of the graphical processor unit.
         /// </summary>
         /// <param name="cycles">The cycles the central processor unit has executed since last step.</param>
-        private void GpuStep(int cycles)
+        public void Step(int cycles)
         {
             if ((_lcdc & LcdControlFlags.EnableLcd) == 0)
                 return;
@@ -469,7 +474,7 @@ namespace Emux.GameBoy.Graphics
                                 currentMode = LcdStatusFlags.VBlankMode;
                                 OnVBlankStarted();
                                 VideoOutput.RenderFrame(_frameBuffer);
-                                _device.Cpu.Registers.IF |= InterruptFlags.VBlank;
+								_device.Cpu.Registers.IF |= InterruptFlags.VBlank;
                                 if ((stat & LcdStatusFlags.VBlankModeInterrupt) == LcdStatusFlags.VBlankModeInterrupt)
                                     _device.Cpu.Registers.IF |= InterruptFlags.LcdStat;
                             }
@@ -498,7 +503,7 @@ namespace Emux.GameBoy.Graphics
 
                 stat &= (LcdStatusFlags) ~0b111;
                 stat |= currentMode;
-                if (LY == LYC)
+                if (_ly == _lyc)
                     stat |= LcdStatusFlags.Coincidence;
                 Stat = stat;
             }
@@ -542,9 +547,8 @@ namespace Emux.GameBoy.Graphics
             int x = ScX;
             
             // Read first tile data to render.
-            byte[] currentTileData = new byte[2];
             var flags = _device.GbcMode ? GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F) : 0;
-            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
+            CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
 
             // Render scan line.
             for (int outputX = 0; outputX < FrameWidth; outputX++, x++)
@@ -554,10 +558,10 @@ namespace Emux.GameBoy.Graphics
                     // Read next tile data to render.
                     if (_device.GbcMode)
                         flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
+                    CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
                 }
                 
-                RenderTileDataPixel(currentTileData, flags, outputX, x);
+                RenderTileDataPixel(_currentTileData, flags, outputX, x);
             }
         }
 
@@ -585,7 +589,6 @@ namespace Emux.GameBoy.Graphics
 
                 int x = 0;
                 var flags = SpriteDataFlags.None;
-                byte[] currentTileData = new byte[2];
 
                 // Render scan line.
                 for (int outputX = WX - 7; outputX < FrameWidth; outputX++, x++)
@@ -595,15 +598,15 @@ namespace Emux.GameBoy.Graphics
                         // Read next tile data to render.
                         if (_device.GbcMode)
                             flags = GetTileDataFlags(tileMapAddress, x >> 3 & 0x1F);
-                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), currentTileData, flags);
+                        CopyTileData(tileMapAddress, x >> 3 & 0x1F, tileDataAddress + ((flags & SpriteDataFlags.YFlip) != 0 ? flippedTileDataOffset : tileDataOffset), _currentTileData, flags);
                     }
 
                     if (outputX >= 0)
-                        RenderTileDataPixel(currentTileData, flags, outputX, x);
+                        RenderTileDataPixel(_currentTileData, flags, outputX, x);
                 }
             }
         }
-        
+
         private void RenderSpritesScan()
         {
             int spriteHeight = (Lcdc & LcdControlFlags.Sprite8By16Mode) != 0 ? 16 : 8;
@@ -636,14 +639,17 @@ namespace Emux.GameBoy.Graphics
                             int vramBankOffset = _device.GbcMode && (data.Flags & SpriteDataFlags.TileVramBank) != 0
                                 ? 0x2000
                                 : 0x0000;
-                            byte[] currentTileData = new byte[2];
-                            Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (data.TileDataIndex << 4) + rowIndex * 2), currentTileData, 0, 2);
-                            
-                            // Render sprite.
-                            for (int x = 0; x < 8; x++)
-                            {
-                                int absoluteX = data.X - 8;
+                            Buffer.BlockCopy(_vram, (ushort)(vramBankOffset + (data.TileDataIndex << 4) + rowIndex * 2), _currentTileData, 0, 2);
 
+                            var absoluteX = data.X - 8;
+                            var spriteStartPixel = Math.Max(0, absoluteX);
+                            var spriteStartIndex = spriteStartPixel - absoluteX;
+                            var spriteEndPixel = Math.Max(0, FrameWidth - spriteStartPixel + 8);
+                            var spriteEndIndex = Math.Min(8, spriteEndPixel);
+                            // Render sprite.
+                            for (int x = spriteStartIndex; x < spriteEndIndex; x++)
+                            {
+                                absoluteX = data.X - 8;
                                 // Flip sprite horizontally if specified.
                                 absoluteX += (data.Flags & SpriteDataFlags.XFlip) != SpriteDataFlags.XFlip ? x : 7 - x;
 
@@ -651,7 +657,7 @@ namespace Emux.GameBoy.Graphics
                                 if (absoluteX >= 0 && absoluteX < FrameWidth 
                                     && ((data.Flags & SpriteDataFlags.BelowBackground) == 0 || GetRenderedColorIndex(absoluteX, LY) == 0))
                                 {
-                                    int colorIndex = GetPixelColorIndex(x, currentTileData);
+                                    int colorIndex = GetPixelColorIndex(x, _currentTileData);
 
                                     // Check if not transparent.
                                     if (colorIndex != 0)
@@ -699,14 +705,14 @@ namespace Emux.GameBoy.Graphics
         private static Color GetGbcColor(byte[] paletteMemory, int paletteIndex, int colorIndex)
         {
             ushort rawValue = (ushort)(paletteMemory[paletteIndex * 8 + colorIndex * 2] | (paletteMemory[paletteIndex * 8 + colorIndex * 2 + 1] << 8));
-            return new Color(
-                (byte)((rawValue & 0x1F) * (0xFF / 0x1F)),
-                (byte)(((rawValue >> 5) & 0x1F) * (0xFF / 0x1F)),
-                (byte)(((rawValue >> 10) & 0x1F) * (0xFF / 0x1F)));
+			return new Color(
+				(byte)((rawValue & 0x1F) * (0xFF / 0x1F)),
+				(byte)(((rawValue >> 5) & 0x1F) * (0xFF / 0x1F)),
+				(byte)(((rawValue >> 10) & 0x1F) * (0xFF / 0x1F)));
+		}
 
-        }
-        
-        private static int GetGreyshadeIndex(byte palette, int paletteIndex)
+
+		private static int GetGreyshadeIndex(byte palette, int paletteIndex)
         {
             return (palette >> (paletteIndex * 2)) & 3;
         }
@@ -730,10 +736,6 @@ namespace Emux.GameBoy.Graphics
                 if ((flags & SpriteDataFlags.XFlip) != 0)
                     actualX = 7 - actualX;
                 
-                if (LY == 0)
-                {
-
-                }
                 int paletteIndex = (int)(flags & SpriteDataFlags.PaletteNumberMask);
                 int colorIndex = GetPixelColorIndex(actualX, currentTileData);
                 RenderPixel(outputX, LY, colorIndex, GetGbcColor(_bgPaletteMemory, paletteIndex, colorIndex));

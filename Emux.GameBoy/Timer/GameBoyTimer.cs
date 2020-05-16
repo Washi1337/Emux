@@ -61,7 +61,6 @@ namespace Emux.GameBoy.Timer
 
         public void Initialize()
         {
-            _device.Cpu.PerformedStep += CpuOnPerformedStep;
         }
 
         public void Reset()
@@ -74,7 +73,6 @@ namespace Emux.GameBoy.Timer
 
         public void Shutdown()
         {
-            _device.Cpu.PerformedStep -= CpuOnPerformedStep;
         }
 
         public int GetTimaFrequency()
@@ -97,13 +95,9 @@ namespace Emux.GameBoy.Timer
         {
             return (int)(GameBoyCpu.OfficialClockFrequency / GetTimaFrequency());
         }
-        
-        private void CpuOnPerformedStep(object sender, StepEventArgs args)
-        {
-            TimerStep(args.Cycles);
-        }
+		
 
-        private void TimerStep(int cycles)
+        public void Step(int cycles)
         {
             _divClock += cycles;
             while (_divClock > DivCycleInterval)

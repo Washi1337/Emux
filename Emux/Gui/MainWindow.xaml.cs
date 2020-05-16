@@ -179,14 +179,14 @@ namespace Emux.Gui
         {
             if (_currentDevice != null)
             {
-                _currentDevice.Cpu.Paused -= GameBoyOnPaused;
-                _currentDevice.Cpu.Resumed -= GameBoyOnResumed;
+                _currentDevice.Paused -= GameBoyOnPaused;
+                _currentDevice.Resumed -= GameBoyOnResumed;
                 RunningOverlay.DisableOverlay();
             }
 
             _currentDevice = DeviceManager.CurrentDevice;
-            _currentDevice.Cpu.Paused += GameBoyOnPaused;
-            _currentDevice.Cpu.Resumed += GameBoyOnResumed;
+            _currentDevice.Paused += GameBoyOnPaused;
+            _currentDevice.Resumed += GameBoyOnResumed;
             _currentDevice.Gpu.VideoOutput = _videoWindow;
 
             _videoWindow.Device = _currentDevice;
@@ -215,10 +215,11 @@ namespace Emux.Gui
                 ;
             DisassemblyView.Items.Clear();
             var disassembler = new Z80Disassembler(_currentDevice.Memory);
-            disassembler.Position = _currentDevice.Cpu.Registers.PC;
-            for (int i = 0; i < 30 && disassembler.Position < 0xFFFF; i ++)
+            var position = _currentDevice.Cpu.Registers.PC;
+            for (int i = 0; i < 30 && position < 0xFFFF; i ++)
             {
-                var instruction = disassembler.ReadNextInstruction();
+                var instruction = new Z80Instruction(0, Z80OpCodes.SingleByteOpCodes[0], new byte[0]);
+                disassembler.ReadInstruction(ref position, instruction);
                 DisassemblyView.Items.Add(new InstructionItem(_currentDevice, instruction));
             }
             
@@ -252,7 +253,7 @@ namespace Emux.Gui
 
         private void StepCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _currentDevice.Cpu.Step();
+            _currentDevice.Step();
             RefreshView();
         }
 
@@ -273,12 +274,12 @@ namespace Emux.Gui
 
         private void RunCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _currentDevice.Cpu.Run();
+            _currentDevice.Run();
         }
 
         private void BreakCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _currentDevice.Cpu.Break();
+            _currentDevice.Break();
         }
 
         private void SetBreakpointCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -307,7 +308,7 @@ namespace Emux.Gui
                     }
                     else
                     {
-                        var bp = _currentDevice.Cpu.SetBreakpoint(address);
+                        var bp = _currentDevice.SetBreakpoint(address);
                         DeviceManager.Breakpoints[address] = new BreakpointInfo(bp);
                     }
                 }
@@ -322,7 +323,7 @@ namespace Emux.Gui
 
         private void ClearBreakpointsCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
         {
-            _currentDevice.Cpu.ClearBreakpoints();
+            _currentDevice.ClearBreakpoints();
         }
 
         private void KeyPadCommandOnExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -401,7 +402,7 @@ namespace Emux.Gui
             {
                 if (instruction.Breakpoint == null)
                 {
-                    _currentDevice.Cpu.SetBreakpoint((ushort) instruction.Offset);
+                    _currentDevice.SetBreakpoint((ushort) instruction.Offset);
                 }
                 
                 var dialog = new BreakpointDialog(instruction.Breakpoint);

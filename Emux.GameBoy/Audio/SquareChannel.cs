@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using Emux.GameBoy.Cpu;
 
 namespace Emux.GameBoy.Audio
@@ -146,8 +147,8 @@ namespace Emux.GameBoy.Audio
 
         public virtual void ChannelStep(int cycles)
         {
-            double cpuSpeedFactor = Spu.Device.Cpu.SpeedFactor;
-            if (!Active || double.IsNaN(cpuSpeedFactor) || double.IsInfinity(cpuSpeedFactor) || cpuSpeedFactor < 0.5)
+            double cpuSpeedFactor = Spu.Device.SpeedFactor;
+            if (!Active)
                 return;
 
             // Update volume and calculate wave amplitude.
@@ -160,26 +161,28 @@ namespace Emux.GameBoy.Audio
             // Allocate sound buffer.
             int sampleRate = ChannelOutput.SampleRate;
             int sampleCount = (int) Math.Ceiling(timeDelta * sampleRate) * 2;
-            var buffer = new float[sampleCount];
-            
-            if (!UseSoundLength || _length >= 0)
+            using (var malloc = MemoryPool<float>.Shared.Rent(sampleCount))
             {
-                double period = 1f / Frequency;
-                for (int i = 0; i < buffer.Length; i += 2)
+                var buffer = malloc.Memory.Span;
+                if (!UseSoundLength || _length >= 0)
                 {
-                    // Get current x coordinate and compute current sample value. 
-                    double x = (double) _coordinate / sampleRate;
-                    float sample = DutyWave(amplitude, x, period);
-                    Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
-                    
-                    _coordinate = (_coordinate + 1) % sampleRate;
+                    double period = 1f / Frequency;
+                    for (int i = 0; i < sampleCount; i += 2)
+                    {
+                        // Get current x coordinate and compute current sample value. 
+                        double x = (double)_coordinate / sampleRate;
+                        float sample = DutyWave(amplitude, x, period);
+                        Spu.WriteToSoundBuffer(ChannelNumber, buffer, i, sample);
+
+                        _coordinate = (_coordinate + 1) % sampleRate;
+                    }
+
+                    if (UseSoundLength)
+                        _length -= timeDelta;
                 }
 
-                if (UseSoundLength)
-                    _length -= timeDelta;
+                ChannelOutput.BufferSoundSamples(buffer, 0, sampleCount);
             }
-
-            ChannelOutput.BufferSoundSamples(buffer, 0, buffer.Length);
         }
 
         private float DutyWave(double amplitude, double x, double period)

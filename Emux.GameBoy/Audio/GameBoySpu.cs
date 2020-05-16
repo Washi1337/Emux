@@ -207,6 +207,10 @@ namespace Emux.GameBoy.Audio
 
         public void SpuStep(int cycles)
         {
+            var speedFactor = Device.SpeedFactor;
+            if (double.IsNaN(speedFactor) || double.IsInfinity(speedFactor) || speedFactor < 0.5 || speedFactor > 1.5)
+                return;
+
             if ((NR52 & (1 << 7)) != 0)
             {
                 foreach (var channel in Channels)
@@ -232,7 +236,7 @@ namespace Emux.GameBoy.Audio
             }
         }
 
-        internal void WriteToSoundBuffer(int channel, float[] totalBuffer, int index, float sample)
+        internal void WriteToSoundBuffer(int channel, Span<float> totalBuffer, int index, float sample)
         {
             sample *= SO1Volume / 7f;
             if (((int)NR51 & (1 << (channel - 1))) != 0)

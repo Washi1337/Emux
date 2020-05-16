@@ -39,6 +39,7 @@ namespace Emux.MonoGame
             [Keys.Enter] = GameBoyPadButton.Start,
             [Keys.LeftShift] = GameBoyPadButton.Select,
         };
-
+        public const int FrameScaler = 2;
+        public const bool FitVideo = false;
     }
 }

@@ -9,14 +9,14 @@ namespace Emux.GameBoy.Cpu
     {
         public Z80Instruction(ushort offset, Z80OpCode opCode, byte[] operand)
         {
+            Set(offset, opCode, operand);
+        }
+
+        public void Set(ushort offset, Z80OpCode opCode, byte[] operand)
+        {
             Offset = offset;
             OpCode = opCode;
             RawOperand = operand;
-        }
-
-        public Z80Instruction(Z80OpCode opCode, byte[] operand)
-            : this(0, opCode, operand)
-        {
         }
 
         /// <summary>
@@ -25,6 +25,7 @@ namespace Emux.GameBoy.Cpu
         public ushort Offset
         {
             get;
+            private set;
         }
 
         /// <summary>
@@ -33,6 +34,7 @@ namespace Emux.GameBoy.Cpu
         public Z80OpCode OpCode
         {
             get;
+            private set;
         }
 
         /// <summary>
@@ -41,23 +43,18 @@ namespace Emux.GameBoy.Cpu
         public byte[] RawOperand
         {
             get;
+            private set;
         }
 
         /// <summary>
         /// The operand interpreted as a single unsigned 8 bit integer.
         /// </summary>
-        public byte Operand8
-        {
-            get { return RawOperand[0]; }
-        }
+        public byte Operand8 => RawOperand[0];
 
         /// <summary>
         /// The operand interpreted as an unsigned 16 bit integer.
         /// </summary>
-        public ushort Operand16
-        {
-            get { return BitConverter.ToUInt16(RawOperand, 0); }
-        }
+        public ushort Operand16 => BitConverter.ToUInt16(RawOperand, 0);
 
         /// <summary>
         /// Gets the assembler code representing the instruction.
@@ -78,19 +75,13 @@ namespace Emux.GameBoy.Cpu
             }
         }
 
-        public override string ToString()
-        {
-            return Offset.ToString("X4") + ": " + Disassembly;
-        }
+        public override string ToString() => Offset.ToString("X4") + ": " + Disassembly;
 
         /// <summary>
         /// Executes the instruction on the given device.
         /// </summary>
         /// <param name="device">The device to execute the instruction on.</param>
         /// <returns>The clock cycles it took to evaluate the instruction.</returns>
-        public int Execute(GameBoy device)
-        {
-            return OpCode.Operation(device, this);
-        }
+        public int Execute(GameBoy device) => OpCode.Operation(device, this);
     }
 }

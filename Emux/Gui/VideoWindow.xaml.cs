@@ -53,8 +53,8 @@ namespace Emux.Gui
             {
                 lock (this)
                 {
-                    Dispatcher.Invoke(() => Title = string.Format("Video Output ({0:0.00} %)",
-                        _device.Cpu.SpeedFactor * 100));
+                    Dispatcher.Invoke(() => Title = string.Format("Video Output ({0:0.00}x)",
+                        _device.SpeedFactor));
                 }
             }
         }
@@ -84,7 +84,7 @@ namespace Emux.Gui
         private void VideoWindowOnKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
-                Device.Cpu.EnableFrameLimit = false;
+                Device.EnableFrameLimit = false;
             else if (GetBindedButton(e.Key, out var button))
                 Device.KeyPad.PressedButtons |= button;
         }
@@ -93,7 +93,7 @@ namespace Emux.Gui
         private void VideoWindowOnKeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Space)
-                Device.Cpu.EnableFrameLimit = true;
+                Device.EnableFrameLimit = true;
             else if (GetBindedButton(e.Key, out var button))
                 Device.KeyPad.PressedButtons &= ~button;
         }
