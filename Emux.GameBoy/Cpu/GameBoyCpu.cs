@@ -133,31 +133,28 @@ namespace Emux.GameBoy.Cpu
                 cycles = nextInstruction.Execute(_device);
                 LastInstruction = nextInstruction;
             }
-
-            // Check for interrupts.
-            bool interrupted = false;
             
             var firedAndEnabled = (byte)(Registers.IE & Registers.IF);
-            if (firedAndEnabled != 0)
+            if (firedAndEnabled != 0  // Have interrupts to handle
+                && Registers.IME && !Registers.IMESet) // IME wasn't set this cycle
             {
-				var vector = InterruptVector.VBlank;
-                for (int i = 0; i < 5 && !interrupted; i++)
+				var vector = InterruptVector.Custom7; // Start at VBlank interrupt
+                for (int i = 0; i < 5; i++)
                 {
+					vector += 0x08;
+
 					var bit = 1 << i;
                     if ((firedAndEnabled & bit) == bit)
                     {
-                        if (Registers.IME && !Registers.IMESet)
-                        {
-                            Registers.IF &= (InterruptFlags)~bit;
-                            Registers.IME = false;
-                            interrupted = true;
-                            cycles += Rst(vector);
-                        }
+                        Registers.IF &= (InterruptFlags)~bit;
+                        Registers.IME = false;
+
+                        cycles += Rst(vector);
 
                         Halted = false;
-                    }
 
-					vector += 0x08;
+                        break;
+                    }
                 }
             }
 
