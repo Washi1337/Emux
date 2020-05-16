@@ -400,59 +400,6 @@ namespace Emux.GameBoy.Memory
             if (value == 0)
                 value = 1;
             _internalRamBankIndex = value & 7;
-        }
-
-        internal void ReadBlock(ushort address, byte[] buffer, int offset, int length)
-        {
-            byte[] section = null;
-
-            switch (address >> 12)
-            {
-                case 0x0: // rom (0x0000 -> 0x3FFF)
-                case 0x1:
-                case 0x2:
-                case 0x3:
-                case 0x4: // switchable rom (0x4000 -> 0x7FFF)
-                case 0x5:
-                case 0x6:
-                case 0x7:
-                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
-                    break;
-
-                case 0x8: // vram (0x8000 -> 0x9FFF)
-                case 0x9:
-                    throw new NotImplementedException();
-
-                case 0xA: // switchable ram (0xA000 -> 0xBFFF)
-                case 0xB:
-                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
-                    break;
-
-                case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                    section = _internalRam;
-                    address -= 0xC000;
-                    break;
-                case 0xD:
-                    section = _internalSwitchableRam;
-                    address -= 0xD000;
-                    address += (ushort) GetSwitchableRamOffset();
-                    break;
-
-                case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
-                    section = _internalRam;
-                    address -= 0xE000;
-                    break;
-
-                case 0xF:
-                    section = _internalRam;
-                    address -= 0xE000;
-                    break;
-            }
-
-            if (section != null)
-                Buffer.BlockCopy(section, address, buffer, 0, buffer.Length);
-        }
-
- 
+        } 
     }
 }
