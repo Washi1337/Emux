@@ -33,8 +33,8 @@ namespace Emux.GameBoy.Memory
         private int _internalRamBankIndex = 1;
         private readonly byte[] _highInternalRam = new byte[0x7F];
         // Most instructions are 1 or 2 oprands, reuse these buffers if so
-        byte[] _singleOprandBuffer = new byte[1];
-        byte[] _doubleOprandBuffer = new byte[2];
+        private readonly byte[] _singleOprandBuffer = new byte[1];
+        private readonly byte[] _doubleOprandBuffer = new byte[2];
 
         // TODO: to be removed:
         private readonly byte[] _io = new byte[4];
