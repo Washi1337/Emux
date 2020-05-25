@@ -21,7 +21,7 @@ namespace Emux.Gui
             typeof(MainWindow),
             new InputGestureCollection(new[]
             {
-                new KeyGesture(Key.F10)
+                new KeyGesture(Key.F7)
             }));
 
         public static readonly RoutedUICommand RunCommand = new RoutedUICommand(
@@ -30,7 +30,7 @@ namespace Emux.Gui
             typeof(MainWindow),
             new InputGestureCollection(new[]
             {
-                new KeyGesture(Key.F5)
+                new KeyGesture(Key.F9)
             }));
 
         public static readonly RoutedUICommand BreakCommand = new RoutedUICommand(
@@ -39,7 +39,7 @@ namespace Emux.Gui
             typeof(MainWindow),
             new InputGestureCollection(new[]
             {
-                new KeyGesture(Key.F5, ModifierKeys.Control)
+                new KeyGesture(Key.F9, ModifierKeys.Control)
             }));
 
         public static readonly RoutedUICommand SetBreakpointCommand = new RoutedUICommand(
