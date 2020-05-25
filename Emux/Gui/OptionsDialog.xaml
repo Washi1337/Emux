@@ -18,6 +18,9 @@
                     <CheckBox IsChecked="{emux:SettingBinding ForceOriginalGameBoy}">
                         <AccessText TextWrapping="Wrap">Force original GameBoy mode (requires reset of GameBoy)</AccessText>
                     </CheckBox>
+                    <CheckBox IsChecked="{emux:SettingBinding PlayOnLoad}">
+                        <AccessText TextWrapping="Wrap">Start emulation immdiately after loading ROM</AccessText>
+                    </CheckBox>
                 </StackPanel>
             </TabItem>
             <TabItem Header="Video">

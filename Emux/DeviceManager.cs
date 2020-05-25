@@ -96,6 +96,9 @@ namespace Emux
 
         protected virtual void OnDeviceLoaded(DeviceEventArgs e)
         {
+            if (Properties.Settings.Default.PlayOnLoad)
+                e.Device.Cpu.Run();
+
             DeviceLoaded?.Invoke(this, e);
         }
 
