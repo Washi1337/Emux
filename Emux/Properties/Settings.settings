@@ -28,7 +28,7 @@
     </Setting>
     <Setting Name="KeyBindingA" Type="System.Windows.Input.Key" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
-&lt;Key&gt;X&lt;/Key&gt;</Value>
+&lt;Key&gt;S&lt;/Key&gt;</Value>
     </Setting>
     <Setting Name="KeyBindingSelect" Type="System.Windows.Input.Key" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
@@ -56,7 +56,7 @@
     </Setting>
     <Setting Name="KeyBindingB" Type="System.Windows.Input.Key" Scope="User">
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
-&lt;Key&gt;Z&lt;/Key&gt;</Value>
+&lt;Key&gt;A&lt;/Key&gt;</Value>
     </Setting>
   </Settings>
 </SettingsFile>
