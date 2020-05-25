@@ -30,6 +30,8 @@ namespace Emux.Gui
             _frameRateTimer.Tick += FrameRateTimerOnTick;
             _frameRateTimer.Interval = new TimeSpan(0, 0, 1);
             _frameRateTimer.Start();
+
+            VideoImage.Source = _bitmap;
         }
 
         private bool GetBindedButton(Key key, out GameBoyPadButton button)
@@ -64,20 +66,16 @@ namespace Emux.Gui
             get { return _device; }
             set
             {
-                if (_device != null)
-                    _device.Gpu.VideoOutput = new EmptyVideoOutput();
                 _device = value;
-                if (value != null)
-                    Device.Gpu.VideoOutput = this;
             }
         }
 
         public void RenderFrame(byte[] pixelData)
         {
-            Dispatcher.Invoke(() =>
+            // Should really await this but theres no async context here. No idea how it would throw anyway
+            Dispatcher.InvokeAsync(() =>
             {
                 _bitmap.WritePixels(new Int32Rect(0, 0, 160, 144), pixelData, _bitmap.BackBufferStride, 0);
-                VideoImage.Source = _bitmap;
             });
         }
 
