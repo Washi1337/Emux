@@ -25,6 +25,7 @@ namespace Emux.GameBoy.Graphics
         private readonly byte[] _frameIndices = new byte[FrameWidth * FrameHeight];
         private readonly byte[] _frameBuffer = new byte[3 * FrameWidth * FrameHeight];
         private readonly GameBoy _device;
+        private IVideoOutput _videoOutput;
 
         private readonly byte[] _vram;
         private readonly byte[] _oam = new byte[0xA0];
@@ -222,8 +223,11 @@ namespace Emux.GameBoy.Graphics
         /// </summary>
         public IVideoOutput VideoOutput
         {
-            get;
-            set;
+            get => _videoOutput;
+            set {
+                _videoOutput = value;
+                _videoOutput.RenderFrame(_frameBuffer);
+            }
         }
 
         /// <summary>
