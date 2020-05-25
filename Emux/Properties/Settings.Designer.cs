@@ -211,5 +211,29 @@ namespace Emux.Properties {
                 this["KeyBindingB"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("320")]
+        public int VideoWidth {
+            get {
+                return ((int)(this["VideoWidth"]));
+            }
+            set {
+                this["VideoWidth"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("288")]
+        public int VideoHeight {
+            get {
+                return ((int)(this["VideoHeight"]));
+            }
+            set {
+                this["VideoHeight"] = value;
+            }
+        }
     }
 }
