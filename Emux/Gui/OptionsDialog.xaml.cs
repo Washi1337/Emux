@@ -1,4 +1,6 @@
-﻿using System.ComponentModel;
+﻿using Emux.GameBoy.Graphics;
+using Emux.Properties;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -16,6 +18,31 @@ namespace Emux.Gui
         public OptionsDialog()
         {
             InitializeComponent();
+
+            UpdateScaleDD();
+            VideoScaleDD.SelectionChanged += VideoScale_SelectionChanged;
+        }
+
+        private void UpdateScaleDD()
+        {
+            var configWidth = Settings.Default.VideoWidth;
+            var configHeight = Settings.Default.VideoHeight;
+            var widthScale = configWidth / (float)GameBoyGpu.FrameWidth;
+            var heightScale = configHeight / (float)GameBoyGpu.FrameHeight;
+            if (widthScale == heightScale && widthScale % 1 == 0 && heightScale % 1 == 0) // Exact scale
+                VideoScaleDD.SelectedIndex = (int)widthScale;
+            else
+                VideoScaleDD.SelectedIndex = 0;
+        }
+
+        private void VideoScale_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var newScale = VideoScaleDD.SelectedIndex;
+            if (newScale == 0)
+                return;
+
+            Settings.Default.VideoWidth = GameBoyGpu.FrameWidth * newScale;
+            Settings.Default.VideoHeight = GameBoyGpu.FrameHeight * newScale;
         }
 
         public bool CanClose
