@@ -29,6 +29,7 @@ namespace Emux.GameBoy.Graphics
         public event EventHandler VBlankStarted;
 
         protected readonly GameBoy _device;
+        protected IVideoOutput _videoOutput;
 
         protected readonly byte[] _vram;
         protected readonly byte[] _colorIndices = new byte[FrameWidth * FrameHeight];
@@ -221,8 +222,6 @@ namespace Emux.GameBoy.Graphics
         /// <summary>
         /// Gets or sets the output device the graphics processor should render frames to.
         /// </summary>
-        private IVideoOutput _videoOutput;
-
         public IVideoOutput VideoOutput
         {
             get => _videoOutput;
