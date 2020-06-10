@@ -6,6 +6,11 @@
     public interface ICartridge : IGameBoyComponent
     {
         /// <summary>
+        /// Gets the name of the file that this cartridge contains data of
+        /// </summary>
+        string ROMName { get; }
+
+        /// <summary>
         /// Gets the compressed Nintendo Logo bitmap used by the BIOS.
         /// </summary>
         byte[] NintendoLogo { get; }
@@ -93,7 +98,7 @@
     /// Provides members for accessing a fully accessible cartridge.
     /// </summary>
     public interface IFullyAccessibleCartridge : ICartridge
-    {
+    { 
         IExternalMemory ExternalMemory
         {
             get;

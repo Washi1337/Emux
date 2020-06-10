@@ -58,6 +58,12 @@
       <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
 &lt;Key&gt;Z&lt;/Key&gt;</Value>
     </Setting>
+    <Setting Name="VideoWidth" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">320</Value>
+    </Setting>
+    <Setting Name="VideoHeight" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">288</Value>
+    </Setting>
     <Setting Name="PlayOnLoad" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>

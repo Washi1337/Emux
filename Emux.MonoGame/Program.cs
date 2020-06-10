@@ -21,8 +21,9 @@ namespace Emux.MonoGame
 			using (var host = new EmuxHost(settings))
 			using (var mbc = new BufferedExternalMemory(saveFile))
 			{
-				var cartridge = new EmulatedCartridge(File.ReadAllBytes(romFile), mbc);
+				var cartridge = new EmulatedCartridge(Path.GetFileName(romFile), File.ReadAllBytes(romFile), mbc);
 				var device = new GameBoy.GameBoy(cartridge, host, true);
+                device.Break();
 				host.GameBoy = device;
 
 				device.Gpu.VideoOutput = host;
@@ -34,6 +35,7 @@ namespace Emux.MonoGame
 				player.Play();
 
 				host.Run();
+                device.Run();
 			}
         }
 

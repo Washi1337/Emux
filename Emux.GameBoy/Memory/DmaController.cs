@@ -1,60 +1,141 @@
 ﻿using System;
 using Emux.GameBoy.Graphics;
+using static Emux.GameBoy.Memory.GameBoyMemory;
 
 namespace Emux.GameBoy.Memory
 {
     public class DmaController : IGameBoyComponent
     {
+        public enum DMAType
+        {
+            None,
+            OAM,
+            HBlank,
+            General
+        }
+
+        private const byte
+            TransferingMask = 0b10000000, // 0x80
+            VBlankMask = TransferingMask, // 0x80
+            LengthMask = 0b01111111; // 0x7F
+
         private readonly GameBoy _device;
-        private bool _isTransferring;
-        private int _currentBlockIndex;
         private byte _sourceHigh;
         private byte _sourceLow;
         private byte _destinationHigh;
         private byte _destinationLow;
-        private byte _dmaLengthMode;
+        private DMAType _activeDMA;
+        private byte _OAMDMAIndex;
+        private ushort _DMAIndex;
+        private ushort _OAMDMAAddress;
+        private int currentScanline, transferedThisScanline;
 
         public DmaController(GameBoy device)
         {
-            if (device == null)
-                throw new ArgumentNullException(nameof(device));
-            _device = device;
+            _device = device ?? throw new ArgumentNullException(nameof(device));
         }
 
-        public ushort SourceAddress
+        public ushort SourceAddress => (ushort)((_sourceHigh << 8) | _sourceLow & 0xF0); // 0x0000 - 0x7FF0
+
+        public ushort DestinationAddress => (ushort)(0x8000 | (((_destinationHigh << 8) | (_destinationLow & 0xF0)) & 0b0001111111110000)); // 0x8000 - 0x9FF0
+
+        public int RemianingDMALength { get; private set; }
+
+        public bool DMAIsActive => ActiveDMA != DMAType.None;
+
+        private byte HDMA5 
         {
-            get { return (ushort)((_sourceHigh << 8) | _sourceLow & 0xF0); }
+            set
+            {
+                RemianingDMALength = ((value & LengthMask) + 1) * 16;
+
+                var isHblank = (value & TransferingMask) == TransferingMask;
+                if (ActiveDMA == DMAType.HBlank && (value & TransferingMask) == 0)
+                {
+                    StopVramDmaTransfer();
+                }
+                else
+                {
+                    StartVramDmaTransfer(isHblank);
+                }
+            }
+            get
+            {
+                var active = DMAIsActive ? 0 : TransferingMask;
+                var length = RemianingDMALength / 16 - 1;
+                return (byte)(active | length);
+            } 
         }
 
-        public ushort DestinationAddress
+        public DMAType ActiveDMA 
         {
-            get { return (ushort)(0x8000 | ((_destinationHigh & 0x1F) << 8) | _destinationLow & 0xF0); }
-        }
-
-        public int Length
-        {
-            get { return ((_dmaLengthMode & 0x7F) + 1) * 0x10; }
+            get => _activeDMA;
+            private set 
+            {
+                _activeDMA = value;
+                
+                if (value == DMAType.OAM)
+                    _device.Memory.RAMIsBusy = true;
+                else if (value == DMAType.General)
+                    _device.Memory.ROMIsBusy = true;
+                else if (value == DMAType.None)
+                {
+                    _device.Memory.ROMIsBusy = false;
+                    _device.Memory.RAMIsBusy = false;
+                }
+            }
         }
 
         public void Initialize()
         {
-            _device.Gpu.HBlankStarted += GpuOnHBlankStarted;
+            _device.Gpu.HBlankTick += GpuHBlankTick;
         }
 
         public void Reset()
         {
-            _isTransferring = false;
-            _currentBlockIndex = 0;
+            _activeDMA = DMAType.None;
             _sourceHigh = 0;
             _sourceLow = 0;
             _destinationHigh = 0;
             _destinationLow = 0;
-            _dmaLengthMode = 0;
+            RemianingDMALength = 0;
         }
 
         public void Shutdown()
         {
-            _device.Gpu.HBlankStarted -= GpuOnHBlankStarted;
+            _device.Gpu.HBlankTick -= GpuHBlankTick;
+        }
+
+        internal void Step()
+        {
+            switch (ActiveDMA)
+            {
+                case DMAType.None:
+                    return;
+                case DMAType.OAM:
+                    {
+                        var value = _device.Memory.ReadByte((ushort)(_OAMDMAAddress + _OAMDMAIndex), false);
+                        _device.Memory.WriteByte((ushort)(0xFE00 + _OAMDMAIndex), value, false);
+                        _OAMDMAIndex++;
+                        if (_OAMDMAIndex == OAMSize)
+                            ActiveDMA = DMAType.None;
+                    }
+                    break;
+                case DMAType.General:
+                    {
+                        var value = _device.Memory.ReadByte((ushort)(SourceAddress + _DMAIndex));
+                        _device.Memory.WriteByte((ushort)(DestinationAddress + _DMAIndex), value);
+                        _DMAIndex++;
+                        RemianingDMALength--;
+
+                        if (RemianingDMALength == 0 || DestinationAddress + _DMAIndex > ushort.MaxValue)
+                        {
+                            ActiveDMA = DMAType.None;
+                            _device.Memory.ROMIsBusy = false;
+                        }
+                    }
+                    break;
+            }
         }
 
         public byte ReadRegister(ushort address)
@@ -64,15 +145,15 @@ namespace Emux.GameBoy.Memory
                 case 0xFF46:
                     return 0;
                 case 0xFF51:
-                    return _sourceHigh;
+                    return (_device.GbcMode) ? _sourceHigh : (byte)0xFF;
                 case 0xFF52:
-                    return _sourceLow;
+                    return (_device.GbcMode) ? _sourceLow : (byte)0xFF;
                 case 0xFF53:
-                    return _destinationHigh;
+                    return (_device.GbcMode) ? _destinationHigh : (byte)0xFF;
                 case 0xFF54:
-                    return _destinationLow;
+                    return (_device.GbcMode) ? _destinationLow : (byte)0xFF;
                 case 0xFF55:
-                    return _dmaLengthMode;
+                    return (_device.GbcMode) ? HDMA5 : (byte)0xFF;
             }
 
             throw new ArgumentOutOfRangeException(nameof(address));
@@ -80,11 +161,22 @@ namespace Emux.GameBoy.Memory
 
         public void WriteRegister(ushort address, byte value)
         {
+            if (address == 0xFF46)
+            {
+                // Writing to this register launches a DMA transfer from ROM or RAM to OAM memory (sprite attribute table).
+                // The written value specifies the transfer source address divided by 0x100
+                // The transfer takes 160 machine cycles
+                ActiveDMA = DMAType.OAM;
+                _OAMDMAAddress = (ushort)(value * 0x100);
+                _OAMDMAIndex = 0;
+                return;
+            }
+
+            // GBC registers
+            if (!_device.GbcMode)
+                return;
             switch (address)
             {
-                case 0xFF46:
-                    PerformOamDmaTransfer(value);
-                    break;
                 case 0xFF51:
                     _sourceHigh = value;
                     break;
@@ -98,15 +190,7 @@ namespace Emux.GameBoy.Memory
                     _destinationLow = value;
                     break;
                 case 0xFF55:
-                    if (_isTransferring && (value & 0x80) == 0)
-                    {
-                        StopVramDmaTransfer();
-                    }
-                    else
-                    {
-                        _dmaLengthMode = value;
-                        StartVramDmaTransfer();
-                    }
+                    HDMA5 = value;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(address));
@@ -115,57 +199,59 @@ namespace Emux.GameBoy.Memory
 
         private void StopVramDmaTransfer()
         {
-            _dmaLengthMode |= 0x80;
-            _currentBlockIndex = 0;
-            _isTransferring = false;
+            // Once 0xFF is written to, bit 7 set indicates that it is not active
+            ActiveDMA = DMAType.None;
         }
 
-        private void StartVramDmaTransfer()
+        private void StartVramDmaTransfer(bool isHBlank)
         {
-            if ((_dmaLengthMode & 0x80) == 0)
+            if (!isHBlank)
             {
-                byte[] vram = new byte[Length];
-                _device.Memory.ReadBlock(SourceAddress, vram, 0, vram.Length);
-                _device.Gpu.WriteVRam((ushort) (DestinationAddress - 0x8000), vram, 0, vram.Length);
+                ActiveDMA = DMAType.General;
+                _device.Memory.ROMIsBusy = true;
             }
             else
             {
-                _currentBlockIndex = 0;
-                _isTransferring = true;
-                _dmaLengthMode &= 0x7F;
+                ActiveDMA = DMAType.HBlank;
+                currentScanline = _device.Gpu.LY;
+                transferedThisScanline = 0;
             }
+
+            _DMAIndex = 0;
         }
 
-        private void PerformOamDmaTransfer(byte dma)
+
+        private void GpuHBlankTick(object sender, EventArgs e)
         {
-            byte[] oamData = new byte[0xA0];
-            _device.Memory.ReadBlock((ushort) (dma * 0x100), oamData, 0, oamData.Length);
-            _device.Gpu.ImportOam(oamData);
+            if (ActiveDMA == DMAType.HBlank && _device.Gpu.LY < GameBoyGpu.FrameHeight)
+                NewHDmaStep();
         }
 
-        private void GpuOnHBlankStarted(object sender, EventArgs eventArgs)
+        private void NewHDmaStep() 
         {
-            if (_isTransferring && _device.Gpu.LY < GameBoyGpu.FrameHeight)
-                HDmaStep();
-        }
-
-        private void HDmaStep()
-        {
-            int currentOffset = _currentBlockIndex * 0x10;
-
-            byte[] block = new byte[0x10];
-            _device.Memory.ReadBlock((ushort) (SourceAddress + currentOffset), block, 0, block.Length);
-            _device.Gpu.WriteVRam((ushort)(DestinationAddress - 0x8000 + currentOffset), block, 0, block.Length);
-
-            _currentBlockIndex++;
-            int next = (_dmaLengthMode & 0x7F) - 1;
-            _dmaLengthMode = (byte) ((_dmaLengthMode & 0x80) | next);
-
-            if (next <= 0)
+            if (transferedThisScanline == 16)
             {
-                _dmaLengthMode = 0xFF;
-                _isTransferring = false;
+                if (_device.Gpu.LY == currentScanline)
+                {
+                    _device.Memory.ROMIsBusy = false;
+                    return;
+                }
+                else
+                {
+                    currentScanline = _device.Gpu.LY;
+                    transferedThisScanline = 0;
+                    _device.Memory.ROMIsBusy = true;
+                }
             }
+
+            var value = _device.Memory.ReadByte((ushort)(SourceAddress + _DMAIndex));
+            _device.Memory.WriteByte((ushort)(DestinationAddress + _DMAIndex), value);
+            _DMAIndex++;
+            RemianingDMALength--;
+            transferedThisScanline++;
+
+            if (RemianingDMALength == 0 || DestinationAddress + _DMAIndex > ushort.MaxValue)
+                ActiveDMA = DMAType.None;
         }
     }
 }

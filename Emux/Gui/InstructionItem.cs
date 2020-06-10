@@ -30,9 +30,9 @@ namespace Emux.Gui
             set
             {
                 if (value)
-                    _gameBoy.Cpu.SetBreakpoint(_instruction.Offset);
+                    _gameBoy.SetBreakpoint(_instruction.Offset);
                 else
-                    _gameBoy.Cpu.RemoveBreakpoint(_instruction.Offset);
+                    _gameBoy.RemoveBreakpoint(_instruction.Offset);
                 OnPropertyChanged(nameof(IsBreakpoint));
             }
         }
@@ -41,7 +41,7 @@ namespace Emux.Gui
         {
             get
             {
-                var bp = _gameBoy.Cpu.GetBreakpointAtAddress(_instruction.Offset);
+                var bp = _gameBoy.GetBreakpointAtAddress(_instruction.Offset);
                 if (bp == null)
                     return null;
                 App.Current.DeviceManager.Breakpoints.TryGetValue(_instruction.Offset, out var breakpointInfo);

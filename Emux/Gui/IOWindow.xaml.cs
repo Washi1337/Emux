@@ -43,14 +43,14 @@ namespace Emux.Gui
                     {
                         if (value != null)
                         {
-                            value.Cpu.Paused -= CpuOnPaused;
-                            value.Cpu.Resumed -= CpuOnResumed;
+                            value.Paused -= CpuOnPaused;
+                            value.Resumed -= CpuOnResumed;
                         }
                         _device = value;
                         if (_device != null)
                         {
-                            _device.Cpu.Paused += CpuOnPaused;
-                            _device.Cpu.Resumed += CpuOnResumed;
+                            _device.Paused += CpuOnPaused;
+                            _device.Resumed += CpuOnResumed;
                         }
                     }
                 }

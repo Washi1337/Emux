@@ -8,13 +8,34 @@ namespace Emux.GameBoy.Memory
     /// </summary>
     public class GameBoyMemory : IGameBoyComponent
     {
+        public static readonly ushort
+            VRAMStartAddress = 0x8000,
+            OAMDMABlockSize = 16,
+            SpriteSize = 4,
+            NumSprites = 40,
+            OAMSize = (ushort)(SpriteSize * NumSprites);
+        public const int
+            ROMBank0 = 0x0000,
+            ROMBankN = 0x4000,
+            VRAM = 0x8000,
+            ExternalRAM = 0xA000,
+            WorkRAMBank0 = 0xC000,
+            WorkRAMBankN = 0xD000,
+            EchoRAM = 0xC000,
+            IORegisters = 0xFF00,
+            OAMLocation = 0xFE00,
+            HighRAMLocation = 0xFF80;
+
         private readonly GameBoy _device;
 
         private readonly byte[] _internalRam = new byte[0x1000];
         private readonly byte[] _internalSwitchableRam;
         private int _internalRamBankIndex = 1;
         private readonly byte[] _highInternalRam = new byte[0x7F];
-        
+        // Most instructions are 1 or 2 oprands, reuse these buffers if so
+        private readonly byte[] _singleOprandBuffer = new byte[1];
+        private readonly byte[] _doubleOprandBuffer = new byte[2];
+
         // TODO: to be removed:
         private readonly byte[] _io = new byte[4];
 
@@ -27,10 +48,13 @@ namespace Emux.GameBoy.Memory
             DmaController = new DmaController(device);
         }
 
-        public DmaController DmaController
-        {
-            get;
-        }
+        public DmaController DmaController { get; }
+
+        // Another component is actively using RAM so RAM is unavailable (except HRAM)
+        public bool RAMIsBusy { get; set; }
+
+        // Another component is actively using ROM so RoM is unavailable. CPU is essentially halted.
+        public bool ROMIsBusy { get; set; }
 
         public void Initialize()
         {
@@ -48,8 +72,21 @@ namespace Emux.GameBoy.Memory
             DmaController.Shutdown();
         }
 
-        public byte ReadByte(ushort address)
+        public byte ReadByte(ushort address, bool lockBus = true)
         {
+
+            if (_device.Memory.RAMIsBusy && lockBus)
+            {
+                if (address >= HighRAMLocation && address != 0xFFFF)
+                {
+                    return _highInternalRam[address - HighRAMLocation];
+                }
+                else
+                {
+                    return 0xFF;
+                }
+            }
+
             switch (address >> 12)
             {
                 case 0x0: // rom (0x0000 -> 0x3FFF)
@@ -61,11 +98,11 @@ namespace Emux.GameBoy.Memory
                 case 0x6:
                 case 0x7:
                     return _device.Cartridge.ReadByte(address);
-
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
+                    if ((_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ScanLineVRamMode) == Graphics.LcdStatusFlags.ScanLineVRamMode)
+                        return 0xFF;
                     return _device.Gpu.ReadVRam(address - 0x8000);
-
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
                 case 0xB:
                     return _device.Cartridge.ReadByte(address);
@@ -83,16 +120,18 @@ namespace Emux.GameBoy.Memory
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            return _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()];
+                            return _internalSwitchableRam[address - 0xF000 + GetSwitchableRamOffset()];
 
-                        case 0xFE00:
+                        case OAMLocation:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
-                                return _device.Gpu.ReadOam((byte) (address & 0xFF));
+                            {   // Inaccessable in mode 2 & 3
+                                if ((byte)(_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ModeMask) > 1)
+                                    return 0xFF;
+                                return _device.Gpu.ReadOam((byte)(address & 0xFF));
+                            }
                             else // Empty (0xFEA0 -> 0xFEFF)
                                 return 0x0;
                         case 0xFF00: // IO (0xFF00 -> 0xFFFF)
-                            if (address >= 0xFF10 && address < 0xFF40)
-                                return _device.Spu.ReadRegister(address);
                             switch (address & 0xFF)
                             {
                                 case 0x00:
@@ -108,6 +147,30 @@ namespace Emux.GameBoy.Memory
                                     return _device.Timer.ReadRegister((ushort) (address & 0xFF));
                                 case 0x0F:
                                     return (byte) _device.Cpu.Registers.IF;
+                                case 0x10:
+                                case 0x11:
+                                case 0x12:
+                                case 0x13:
+                                case 0x14:
+                                case 0x15:
+                                case 0x16:
+                                case 0x17:
+                                case 0x18:
+                                case 0x19:
+                                case 0x1A:
+                                case 0x1B:
+                                case 0x1C:
+                                case 0x1D:
+                                case 0x1E:
+                                case 0x1F:
+                                case 0x20:
+                                case 0x21:
+                                case 0x22:
+                                case 0x23:
+                                case 0x24:
+                                case 0x25:
+                                case 0x26:
+                                    return _device.Spu.ReadRegister(address);
                                 case 0x40:
                                 case 0x41:
                                 case 0x42:
@@ -147,9 +210,17 @@ namespace Emux.GameBoy.Memory
 
         public byte[] ReadBytes(ushort address, int length)
         {
-            var result = new byte[length];
-            for (int i = 0; i < length; i++)
-                result[i] = ReadByte((ushort) (address + i));
+            byte[] result;
+            if (length == 1)
+                result = _singleOprandBuffer;
+            else if (length == 2)
+                result = _doubleOprandBuffer;
+            else
+                result = new byte[length];
+
+            for (var i = 0; i < length; i++)
+                result[i] = ReadByte((ushort)(address + i));
+
             return result;
         }
 
@@ -158,8 +229,20 @@ namespace Emux.GameBoy.Memory
             return BitConverter.ToUInt16(ReadBytes(address, 2), 0);
         }
 
-        public void WriteByte(ushort address, byte value)
+        public void WriteByte(ushort address, byte value, bool lockBus = true)
         {
+            if (_device.Memory.RAMIsBusy && lockBus)
+            {
+                if (address >= HighRAMLocation && address != 0xFFFF)
+                {
+                    _highInternalRam[address - HighRAMLocation] = value;
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
             switch (address >> 12)
             {
                 case 0x0: // rom (0x0000 -> 0x3FFF)
@@ -175,7 +258,8 @@ namespace Emux.GameBoy.Memory
 
                 case 0x8: // vram (0x8000 -> 0x9FFF)
                 case 0x9:
-                    _device.Gpu.WriteVRam((ushort) (address - 0x8000), value);
+                    if ((_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ScanLineVRamMode) != Graphics.LcdStatusFlags.ScanLineVRamMode)
+                        _device.Gpu.WriteVRam((ushort) (address - 0x8000), value);
                     break;
 
                 case 0xA: // switchable ram (0xA000 -> 0xBFFF)
@@ -196,17 +280,20 @@ namespace Emux.GameBoy.Memory
                     break;
 
                 case 0xF:
-                    if (address >= 0xFF10 && address < 0xFF40)
-                        _device.Spu.WriteRegister(address, value);
                     switch (address & 0xFF00)
                     {
                         default: // Echo internal ram (0xF000 -> 0xFDFF)
-                            _internalSwitchableRam[address - 0xE000 + GetSwitchableRamOffset()] = value;
+                            _internalSwitchableRam[address - 0xF000 + GetSwitchableRamOffset()] = value;
                             break;
 
                         case 0xFE00:
                             if (address < 0xFEA0) // OAM (0xFE00 -> 0xFE9F)
+                            {
+                                // Inaccessable in mode 2 & 3
+                                if ((byte)(_device.Gpu.LCDMode & Graphics.LcdStatusFlags.ModeMask) > 1)
+                                    return;
                                 _device.Gpu.WriteOam((byte)(address & 0xFF), value);
+                            }
                             break;
                         case 0xFF00: // IO (0xFF00 -> 0xFFFF)
                             switch (address & 0xFF)
@@ -222,6 +309,31 @@ namespace Emux.GameBoy.Memory
                                     break;
                                 case 0x0F:
                                     _device.Cpu.Registers.IF = (InterruptFlags) (0xE0 | value);
+                                    break;
+                                case 0x10:
+                                case 0x11:
+                                case 0x12:
+                                case 0x13:
+                                case 0x14:
+                                case 0x15:
+                                case 0x16:
+                                case 0x17:
+                                case 0x18:
+                                case 0x19:
+                                case 0x1A:
+                                case 0x1B:
+                                case 0x1C:
+                                case 0x1D:
+                                case 0x1E:
+                                case 0x1F:
+                                case 0x20:
+                                case 0x21:
+                                case 0x22:
+                                case 0x23:
+                                case 0x24:
+                                case 0x25:
+                                case 0x26:
+                                    _device.Spu.WriteRegister(address, value);
                                     break;
                                 case 0x40:
                                 case 0x41:
@@ -279,70 +391,15 @@ namespace Emux.GameBoy.Memory
         {
             WriteBytes(address, BitConverter.GetBytes(value));
         }
-        
-        private int GetSwitchableRamOffset()
-        {
-            return _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
-        }
+
+        private int GetSwitchableRamOffset() 
+            => _device.GbcMode ? (_internalRamBankIndex - 1) * 0x1000 : 0;
 
         private void SwitchRamBank(byte value)
         {
             if (value == 0)
                 value = 1;
             _internalRamBankIndex = value & 7;
-        }
-
-        internal void ReadBlock(ushort address, byte[] buffer, int offset, int length)
-        {
-            byte[] section = null;
-
-            switch (address >> 12)
-            {
-                case 0x0: // rom (0x0000 -> 0x3FFF)
-                case 0x1:
-                case 0x2:
-                case 0x3:
-                case 0x4: // switchable rom (0x4000 -> 0x7FFF)
-                case 0x5:
-                case 0x6:
-                case 0x7:
-                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
-                    break;
-
-                case 0x8: // vram (0x8000 -> 0x9FFF)
-                case 0x9:
-                    throw new NotImplementedException();
-
-                case 0xA: // switchable ram (0xA000 -> 0xBFFF)
-                case 0xB:
-                    _device.Cartridge.ReadBytes(address, buffer, 0, buffer.Length);
-                    break;
-
-                case 0xC: // internal ram (0xC000 -> 0xDFFF)
-                    section = _internalRam;
-                    address -= 0xC000;
-                    break;
-                case 0xD:
-                    section = _internalSwitchableRam;
-                    address -= 0xD000;
-                    address += (ushort) GetSwitchableRamOffset();
-                    break;
-
-                case 0xE: // Echo internal ram (0xE000 -> 0xEFFF)
-                    section = _internalRam;
-                    address -= 0xE000;
-                    break;
-
-                case 0xF:
-                    section = _internalRam;
-                    address -= 0xE000;
-                    break;
-            }
-
-            if (section != null)
-                Buffer.BlockCopy(section, address, buffer, 0, buffer.Length);
-        }
-
- 
+        } 
     }
 }

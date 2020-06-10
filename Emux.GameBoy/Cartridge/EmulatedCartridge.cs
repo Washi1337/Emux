@@ -10,7 +10,7 @@ namespace Emux.GameBoy.Cartridge
     {
         private readonly byte[] _romContents;
 
-        public EmulatedCartridge(byte[] romContents, IExternalMemory externalMemory)
+        public EmulatedCartridge(string ROMName, byte[] romContents, IExternalMemory externalMemory)
         {
             if (romContents == null)
                 throw new ArgumentNullException(nameof(romContents));
@@ -19,7 +19,7 @@ namespace Emux.GameBoy.Cartridge
             _romContents = romContents;
             ExternalMemory = externalMemory;
 
-            if (CartridgeType.IsRom()) 
+            if (CartridgeType.IsRom())
                 BankController = new RomOnlyBankController(this);
             else if (CartridgeType.IsMbc1())
                 BankController = new MemoryBankController1(this);
@@ -31,7 +31,11 @@ namespace Emux.GameBoy.Cartridge
                 BankController = new MemoryBankController5(this);
             else
                 throw new NotSupportedException("Unsupported cartridge type " + CartridgeType + ".");
+
+            this.ROMName = ROMName;
         }
+
+        public string ROMName { get; private set; }
 
         public byte[] NintendoLogo
         {

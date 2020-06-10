@@ -21,6 +21,14 @@ namespace Emux
                 [Stretch.Uniform] = "Uniform",
                 [Stretch.UniformToFill] = "Uniform to fill"
             };
+            Scales = new Dictionary<int, string>
+            {
+                [0] = "Custom",
+                [1] = "1x",
+                [2] = "2x",
+                [4] = "4x",
+                [8] = "8x",
+            };
         }
 
         public Dictionary<BitmapScalingMode, string> BitmapScalingModeItems
@@ -33,6 +41,10 @@ namespace Emux
             get;
         }
 
-        
+        public Dictionary<int, string> Scales
+        {
+            get;
+        }
+
     }
 }
